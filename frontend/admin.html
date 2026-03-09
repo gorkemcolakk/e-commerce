@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | EVENTİX</title>
+  <link rel="stylesheet" href="./styles/main.css">
+  <link rel="stylesheet" href="./styles/components.css">
+  <link rel="stylesheet" href="./styles/dashboard.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="logo"><span>EVENT<span class="logo-highlight">İX</span></span></a>
+      <div class="user-controls"></div>
+    </div>
+  </nav>
+
+  <main class="container dashboard-page">
+    <aside class="dash-sidebar glass-panel">
+      <div class="dash-avatar" style="background:linear-gradient(135deg,#ef4444,#f97316);" id="adminAvatar">A</div>
+      <div class="dash-name" id="adminName">Admin</div>
+      <div class="dash-role-badge" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#fca5a5;">⚙ Admin</div>
+      <nav class="dash-nav">
+        <button class="dash-nav-btn active" onclick="showTab('pending',this)">
+          ⏳ Onay Bekleyenler
+          <span class="pending-count-badge" id="pendingBadge" style="display:none;"></span>
+        </button>
+        <button class="dash-nav-btn" onclick="showTab('users',this)">👥 Kullanıcılar</button>
+        <button class="dash-nav-btn" onclick="showTab('allevents',this)">📋 Tüm Etkinlikler</button>
+        <button class="dash-nav-btn" onclick="showTab('revenue',this)">💰 Platform Geliri</button>
+      </nav>
+      <button onclick="logout()" class="btn btn-danger" style="width:100%;justify-content:center;margin-top:auto;padding:10px;">Çıkış Yap</button>
+    </aside>
+
+    <div class="dash-content">
+
+      <!-- ── PENDING EVENTS ─────────────────────────── -->
+      <section id="tab-pending" class="dash-tab">
+        <h2 class="dash-section-title">⏳ Onay Bekleyen Etkinlikler</h2>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Organizatörler tarafından oluşturulan ve yayınlanmayı bekleyen etkinlikler.</p>
+        <div id="pendingList"><p class="loading-text">Yükleniyor...</p></div>
+      </section>
+
+      <!-- ── USERS ──────────────────────────────────── -->
+      <section id="tab-users" class="dash-tab" style="display:none;">
+        <h2 class="dash-section-title">👥 Kullanıcılar</h2>
+        <div id="usersList"><p class="loading-text">Yükleniyor...</p></div>
+      </section>
+
+      <!-- ── ALL EVENTS ─────────────────────────────── -->
+      <section id="tab-allevents" class="dash-tab" style="display:none;">
+        <h2 class="dash-section-title">📋 Tüm Etkinlikler</h2>
+        <div id="allEventsList"><p class="loading-text">Yükleniyor...</p></div>
+      </section>
+
+      <!-- ── REVENUE ────────────────────────────────── -->
+      <section id="tab-revenue" class="dash-tab" style="display:none;">
+        <h2 class="dash-section-title">💰 Platform Geliri</h2>
+        <div id="adminRevenue"><p class="loading-text">Yükleniyor...</p></div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="./scripts/auth.js"></script>
+  <script>
+    const user = getUser();
+    if (!user || user.role !== 'admin') { alert('Bu sayfa sadece adminlere özeldir.'); window.location.href = 'index.html'; }
+    document.getElementById('adminName').textContent = user.fullname;
+    document.getElementById('adminAvatar').textContent = user.fullname.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+
+    function showTab(name, btn) {
+      document.querySelectorAll('.dash-tab').forEach(t => t.style.display = 'none');
+      document.getElementById('tab-' + name).style.display = 'block';
+      document.querySelectorAll('.dash-nav-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      if (name === 'pending')   loadPending();
+      if (name === 'users')     loadUsers();
+      if (name === 'allevents') loadAllEvents();
+      if (name === 'revenue')   loadAdminRevenue();
+    }
+
+    // ── PENDING APPROVAL ──────────────────────────────────────
+    async function loadPending() {
+      const el = document.getElementById('pendingList');
+      el.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      try {
+        const r = await fetch('/api/admin/pending-events', { headers: authHeaders() });
+        const events = await r.json();
+        // Update badge
+        const badge = document.getElementById('pendingBadge');
+        badge.style.display = events.length > 0 ? 'inline-flex' : 'none';
+        badge.textContent = events.length;
+
+        if (!events.length) {
+          el.innerHTML = '<div style="text-align:center;padding:48px 20px;"><div style="font-size:2.5rem;">✅</div><p style="color:var(--text-muted);margin-top:12px;font-size:0.9rem;">Şu anda onay bekleyen etkinlik yok.</p></div>';
+          return;
+        }
+        el.innerHTML = events.map(e => `
+          <div class="glass-panel" style="margin-bottom:14px;padding:20px;border-left:3px solid var(--gold);">
+            <div style="display:flex;gap:14px;align-items:flex-start;">
+              <img src="${e.image}" style="width:80px;height:80px;object-fit:cover;border-radius:10px;flex-shrink:0;" onerror="this.src='https://images.unsplash.com/photo-1540039155733-5bb30b4a574b?w=200'">
+              <div style="flex:1;min-width:0;">
+                <h3 style="color:var(--text);font-size:1rem;margin:0 0 4px;">${e.title}</h3>
+                <p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 2px;">📅 ${e.date} &nbsp;|&nbsp; 📍 ${e.location}</p>
+                <p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 8px;">💰 ${e.price.toLocaleString('tr-TR')} ₺ &nbsp;|&nbsp; 🎟 Kapasite: ${e.capacity}</p>
+                <p style="font-size:0.78rem;color:var(--text-sub);background:var(--bg-surface);padding:6px 10px;border-radius:6px;margin:0;">
+                  👤 Organizatör: <strong>${e.organizer_name || 'Bilinmiyor'}</strong> &lt;${e.organizer_email || ''}&gt;
+                </p>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px;">
+              <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="approveEvent('${e.id}', this)">✓ Onayla & Yayınla</button>
+              <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="rejectEvent('${e.id}', this)" id="reject-${e.id}">✗ Reddet</button>
+            </div>
+            <div id="reject-reason-${e.id}" style="display:none;margin-top:10px;">
+              <input type="text" class="form-control" placeholder="Red gerekçesi (opsiyonel)..." id="reason-${e.id}" style="margin-bottom:8px;">
+              <button class="btn btn-danger btn-sm" style="width:100%;justify-content:center;" onclick="confirmReject('${e.id}')">Red Gönder</button>
+            </div>
+          </div>`).join('');
+      } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yüklenemedi.</p>'; }
+    }
+
+    async function approveEvent(id, btn) {
+      btn.textContent = 'Onaylanıyor...'; btn.disabled = true;
+      try {
+        const r = await fetch(`/api/admin/events/${id}/approve`, { method: 'POST', headers: authHeaders() });
+        const d = await r.json();
+        showToast(d.message, 'success');
+        loadPending();
+      } catch { btn.textContent = 'Onayla'; btn.disabled = false; }
+    }
+
+    function rejectEvent(id, btn) {
+      const box = document.getElementById(`reject-reason-${id}`);
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function confirmReject(id) {
+      const reason = document.getElementById(`reason-${id}`).value || 'Belirtilmedi';
+      try {
+        const r = await fetch(`/api/admin/events/${id}/reject`, {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({ reason })
+        });
+        const d = await r.json();
+        showToast(d.message, 'error');
+        loadPending();
+      } catch {}
+    }
+
+    // ── USERS ─────────────────────────────────────────────────
+    async function loadUsers() {
+      const el = document.getElementById('usersList');
+      el.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      try {
+        const r = await fetch('/api/admin/users', { headers: authHeaders() });
+        const users = await r.json();
+        const roleLabel = r => ({ admin: '⚙ Admin', organizer: '🎪 Org.', customer: '🎟 Müşteri' }[r] || r);
+        const roleColor = r => ({ admin: '#ef4444', organizer: '#f59e0b', customer: '#14b8a6' }[r] || '#6b7280');
+        el.innerHTML = `<p style="color:var(--text-muted);margin-bottom:14px;font-size:0.85rem;">${users.length} kullanıcı</p>
+          <div class="glass-panel" style="overflow:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+              <thead><tr style="border-bottom:1px solid var(--border);">
+                <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">#</th>
+                <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">Ad Soyad</th>
+                <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">E-posta</th>
+                <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">Rol</th>
+                <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">Kayıt</th>
+              </tr></thead>
+              <tbody>${users.map(u => `
+              <tr style="border-bottom:1px solid rgba(255,255,255,.04);">
+                <td style="padding:10px 14px;color:var(--text-muted);">${u.id}</td>
+                <td style="padding:10px 14px;color:var(--text);font-weight:600;">${u.fullname}</td>
+                <td style="padding:10px 14px;color:var(--text-sub);">${u.email}</td>
+                <td style="padding:10px 14px;">
+                  <span style="background:${roleColor(u.role)}18;color:${roleColor(u.role)};border:1px solid ${roleColor(u.role)}44;border-radius:100px;padding:2px 10px;font-size:0.72rem;font-weight:600;">${roleLabel(u.role)}</span>
+                </td>
+                <td style="padding:10px 14px;color:var(--text-muted);font-size:0.78rem;">${new Date(u.created_at).toLocaleDateString('tr-TR')}</td>
+              </tr>`).join('')}</tbody>
+            </table>
+          </div>`;
+      } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yüklenemedi.</p>'; }
+    }
+
+    // ── ALL EVENTS ────────────────────────────────────────────
+    async function loadAllEvents() {
+      const el = document.getElementById('allEventsList');
+      el.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      try {
+        const r = await fetch('/api/admin/all-events', { headers: authHeaders() });
+        const events = await r.json();
+        const sColor = s => ({ active:'#14b8a6', pending:'#f59e0b', cancelled:'#ef4444', rejected:'#6b7280' }[s] || '#6b7280');
+        const sLabel = s => ({ active:'Aktif', pending:'Bekliyor', cancelled:'İptal', rejected:'Reddedildi' }[s] || s);
+        el.innerHTML = `<p style="color:var(--text-muted);margin-bottom:14px;font-size:0.85rem;">${events.length} etkinlik</p>` +
+          events.map(e => `
+          <div class="glass-panel" style="margin-bottom:10px;padding:14px 18px;display:flex;gap:14px;align-items:center;">
+            <img src="${e.image}" style="width:60px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.src='https://images.unsplash.com/photo-1540039155733-5bb30b4a574b?w=200'">
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:3px;flex-wrap:wrap;">
+                <span style="color:var(--text);font-weight:600;font-size:0.9rem;">${e.title}</span>
+                <span style="background:${sColor(e.status)}18;color:${sColor(e.status)};border:1px solid ${sColor(e.status)}44;border-radius:100px;padding:1px 8px;font-size:0.7rem;font-weight:600;">${sLabel(e.status)}</span>
+              </div>
+              <p style="color:var(--text-muted);font-size:0.78rem;margin:0;">📅 ${e.date} | 📍 ${e.location} | 💰 ${e.price.toLocaleString('tr-TR')} ₺ | 🎟 ${e.sold_count}/${e.capacity}</p>
+            </div>
+            ${e.status === 'active' || e.status === 'pending' ? `
+            <button class="btn btn-danger btn-sm" onclick="adminCancelEvent('${e.id}')">İptal</button>` : ''}
+          </div>`).join('');
+      } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yüklenemedi.</p>'; }
+    }
+
+    async function adminCancelEvent(id) {
+      if (!confirm('Bu etkinliği iptal etmek istediğinize emin misiniz?')) return;
+      try { const r = await fetch(`/api/events/${id}`, { method:'DELETE', headers:authHeaders() }); showToast((await r.json()).message); loadAllEvents(); }
+      catch {}
+    }
+
+    // ── REVENUE ───────────────────────────────────────────────
+    async function loadAdminRevenue() {
+      const el = document.getElementById('adminRevenue');
+      el.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      try {
+        const r = await fetch('/api/organizer/revenue', { headers: authHeaders() });
+        const d = await r.json();
+        el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;">
+          <div class="glass-panel" style="padding:20px;text-align:center;border-top:2px solid var(--gold);">
+            <div style="font-family:'Space Mono',monospace;font-size:1.7rem;font-weight:700;color:var(--gold);">${d.total_revenue.toLocaleString('tr-TR')} ₺</div>
+            <div style="color:var(--text-muted);font-size:0.8rem;margin-top:4px;">Toplam Ciro</div>
+          </div>
+          <div class="glass-panel" style="padding:20px;text-align:center;border-top:2px solid var(--coral);">
+            <div style="font-family:'Space Mono',monospace;font-size:1.7rem;font-weight:700;color:var(--coral);">${d.commission.toLocaleString('tr-TR')} ₺</div>
+            <div style="color:var(--text-muted);font-size:0.8rem;margin-top:4px;">Platform Komisyonu</div>
+          </div>
+          <div class="glass-panel" style="padding:20px;text-align:center;border-top:2px solid var(--teal);">
+            <div style="font-family:'Space Mono',monospace;font-size:1.7rem;font-weight:700;color:var(--teal);">${d.net_revenue.toLocaleString('tr-TR')} ₺</div>
+            <div style="color:var(--text-muted);font-size:0.8rem;margin-top:4px;">Net Organizatör Ödemeleri</div>
+          </div>
+          <div class="glass-panel" style="padding:20px;text-align:center;border-top:2px solid var(--blue);">
+            <div style="font-family:'Space Mono',monospace;font-size:1.7rem;font-weight:700;color:var(--blue);">${d.total_tickets}</div>
+            <div style="color:var(--text-muted);font-size:0.8rem;margin-top:4px;">Toplam Bilet</div>
+          </div>
+        </div>`;
+      } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yüklenemedi.</p>'; }
+    }
+
+    // Init
+    loadPending();
+  </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+/* ═══════════════════════════════════════════════════════════
+   EVENTİX — Home Page · Gold Editorial
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── TICKET CARD DETAIL ──────────────────────────────────── */
+.ticket-box {
+  padding: 24px;
+  position: sticky;
+  top: 90px;
+}
+
+.ticket-box-price {
+  font-family: 'Space Mono', monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
+.ticket-box-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.ticket-features {
+  margin: 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-sub);
+}
+
+.feature-item svg { color: var(--gold); flex-shrink: 0; }

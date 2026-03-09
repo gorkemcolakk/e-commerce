@@ -1,0 +1,149 @@
+/* ═══════════════════════════════════════════════════════════
+   EVENTİX — Dashboard, Organizer, Admin Panels
+   ═══════════════════════════════════════════════════════════ */
+
+.dashboard-page {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 24px;
+  padding-top: 90px;
+  padding-bottom: 60px;
+  min-height: 100vh;
+  align-items: flex-start;
+}
+
+/* ── SIDEBAR ──────────────────────────────────────────────── */
+.dash-sidebar {
+  padding: 24px 16px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: sticky;
+  top: 84px;
+}
+
+.dash-avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), #d97706);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #09090f;
+  margin-bottom: 6px;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.dash-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+}
+
+.dash-email {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  word-break: break-all;
+  margin-bottom: 6px;
+}
+
+.dash-role-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--gold-glow);
+  border: 1px solid rgba(245,158,11,0.35);
+  color: var(--gold);
+  border-radius: 100px;
+  padding: 3px 12px;
+  margin-bottom: 16px;
+}
+
+.dash-nav {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 20px;
+}
+
+.dash-nav-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-sub);
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dash-nav-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.dash-nav-btn.active {
+  background: var(--gold-glow);
+  border-color: rgba(245,158,11,0.3);
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* ── CONTENT ──────────────────────────────────────────────── */
+.dash-content { min-width: 0; }
+
+.dash-tab { animation: fadeIn 0.25s ease; }
+
+.dash-section-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text);
+  margin: 0 0 20px;
+}
+
+.loading-text {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 48px 24px;
+  font-size: 0.9rem;
+}
+
+/* ── PENDING BADGE ──────────────────────────────────────────── */
+.pending-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gold);
+  color: #09090f;
+  border-radius: 100px;
+  min-width: 18px;
+  height: 18px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0 5px;
+  margin-left: auto;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .dashboard-page {
+    grid-template-columns: 1fr;
+    padding-top: 76px;
+  }
+  .dash-sidebar { position: static; }
+}

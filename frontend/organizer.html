@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizatör Paneli | EVENTİX</title>
+  <link rel="stylesheet" href="./styles/main.css">
+  <link rel="stylesheet" href="./styles/components.css">
+  <link rel="stylesheet" href="./styles/dashboard.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="logo"><span>EVENT<span class="logo-highlight">İX</span></span></a>
+      <div class="user-controls"></div>
+    </div>
+  </nav>
+
+  <main class="container dashboard-page">
+    <!-- Sidebar -->
+    <aside class="dash-sidebar glass-panel">
+      <div class="dash-avatar" id="orgAvatar">O</div>
+      <div class="dash-name" id="orgName">Organizatör</div>
+      <div class="dash-role-badge">🎪 Organizatör</div>
+      <nav class="dash-nav">
+        <button class="dash-nav-btn active" onclick="showTab('myevents',this)">📋 Etkinliklerim</button>
+        <button class="dash-nav-btn" onclick="showTab('create',this)">➕ Etkinlik Oluştur</button>
+        <button class="dash-nav-btn" onclick="showTab('revenue',this)">💰 Gelir Raporu</button>
+        <button class="dash-nav-btn" onclick="showTab('validate',this)">📷 QR Doğrulama</button>
+      </nav>
+      <button onclick="logout()" class="btn" style="width:100%;margin-top:auto;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;padding:10px;">Çıkış Yap</button>
+    </aside>
+
+    <!-- Content -->
+    <div class="dash-content">
+
+      <!-- === MY EVENTS === -->
+      <section id="tab-myevents" class="dash-tab">
+        <h2 class="dash-section-title">Etkinliklerim</h2>
+        <div id="myEventsList"><p class="loading-text">Yükleniyor...</p></div>
+      </section>
+
+      <!-- === CREATE EVENT === -->
+      <section id="tab-create" class="dash-tab" style="display:none;">
+        <h2 class="dash-section-title">Yeni Etkinlik Oluştur</h2>
+        <div class="glass-panel" style="max-width:600px;padding:28px;">
+          <div id="createFeedback"></div>
+          <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+            <div>
+              <label class="form-label">Etkinlik Adı *</label>
+              <input type="text" id="evTitle" class="form-control" placeholder="Neon Nights..." required>
+            </div>
+            <div>
+              <label class="form-label">Kategori *</label>
+              <select id="evCategory" class="form-control" style="background:#1a1040;color:white;">
+                <option value="concert">🎵 Konser</option>
+                <option value="theater">🎭 Tiyatro</option>
+                <option value="workshop">🎨 Atölye</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+            <div>
+              <label class="form-label">Tarih & Saat * (örn: 24 May 2026 • 21:00)</label>
+              <input type="text" id="evDate" class="form-control" placeholder="DD Ay YYYY • HH:MM" required>
+            </div>
+            <div>
+              <label class="form-label">Fiyat (₺) *</label>
+              <input type="number" id="evPrice" class="form-control" placeholder="850" min="0" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Konum * (Google Haritalar'da aranacak)</label>
+            <input type="text" id="evLocation" class="form-control" placeholder="Volkswagen Arena, Istanbul" required>
+          </div>
+          <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+            <div>
+              <label class="form-label">Kapasite *</label>
+              <input type="number" id="evCapacity" class="form-control" placeholder="500" min="1" required>
+            </div>
+            <div>
+              <label class="form-label">Görsel URL</label>
+              <input type="url" id="evImage" class="form-control" placeholder="https://...">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Açıklama</label>
+            <textarea id="evDesc" class="form-control" rows="4" placeholder="Etkinlik hakkında detaylı bilgi..." style="resize:vertical;"></textarea>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <input type="checkbox" id="evFeatured" style="width:16px;height:16px;">
+            <label for="evFeatured" class="form-label" style="margin:0;cursor:pointer;">⭐ Öne Çıkan etkinlik olarak işaretle</label>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;" onclick="createEvent()">Etkinlik Oluştur</button>
+        </div>
+      </section>
+
+      <!-- === REVENUE === -->
+      <section id="tab-revenue" class="dash-tab" style="display:none;">
+        <h2 class="dash-section-title">💰 Gelir Raporu</h2>
+        <div id="revenueSummary"></div>
+        <h3 style="color:white;margin:28px 0 16px;">Etkinlik Bazlı Döküm</h3>
+        <div id="revenueBreakdown"></div>
+      </section>
+
+      <!-- === QR VALIDATE === -->
+      <section id="tab-validate" class="dash-tab" style="display:none;">
+        <h2 class="dash-section-title">📷 QR Bilet Doğrulama</h2>
+        <div class="glass-panel" style="max-width:480px;padding:28px;">
+          <p style="color:var(--text-muted);margin-bottom:16px;font-size:0.9rem;">Etkinlik girişinde müşterinin QR kodundaki metni girin veya tarayın.</p>
+          <div class="form-group">
+            <label class="form-label">QR Kod Verisi</label>
+            <input type="text" id="qrInput" class="form-control" placeholder="EVENTIX-XXXXXX-evt-001" style="font-family:monospace;">
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-outline" style="flex:1;justify-content:center;padding:12px;" onclick="checkQR()">Kontrol Et</button>
+            <button class="btn btn-primary" style="flex:1;justify-content:center;padding:12px;" onclick="useQR()">Kullanıldı Say</button>
+          </div>
+          <div id="qrValidResult" style="margin-top:20px;"></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="./scripts/auth.js"></script>
+  <script>
+    const user = getUser();
+    if (!user || (user.role !== 'organizer' && user.role !== 'admin')) {
+      alert('Bu sayfa sadece organizatörlere özeldir.');
+      window.location.href = 'index.html';
+    }
+    document.getElementById('orgName').textContent = user.fullname;
+    document.getElementById('orgAvatar').textContent = user.fullname.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+
+    function showTab(name, btn) {
+      document.querySelectorAll('.dash-tab').forEach(t => t.style.display = 'none');
+      document.getElementById('tab-'+name).style.display = 'block';
+      document.querySelectorAll('.dash-nav-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      if (name === 'myevents') loadMyEvents();
+      if (name === 'revenue') loadRevenue();
+    }
+
+    // ── MY EVENTS ──────────────────────────────────────────
+    async function loadMyEvents() {
+      const el = document.getElementById('myEventsList');
+      el.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      try {
+        const res = await fetch('/api/organizer/events', { headers: authHeaders() });
+        const events = await res.json();
+        if (!events.length) { el.innerHTML = '<p class="loading-text">Henüz etkinlik oluşturmadınız.</p>'; return; }
+        el.innerHTML = events.map(e => {
+          const statusColor = e.status === 'active' ? '#10b981' : e.status === 'cancelled' ? '#ef4444' : '#f59e0b';
+          const statusLabel = e.status === 'active' ? '✓ Aktif' : e.status === 'cancelled' ? '✗ İptal' : e.status;
+          const pct = e.capacity > 0 ? Math.min(100,Math.round(e.sold_count/e.capacity*100)) : 0;
+          return `
+          <div class="glass-panel" style="margin-bottom:16px;padding:20px;display:flex;gap:16px;align-items:flex-start;">
+            <img src="${e.image}" alt="${e.title}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;flex-shrink:0;">
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px;">
+                <h3 style="color:white;margin:0;font-size:1rem;">${e.title}</h3>
+                <span style="background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44;border-radius:20px;padding:2px 10px;font-size:0.75rem;white-space:nowrap;">${statusLabel}</span>
+              </div>
+              <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 2px;">📅 ${e.date} &nbsp;|&nbsp; 📍 ${e.location}</p>
+              <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 8px;">💰 ${e.price.toLocaleString('tr-TR')} ₺ &nbsp;|&nbsp; Kapasite: ${e.sold_count}/${e.capacity}</p>
+              <div style="background:rgba(255,255,255,.06);border-radius:20px;height:5px;overflow:hidden;max-width:200px;">
+                <div style="height:100%;background:linear-gradient(90deg,#8b5cf6,#ec4899);width:${pct}%;border-radius:20px;"></div>
+              </div>
+            </div>
+            ${e.status === 'active' ? `
+            <button class="btn" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5;font-size:0.8rem;padding:6px 14px;white-space:nowrap;flex-shrink:0;"
+              onclick="cancelEvent('${e.id}','${e.title.replace(/'/g,"\\'")}')">İptal Et</button>` : ''}
+          </div>`;
+        }).join('');
+      } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yüklenemedi.</p>'; }
+    }
+
+    async function cancelEvent(id, title) {
+      if (!confirm(`"${title}" etkinliğini iptal etmek istediğinize emin misiniz? Satılan tüm biletler iade sürecine alınacak.`)) return;
+      try {
+        const res = await fetch(`/api/events/${id}`, { method: 'DELETE', headers: authHeaders() });
+        const data = await res.json();
+        alert(data.message);
+        loadMyEvents();
+      } catch { alert('Hata oluştu.'); }
+    }
+
+    // ── CREATE EVENT ─────────────────────────────────────
+    async function createEvent() {
+      const title = document.getElementById('evTitle').value.trim();
+      const category = document.getElementById('evCategory').value;
+      const date = document.getElementById('evDate').value.trim();
+      const price = document.getElementById('evPrice').value;
+      const location = document.getElementById('evLocation').value.trim();
+      const capacity = document.getElementById('evCapacity').value;
+      const image = document.getElementById('evImage').value.trim();
+      const description = document.getElementById('evDesc').value.trim();
+      const featured = document.getElementById('evFeatured').checked;
+      const fb = document.getElementById('createFeedback');
+
+      if (!title || !date || !location || !price || !capacity) {
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Zorunlu alanları doldurun.</p>';
+        return;
+      }
+      try {
+        const res = await fetch('/api/events', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ title, category, date, price: parseInt(price), location, capacity: parseInt(capacity), image, description, featured })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          fb.innerHTML = `<p style="color:#6ee7b7;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ ${data.message}</p>`;
+          document.querySelectorAll('#tab-create input, #tab-create textarea').forEach(i => i.value = '');
+        } else {
+          fb.innerHTML = `<p style="color:#fca5a5;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ ${data.message}</p>`;
+        }
+      } catch { fb.innerHTML = '<p style="color:#fca5a5;">Hata oluştu.</p>'; }
+    }
+
+    // ── REVENUE ──────────────────────────────────────────
+    async function loadRevenue() {
+      const summaryEl = document.getElementById('revenueSummary');
+      const breakdownEl = document.getElementById('revenueBreakdown');
+      summaryEl.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      try {
+        const res = await fetch('/api/organizer/revenue', { headers: authHeaders() });
+        const data = await res.json();
+        summaryEl.innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+            <div class="glass-panel" style="padding:20px;text-align:center;">
+              <div style="font-size:1.8rem;font-weight:700;color:#8b5cf6;">${data.total_revenue.toLocaleString('tr-TR')} ₺</div>
+              <div style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;">Toplam Ciro</div>
+            </div>
+            <div class="glass-panel" style="padding:20px;text-align:center;">
+              <div style="font-size:1.8rem;font-weight:700;color:#ec4899;">${data.commission.toLocaleString('tr-TR')} ₺</div>
+              <div style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;">Platform Komisyonu (%10)</div>
+            </div>
+            <div class="glass-panel" style="padding:20px;text-align:center;">
+              <div style="font-size:1.8rem;font-weight:700;color:#10b981;">${data.net_revenue.toLocaleString('tr-TR')} ₺</div>
+              <div style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;">Net Gelir</div>
+            </div>
+            <div class="glass-panel" style="padding:20px;text-align:center;">
+              <div style="font-size:1.8rem;font-weight:700;color:#2dd4bf;">${data.total_tickets}</div>
+              <div style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;">Toplam Satılan Bilet</div>
+            </div>
+          </div>`;
+
+        breakdownEl.innerHTML = `
+          <div class="glass-panel" style="overflow:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border-color);">
+                  <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">Etkinlik</th>
+                  <th style="text-align:right;padding:10px 14px;color:var(--text-muted);font-weight:500;">Satış</th>
+                  <th style="text-align:right;padding:10px 14px;color:var(--text-muted);font-weight:500;">Brüt</th>
+                  <th style="text-align:right;padding:10px 14px;color:var(--text-muted);font-weight:500;">Komisyon</th>
+                  <th style="text-align:right;padding:10px 14px;color:var(--text-muted);font-weight:500;">Net</th>
+                  <th style="text-align:center;padding:10px 14px;color:var(--text-muted);font-weight:500;">Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.breakdown.map(b => `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                  <td style="padding:10px 14px;color:white;">${b.title}</td>
+                  <td style="padding:10px 14px;text-align:right;color:var(--text-muted);">${b.sold_count}/${b.capacity}</td>
+                  <td style="padding:10px 14px;text-align:right;color:white;">${b.gross_revenue.toLocaleString('tr-TR')} ₺</td>
+                  <td style="padding:10px 14px;text-align:right;color:#ec4899;">-${b.commission.toLocaleString('tr-TR')} ₺</td>
+                  <td style="padding:10px 14px;text-align:right;color:#10b981;">${b.net_revenue.toLocaleString('tr-TR')} ₺</td>
+                  <td style="padding:10px 14px;text-align:center;">
+                    <span style="font-size:0.75rem;">${b.status === 'active' ? '✓ Aktif' : '✗ İptal'}</span>
+                  </td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      } catch { summaryEl.innerHTML = '<p class="loading-text" style="color:#f87171;">Yüklenemedi.</p>'; }
+    }
+
+    // ── QR VALIDATE ──────────────────────────────────────
+    async function checkQR() { await validateQR('GET'); }
+    async function useQR() { await validateQR('POST'); }
+
+    async function validateQR(method) {
+      const code = document.getElementById('qrInput').value.trim();
+      const el = document.getElementById('qrValidResult');
+      if (!code) { el.innerHTML = '<p style="color:#fca5a5;">QR kod giriniz.</p>'; return; }
+      try {
+        const res = await fetch(`/api/tickets/validate/${encodeURIComponent(code)}`, { method, headers: authHeaders() });
+        const data = await res.json();
+        if (data.valid) {
+          el.innerHTML = `<div style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);border-radius:10px;padding:16px;">
+            <p style="color:#6ee7b7;font-size:1.1rem;font-weight:700;margin:0 0 8px;">✓ GEÇERLİ BİLET${method==='POST'?' — Kullanıldı Olarak İşaretlendi':''}</p>
+            <p style="color:white;margin:0 0 2px;font-size:0.875rem;">🎫 ${data.ticket.title}</p>
+            <p style="color:var(--text-muted);margin:0 0 2px;font-size:0.82rem;">👤 ${data.ticket.fullname}</p>
+            <p style="color:var(--text-muted);margin:0;font-size:0.82rem;">📅 ${data.ticket.date}</p>
+          </div>`;
+        } else {
+          const isUsed = data.status === 'already_used';
+          el.innerHTML = `<div style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:10px;padding:16px;">
+            <p style="color:#fca5a5;font-size:1.1rem;font-weight:700;margin:0 0 4px;">${isUsed ? '✗ DAHA ÖNCE KULLANILDI' : '✗ GEÇERSİZ'}</p>
+            <p style="color:var(--text-muted);margin:0;font-size:0.875rem;">${data.message}</p>
+          </div>`;
+        }
+      } catch { el.innerHTML = '<p style="color:#fca5a5;">Bağlantı hatası.</p>'; }
+    }
+
+    // Initial load
+    loadMyEvents();
+  </script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | EVENTİX</title>
+  <link rel="stylesheet" href="./styles/main.css">
+  <link rel="stylesheet" href="./styles/components.css">
+  <link rel="stylesheet" href="./styles/dashboard.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="logo"><span>EVENT<span class="logo-highlight">İX</span></span></a>
+      <div class="user-controls"></div>
+    </div>
+  </nav>
+
+  <main class="container dashboard-page">
+    <!-- Sidebar -->
+    <aside class="dash-sidebar glass-panel">
+      <div class="dash-avatar" id="avatarInitials">?</div>
+      <div class="dash-name" id="sidebarName">Yükleniyor...</div>
+      <div class="dash-email" id="sidebarEmail">—</div>
+      <nav class="dash-nav">
+        <button class="dash-nav-btn active" onclick="showTab('tickets',this)">🎟 Biletlerim</button>
+        <button class="dash-nav-btn" onclick="showTab('wishlist',this)">❤ Favorilerim</button>
+        <button class="dash-nav-btn" onclick="showTab('notifications',this)">
+          🔔 Bildirimler
+          <span class="notif-badge" id="notifBadge" style="display:none;background:#ef4444;color:white;border-radius:50%;width:18px;height:18px;font-size:0.7rem;align-items:center;justify-content:center;margin-left:auto;"></span>
+        </button>
+        <button class="dash-nav-btn" onclick="showTab('profile',this)">👤 Profilim</button>
+      </nav>
+      <button onclick="logout()" class="btn" style="width:100%;margin-top:auto;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;padding:10px;">Çıkış Yap</button>
+    </aside>
+
+    <!-- Content -->
+    <div class="dash-content">
+
+      <!-- === TICKETS TAB === -->
+      <section id="tab-tickets" class="dash-tab">
+        <h2 class="dash-section-title">Biletlerim</h2>
+        <div id="ticketsList"><p class="loading-text">Yükleniyor...</p></div>
+      </section>
+
+      <!-- === WISHLIST TAB === -->
+      <section id="tab-wishlist" class="dash-tab" style="display:none;">
+        <h2 class="dash-section-title">❤ Favorilerim</h2>
+        <div id="wishlistGrid" class="events-grid"></div>
+      </section>
+
+      <!-- === NOTIFICATIONS TAB === -->
+      <section id="tab-notifications" class="dash-tab" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+          <h2 class="dash-section-title" style="margin:0;">Bildirimler</h2>
+          <button class="btn btn-outline" style="font-size:0.8rem;padding:6px 14px;" onclick="markAllRead()">Tümünü Okundu Say</button>
+        </div>
+        <div id="notifList"><p class="loading-text">Yükleniyor...</p></div>
+      </section>
+
+      <!-- === PROFILE TAB === -->
+      <section id="tab-profile" class="dash-tab" style="display:none;">
+        <h2 class="dash-section-title">Profilimi Güncelle</h2>
+        <div class="glass-panel" style="max-width:480px;padding:28px;">
+          <div id="profileFeedback"></div>
+          <div class="form-group">
+            <label class="form-label">Ad Soyad</label>
+            <input type="text" id="profileName" class="form-control" placeholder="Ad Soyad">
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-posta (değiştirilemez)</label>
+            <input type="email" id="profileEmail" class="form-control" disabled style="opacity:0.6;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rol</label>
+            <input type="text" id="profileRole" class="form-control" disabled style="opacity:0.6;">
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;" onclick="saveProfile()">Kaydet</button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="./scripts/auth.js"></script>
+  <script>
+    // Auth guard
+    const user = getUser();
+    if (!user) { window.location.href = 'login.html'; }
+
+    // Sidebar
+    if (user) {
+      document.getElementById('sidebarName').textContent = user.fullname;
+      document.getElementById('sidebarEmail').textContent = user.email;
+      document.getElementById('avatarInitials').textContent = user.fullname.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+      document.getElementById('profileName').value = user.fullname;
+      document.getElementById('profileEmail').value = user.email;
+      document.getElementById('profileRole').value = user.role === 'customer' ? '🎟 Müşteri' : user.role === 'organizer' ? '🎪 Organizatör' : '⚙ Admin';
+    }
+
+    // Tab switching
+    function showTab(name, btn) {
+      document.querySelectorAll('.dash-tab').forEach(t => t.style.display = 'none');
+      document.getElementById('tab-' + name).style.display = 'block';
+      document.querySelectorAll('.dash-nav-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      if (name === 'tickets') loadTickets();
+      if (name === 'wishlist') loadWishlist();
+      if (name === 'notifications') loadNotifications();
+    }
+
+    // ── TICKETS ──────────────────────────────────────────
+    async function loadTickets() {
+      const el = document.getElementById('ticketsList');
+      el.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      try {
+        const res = await fetch('/api/tickets/my-tickets', { headers: authHeaders() });
+        const tickets = await res.json();
+        if (!tickets.length) { el.innerHTML = '<p class="loading-text">Henüz bilet satın almadınız.</p>'; return; }
+        el.innerHTML = tickets.map(t => {
+          const statusColor = { valid: '#10b981', used: '#6b7280', refund_pending: '#f59e0b' }[t.status] || '#6b7280';
+          const statusLabel = { valid: '✓ Geçerli', used: '✗ Kullanıldı', refund_pending: '⏳ İade Bekliyor' }[t.status] || t.status;
+          return `
+          <div class="ticket-card glass-panel" style="display:flex;gap:20px;margin-bottom:16px;padding:20px;">
+            <img src="${t.image || ''}" alt="${t.title}" style="width:90px;height:90px;object-fit:cover;border-radius:10px;flex-shrink:0;" onerror="this.style.display='none'">
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+                <h3 style="color:white;font-size:1rem;margin:0 0 4px;">${t.title}</h3>
+                <span style="background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44;border-radius:20px;padding:2px 10px;font-size:0.75rem;white-space:nowrap;flex-shrink:0;">${statusLabel}</span>
+              </div>
+              <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 2px;">📅 ${t.date}</p>
+              <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 8px;">📍 ${t.location}</p>
+              <p style="color:var(--text-muted);font-size:0.78rem;margin:0;">Bilet Kodu: <strong style="color:white;font-family:monospace;">${t.ticket_key}</strong> &nbsp;|&nbsp; Adet: ${t.quantity} &nbsp;|&nbsp; Toplam: ${(t.total_price || 0).toLocaleString('tr-TR')} ₺</p>
+            </div>
+            ${t.qr_code && t.status === 'valid' ? `
+            <div style="flex-shrink:0;text-align:center;">
+              <button class="btn btn-outline" style="font-size:0.75rem;padding:6px 12px;" onclick="showQR('${t.qr_code}','${t.ticket_key.replace(/'/g,"\\'")}')">QR Göster</button>
+            </div>` : ''}
+          </div>`;
+        }).join('');
+      } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Biletler yüklenemedi.</p>'; }
+    }
+
+    // Show QR popup
+    function showQR(qrData, key) {
+      const win = window.open('', '_blank', 'width=340,height=420');
+      win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR Bilet</title><style>body{margin:0;background:#0f0a1e;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:white;}</style></head><body>
+        <div style="background:white;padding:16px;border-radius:12px;margin-bottom:16px;">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}" width="200" height="200" style="display:block;">
+        </div>
+        <p style="font-size:0.85rem;color:#a1a1aa;margin:0 0 4px;">Bilet Kodu</p>
+        <p style="font-family:monospace;font-size:1.1rem;margin:0;">${key}</p>
+      </body></html>`);
+    }
+
+    // ── WISHLIST ──────────────────────────────────────────
+    async function loadWishlist() {
+      const el = document.getElementById('wishlistGrid');
+      el.innerHTML = '<p class="loading-text" style="grid-column:1/-1;">Yükleniyor...</p>';
+      try {
+        const res = await fetch('/api/wishlist', { headers: authHeaders() });
+        const items = await res.json();
+        if (!items.length) { el.innerHTML = '<p class="loading-text" style="grid-column:1/-1;">Favori listeniz boş.</p>'; return; }
+        el.innerHTML = items.map(e => `
+          <div class="event-card glass-panel" style="cursor:pointer;" onclick="window.location.href='event-detail.html?id=${e.id}'">
+            <div class="event-img-wrapper">
+              <img src="${e.image}" alt="${e.title}" class="event-img" loading="lazy">
+            </div>
+            <div class="event-content">
+              <div class="event-date">${e.date}</div>
+              <h3 class="event-title">${e.title}</h3>
+              <div class="event-location">📍 ${e.location}</div>
+              <div class="event-footer">
+                <div class="event-price">${e.price.toLocaleString('tr-TR')} ₺</div>
+                <button class="btn btn-outline" style="font-size:0.8rem;padding:6px 12px;" onclick="event.stopPropagation();removeWish('${e.id}',this.closest('.event-card'))">❤ Çıkar</button>
+              </div>
+            </div>
+          </div>`).join('');
+      } catch { el.innerHTML = '<p class="loading-text" style="grid-column:1/-1;color:#f87171;">Favoriler yüklenemedi.</p>'; }
+    }
+
+    async function removeWish(eventId, card) {
+      try {
+        const res = await fetch(`/api/wishlist/${eventId}`, { method: 'DELETE', headers: authHeaders() });
+        if (res.ok) { card.remove(); }
+      } catch {}
+    }
+
+    // ── NOTIFICATIONS ──────────────────────────────────────
+    async function loadNotifications() {
+      const el = document.getElementById('notifList');
+      el.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      try {
+        const res = await fetch('/api/notifications', { headers: authHeaders() });
+        const notifs = await res.json();
+        const unread = notifs.filter(n => !n.is_read).length;
+        const badge = document.getElementById('notifBadge');
+        badge.style.display = unread > 0 ? 'inline-flex' : 'none';
+        badge.textContent = unread;
+        if (!notifs.length) { el.innerHTML = '<p class="loading-text">Bildirim yok.</p>'; return; }
+        el.innerHTML = notifs.map(n => `
+          <div class="glass-panel" style="padding:14px 18px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;border-left:3px solid ${n.is_read ? 'transparent' : '#8b5cf6'};">
+            <span style="font-size:1.2rem;flex-shrink:0;">${n.is_read ? '🔔' : '🔔'}</span>
+            <div style="flex:1;">
+              <p style="color:${n.is_read ? 'var(--text-muted)' : 'white'};margin:0 0 4px;font-size:0.9rem;">${n.message}</p>
+              <p style="color:var(--text-muted);font-size:0.75rem;margin:0;">${new Date(n.created_at).toLocaleString('tr-TR')}</p>
+            </div>
+            ${!n.is_read ? `<button class="btn btn-outline" style="font-size:0.75rem;padding:4px 10px;flex-shrink:0;" onclick="readOne(${n.id},this)">Okundu</button>` : ''}
+          </div>`).join('');
+      } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Bildirimler yüklenemedi.</p>'; }
+    }
+
+    async function readOne(id, btn) {
+      try {
+        await fetch(`/api/notifications/${id}/read`, { method: 'PATCH', headers: authHeaders() });
+        btn.closest('.glass-panel').style.borderLeftColor = 'transparent';
+        btn.closest('.glass-panel').querySelector('p').style.color = 'var(--text-muted)';
+        btn.remove();
+        loadNotifications();
+      } catch {}
+    }
+
+    async function markAllRead() {
+      try {
+        await fetch('/api/notifications/read-all', { method: 'PATCH', headers: authHeaders() });
+        loadNotifications();
+      } catch {}
+    }
+
+    // ── PROFILE ──────────────────────────────────────────
+    async function saveProfile() {
+      const fullname = document.getElementById('profileName').value.trim();
+      if (!fullname) return;
+      try {
+        const res = await fetch('/api/users/me', {
+          method: 'PATCH',
+          headers: authHeaders(),
+          body: JSON.stringify({ fullname })
+        });
+        const fb = document.getElementById('profileFeedback');
+        if (res.ok) {
+          fb.innerHTML = '<p style="color:#6ee7b7;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ Profil güncellendi!</p>';
+          const u = getUser();
+          u.fullname = fullname;
+          localStorage.setItem('user', JSON.stringify(u));
+          document.getElementById('sidebarName').textContent = fullname;
+          document.getElementById('avatarInitials').textContent = fullname.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+        } else {
+          fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Hata oluştu.</p>';
+        }
+      } catch {}
+    }
+
+    // Initial load
+    loadTickets();
+  </script>
+</body>
+</html>

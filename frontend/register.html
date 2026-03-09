@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kayıt Ol | EVENTİX - Modern Etkinlik Platformu</title>
+  
+  <!-- CSS Styles -->
+  <link rel="stylesheet" href="./styles/main.css">
+  <link rel="stylesheet" href="./styles/components.css">
+  <link rel="stylesheet" href="./styles/auth.css">
+</head>
+<body>
+
+  <main class="auth-page">
+    <div class="auth-card glass-panel animate-up">
+      
+      <div class="auth-header">
+        <a href="index.html" class="auth-logo logo">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#8b5cf6" />
+                <stop offset="100%" stop-color="#ec4899" />
+              </linearGradient>
+            </defs>
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+          <span style="font-size: 1.5rem; text-decoration: none; color: white;">EVENT<span class="logo-highlight">İX</span></span>
+        </a>
+        <h1 class="auth-title">Aramıza Katıl</h1>
+        <p class="auth-subtitle">Saniyeler içinde hesabını oluştur ve biletlerini almaya başla.</p>
+      </div>
+
+      <form class="auth-form" id="registerForm">
+        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div>
+            <label class="form-label" for="firstName">Ad</label>
+            <input type="text" id="firstName" class="form-control" placeholder="Görkem" required>
+          </div>
+          <div>
+            <label class="form-label" for="lastName">Soyad</label>
+            <input type="text" id="lastName" class="form-control" placeholder="Yılmaz" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">E-posta Adresi</label>
+          <input type="email" id="email" class="form-control" placeholder="ornek@mail.com" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" for="password">Şifre Belirle</label>
+          <div class="password-input-wrapper">
+            <input type="password" id="password" class="form-control" placeholder="En az 8 karakter" required minlength="8">
+            <button type="button" class="password-toggle" onclick="togglePassword('password')">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label" for="role">Hesap Türü</label>
+          <select id="role" class="form-control" style="appearance:none;background:var(--surface-2,#1e1b4b);color:white;cursor:pointer;">
+            <option value="customer">🎟 Müşteri — Bilet satın almak istiyorum</option>
+            <option value="organizer">🎪 Organizatör — Etkinlik düzenlemek istiyorum</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary auth-submit">Ücretsiz Hesap Oluştur</button>
+      </form>
+
+      <div class="auth-divider" style="margin: 30px 0;">
+        <span>Veya hızlı bağlan</span>
+      </div>
+
+      <div class="social-login-grid" style="grid-template-columns: 1fr;">
+        <button class="btn-social">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-1.11 9-5.53 9-10.95z"></path></svg>
+          Google ile Devam Et
+        </button>
+      </div>
+
+      <div class="auth-footer">
+        Zaten hesabın var mı? <a href="login.html" class="auth-link">Giriş Yap</a>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    function togglePassword(inputId) {
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+      } else {
+        input.type = 'password';
+      }
+    }
+  </script>
+  <script src="./scripts/auth.js"></script>
+</body>
+</html>
