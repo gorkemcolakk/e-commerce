@@ -74,7 +74,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="event-content">
           <div class="event-date">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            ${event.date}
+            ${(() => {
+                try {
+                    const d = new Date(event.date);
+                    if (!isNaN(d)) return d.toLocaleDateString("tr-TR", {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+                } catch(e) {}
+                return event.date;
+            })()}
           </div>
           <h3 class="event-title">${event.title}</h3>
           <div class="event-location">
@@ -129,115 +135,56 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.buy-btn:not([disabled])').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        openModal(e.currentTarget.getAttribute('data-id'));
+        window.location.assign('checkout.html?id=' + e.currentTarget.getAttribute('data-id'));
       });
     });
   }
 
-  function openModal(eventId) {
-    currentSelectedEvent = globalEvents.find(e => e.id === eventId);
-    if (!currentSelectedEvent) return;
-    modalEventTitle.textContent = currentSelectedEvent.title;
-    modalEventDate.textContent = currentSelectedEvent.date;
-    modalPrice.textContent = `${currentSelectedEvent.price.toLocaleString('tr-TR')} ₺`;
-    if (modalCapacity) {
-      const rem = currentSelectedEvent.capacity - currentSelectedEvent.sold_count;
-      modalCapacity.textContent = `${rem} bilet kaldı`;
-    }
-    if (quantityInput) {
-      quantityInput.max = Math.min(10, currentSelectedEvent.capacity - currentSelectedEvent.sold_count);
-      quantityInput.value = 1;
-    }
-    updateTotal();
-    modalOverlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeModal() {
-    modalOverlay.classList.remove('active');
-    document.body.style.overflow = 'auto';
-    setTimeout(() => paymentForm && paymentForm.reset(), 400);
-    // Clear QR result
-    const qrResult = document.getElementById('qrResult');
-    if (qrResult) qrResult.style.display = 'none';
-    const paySection = document.getElementById('paySection');
-    if (paySection) paySection.style.display = '';
-  }
-
-  function updateTotal() {
-    if (!currentSelectedEvent || !quantityInput || !modalTotal) return;
-    const qty = parseInt(quantityInput.value) || 1;
-    modalTotal.textContent = `${(currentSelectedEvent.price * qty).toLocaleString('tr-TR')} ₺`;
-  }
-
-  if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
-  if (modalOverlay) modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
-  if (quantityInput) quantityInput.addEventListener('input', updateTotal);
-
-  // ── PAYMENT ────────────────────────────────────────────────
-  if (paymentForm) {
-    paymentForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const token = getToken();
-      if (!token) {
-        alert('Bilet almak için lütfen önce giriş yapın.');
-        return (window.location.href = 'login.html');
-      }
-      const btn = paymentForm.querySelector('button[type="submit"]');
-      const orig = btn.innerHTML;
-      btn.innerHTML = '⌛ İşleniyor...';
-      btn.disabled = true;
-
-      try {
-        const qty = parseInt(quantityInput ? quantityInput.value : 1) || 1;
-        const res = await fetch('/api/tickets/buy', {
-          method: 'POST',
-          headers: authHeaders(),
-          body: JSON.stringify({ event_id: currentSelectedEvent.id, quantity: qty })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          // Show QR code in modal
-          const paySection = document.getElementById('paySection');
-          const qrResult = document.getElementById('qrResult');
-          if (paySection) paySection.style.display = 'none';
-          if (qrResult) {
-            document.getElementById('qrImg').src = data.qr_code;
-            document.getElementById('qrKey').textContent = data.ticket_key;
-            document.getElementById('qrTotal').textContent = data.total_price.toLocaleString('tr-TR') + ' ₺';
-            qrResult.style.display = 'block';
-          } else {
-            alert(`✓ Bilet alındı!\nAnahtar: ${data.ticket_key}`);
-            closeModal();
-          }
-          // refresh capacity on card
-          const idx = globalEvents.findIndex(ev => ev.id === currentSelectedEvent.id);
-          if (idx >= 0) globalEvents[idx].sold_count += qty;
-          applyFilters();
-        } else {
-          alert('Hata: ' + data.message);
-          btn.innerHTML = orig;
-          btn.disabled = false;
-        }
-      } catch {
-        alert('İşlem sırasında bir hata oluştu.');
-        btn.innerHTML = orig;
-        btn.disabled = false;
-      }
-    });
-  }
-
   // ── INIT ──────────────────────────────────────────────────
-  await loadWishlistIds();
-  try {
-    const res = await fetch('/api/events');
-    if (res.ok) {
-      globalEvents = await res.json();
-      applyFilters();
+  let currentPage = 1;
+  const itemsPerPage = 8;
+  const loadMoreBtn = document.createElement('button');
+  loadMoreBtn.className = 'btn btn-outline';
+  loadMoreBtn.style.margin = '30px auto';
+  loadMoreBtn.style.display = 'none';
+  loadMoreBtn.textContent = 'Daha Fazla Yükle';
+  eventsGrid.parentNode.insertBefore(loadMoreBtn, eventsGrid.nextSibling);
+
+  async function fetchEvents(page = 1, append = false) {
+    if (!append) {
+      globalEvents = [];
     }
-  } catch (err) {
-    console.error('Etkinlikler yüklenemedi:', err);
+    try {
+      const res = await fetch(`/api/events?page=${page}&limit=${itemsPerPage}`);
+      if (res.ok) {
+        const data = await res.json();
+        globalEvents = append ? [...globalEvents, ...data] : data;
+        applyFilters();
+        
+        if (data.length < itemsPerPage) {
+          loadMoreBtn.style.display = 'none';
+        } else {
+          loadMoreBtn.style.display = 'block';
+        }
+      }
+    } catch (err) {
+      console.error('Etkinlikler yüklenemedi:', err);
+    }
   }
+
+  loadMoreBtn.addEventListener('click', () => {
+    currentPage++;
+    const prevText = loadMoreBtn.textContent;
+    loadMoreBtn.textContent = 'Yükleniyor...';
+    loadMoreBtn.disabled = true;
+    fetchEvents(currentPage, true).finally(() => {
+        loadMoreBtn.textContent = prevText;
+        loadMoreBtn.disabled = false;
+    });
+  });
+
+  await loadWishlistIds();
+  await fetchEvents(1, false);
 
   loadNotifBadge();
 });

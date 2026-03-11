@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="./styles/main.css">
   <link rel="stylesheet" href="./styles/components.css">
   <link rel="stylesheet" href="./styles/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
   <nav class="navbar">
@@ -43,6 +45,26 @@
         <h2 class="dash-section-title">Yeni Etkinlik Oluştur</h2>
         <div class="glass-panel" style="max-width:600px;padding:28px;">
 
+          <div style="margin-bottom: 24px;">
+            <label class="form-label" style="font-size:1.1rem; margin-bottom: 15px; color: white;">Bilet Tipi Seçimi</label>
+            <div style="display: flex; gap: 15px;">
+              <label style="flex:1; cursor:pointer;">
+                <input type="radio" name="ticket_type" value="standard" checked onchange="toggleSeating()" style="display:none;">
+                <div class="ticket-type-box glass-panel" style="padding:15px; text-align:center; border: 2px solid var(--accent-purple); border-radius:10px; transition: all 0.3s;" id="typeStandardBox">
+                  <div style="font-weight:bold; color:white; margin-bottom:5px;">Genel Giriş</div>
+                  <div style="font-size:0.8rem; color:var(--text-muted);">Tek tip bilet havuzu oluşturur. (Ayakta / Numarasız)</div>
+                </div>
+              </label>
+              <label style="flex:1; cursor:pointer;">
+                <input type="radio" name="ticket_type" value="seated" onchange="toggleSeating()" style="display:none;">
+                <div class="ticket-type-box glass-panel" style="padding:15px; text-align:center; border: 2px solid transparent; border-radius:10px; transition: all 0.3s;" id="typeSeatedBox">
+                  <div style="font-weight:bold; color:white; margin-bottom:5px;">Koltuk Seçimli Seçimli</div>
+                  <div style="font-size:0.8rem; color:var(--text-muted);">Farklı blok ve fiyatlandırmalar ile numaralı koltuk planı.</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
             <div>
               <label class="form-label">Etkinlik Adı *</label>
@@ -61,9 +83,9 @@
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
             <div>
               <label class="form-label">Tarih ve Saat *</label>
-              <input type="text" id="evDate" class="form-control" placeholder="20 May 2026 21:00">
+              <input type="datetime-local" id="evDate" class="form-control">
             </div>
-            <div>
+            <div id="standardPriceContainer">
               <label class="form-label">Fiyat (TL) *</label>
               <input type="number" id="evPrice" class="form-control" placeholder="500" min="0">
             </div>
@@ -71,17 +93,25 @@
 
           <div style="margin-bottom:14px;">
             <label class="form-label">Konum *</label>
-            <input type="text" id="evLocation" class="form-control" placeholder="Arena, Istanbul">
+            <input type="text" id="evLocation" class="form-control" placeholder="Bir mekan seçin veya yazın..." list="locationList">
+            <datalist id="locationList">
+                <option value="Arena, Istanbul"></option>
+                <option value="Açıkhava Tiyatrosu, İzmir"></option>
+                <option value="Kongre Merkezi, Ankara"></option>
+                <option value="Jolly Joker, Kartal"></option>
+                <option value="Kadıköy Sahne, İstanbul"></option>
+                <option value="Zorlu PSM, İstanbul"></option>
+            </datalist>
           </div>
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
-            <div>
+            <div id="standardCapContainer">
               <label class="form-label">Kapasite *</label>
               <input type="number" id="evCapacity" class="form-control" placeholder="1000" min="1">
             </div>
             <div>
-              <label class="form-label">Görsel URL (isteğe bağlı)</label>
-              <input type="text" id="evImage" class="form-control" placeholder="https://...">
+              <label class="form-label">Görsel / Afiş Yükle</label>
+              <input type="file" id="evImageFile" class="form-control" accept="image/*" style="padding:10px;">
             </div>
           </div>
 
@@ -93,6 +123,17 @@
           <div style="margin-bottom:18px;display:flex;align-items:center;gap:10px;">
             <input type="checkbox" id="evFeatured" style="width:16px;height:16px;">
             <label for="evFeatured" class="form-label" style="margin:0;cursor:pointer;">Öne çıkan etkinlik olarak işaretle</label>
+          </div>
+
+          <div id="seatingPlanBuilder" class="glass-panel" style="display:none; padding:15px; margin-bottom:20px; border:1px solid rgba(45,212,191,0.3);">
+            <div style="margin-bottom:15px;">
+              <label class="form-label" style="color:var(--accent-teal);">Oturma Planı Görseli (İsteğe Bağlı)</label>
+              <input type="file" id="evSeatingImageFile" class="form-control" accept="image/*" style="padding:10px;">
+              <p style="font-size:0.75rem; color:var(--text-muted); margin-top:5px;">Müşterilerin bilet alırken konumu daha iyi anlaması için sahne dizilim şeması ekleyebilirsiniz.</p>
+            </div>
+            <h4 style="margin:0 0 10px; color:white; font-size: 0.95rem;">Oturma Planı Blokları</h4>
+            <div id="zonesContainer"></div>
+            <button type="button" class="btn btn-outline" style="width:100%;font-size:0.85rem;margin-top:10px;" onclick="addZone()">+ Alan/Blok Ekle (Örn: VIP, Balkon)</button>
           </div>
 
           <!-- FEEDBACK BURADA - BUTONUN HEMEN ÜSTÜNDE -->
@@ -108,6 +149,11 @@
       <section id="tab-revenue" class="dash-tab" style="display:none;">
         <h2 class="dash-section-title">Gelir Raporu</h2>
         <div id="revenueSummary"><p class="loading-text">Yükleniyor...</p></div>
+        
+        <div class="glass-panel" style="margin-top: 24px; padding: 20px;">
+          <canvas id="revenueChart" style="max-height: 300px;"></canvas>
+        </div>
+
         <h3 style="color:var(--text);margin:28px 0 16px;">Etkinlik Bazlı Döküm</h3>
         <div id="revenueBreakdown"></div>
       </section>
@@ -116,8 +162,12 @@
       <section id="tab-validate" class="dash-tab" style="display:none;">
         <h2 class="dash-section-title">QR Bilet Dogrulama</h2>
         <div class="glass-panel" style="max-width:480px;padding:28px;">
+          
+          <!-- Bilet Scanner UI -->
+          <div id="reader" style="width: 100%; min-height: 250px; background: rgba(0,0,0,0.2); border-radius: 12px; margin-bottom: 20px; overflow: hidden; border: 1px solid var(--border);"></div>
+          
           <div style="margin-bottom:14px;">
-            <label class="form-label">QR Kod Verisi</label>
+            <label class="form-label">Manuel Kod Girişi</label>
             <input type="text" id="qrInput" class="form-control" placeholder="EVENTIX-...">
           </div>
           <div style="display:flex;gap:10px;">
@@ -153,6 +203,7 @@
       if (btn) btn.classList.add('active');
       if (name === 'myevents') loadMyEvents();
       if (name === 'revenue') loadRevenue();
+      if (name === 'validate') initQRScanner();
     }
 
     // ── My Events ─────────────────────────────────────────────
@@ -181,7 +232,16 @@
           html += '<strong style="color:var(--text);">' + e.title + '</strong>';
           html += '<span style="background:' + statusColor + '22;color:' + statusColor + ';border:1px solid ' + statusColor + '44;border-radius:20px;padding:2px 10px;font-size:0.75rem;">' + statusTxt + '</span>';
           html += '</div>';
-          html += '<p style="color:var(--text-muted);font-size:0.82rem;margin:2px 0;">' + e.date + ' | ' + e.location + '</p>';
+          
+          let formattedDate = e.date;
+          try {
+             let dObj = new Date(e.date);
+             if(!isNaN(dObj)) {
+                formattedDate = dObj.toLocaleDateString("tr-TR", {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+             }
+          } catch(e) {}
+
+          html += '<p style="color:var(--text-muted);font-size:0.82rem;margin:2px 0;">' + formattedDate + ' | ' + e.location + '</p>';
           html += '<p style="color:var(--text-muted);font-size:0.82rem;margin:2px 0;">' + e.price.toLocaleString('tr-TR') + ' TL | Kapasite: ' + e.sold_count + '/' + e.capacity + '</p>';
           html += '</div>';
           if (e.status === 'active' || e.status === 'pending') {
@@ -208,25 +268,46 @@
     }
 
     // ── Create Event ───────────────────────────────────────────
-    document.getElementById('evSubmitBtn').addEventListener('click', function() {
+    document.getElementById('evSubmitBtn').addEventListener('click', async function() {
       var btn = this;
       var fb  = document.getElementById('evFeedback');
 
+      var isSeated = document.querySelector('input[name="ticket_type"]:checked').value === 'seated';
+      
       var title    = document.getElementById('evTitle').value.trim();
       var category = document.getElementById('evCategory').value;
       var date     = document.getElementById('evDate').value.trim();
-      var price    = document.getElementById('evPrice').value.trim();
       var location = document.getElementById('evLocation').value.trim();
-      var capacity = document.getElementById('evCapacity').value.trim();
-      var image    = document.getElementById('evImage').value.trim();
       var desc     = document.getElementById('evDesc').value.trim();
       var featured = document.getElementById('evFeatured').checked;
+      
+      var price = 0, capacity = 0;
+      if (!isSeated) {
+        price    = document.getElementById('evPrice').value.trim();
+        capacity = document.getElementById('evCapacity').value.trim();
+      }
 
       // Validate
-      if (!title || !date || !location || !price || !capacity) {
+      if (!title || !date || !location || (!isSeated && (!price || !capacity))) {
         fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Lutfen tum zorunlu alanlari doldurun (Ad, Tarih, Konum, Fiyat, Kapasite)</div>';
         fb.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
+      }
+
+      var zones = [];
+      if (isSeated) {
+        document.querySelectorAll('.zone-item').forEach(function(z) {
+          zones.push({
+            name: z.querySelector('.z-name').value || 'Blok',
+            rows: parseInt(z.querySelector('.z-rows').value) || 1,
+            cols: parseInt(z.querySelector('.z-cols').value) || 1,
+            price: parseInt(z.querySelector('.z-price').value) || 0
+          });
+        });
+        if (zones.length === 0) {
+          fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Lütfen en az bir adet oturma bloğu ekleyin.</div>';
+          return;
+        }
       }
 
       var token = getToken();
@@ -239,55 +320,96 @@
       btn.disabled    = true;
       fb.innerHTML    = '';
 
-      fetch('/api/events', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
-        },
-        body: JSON.stringify({
-          title: title,
-          category: category,
-          date: date,
-          price: parseInt(price),
-          location: location,
-          capacity: parseInt(capacity),
-          image: image,
-          description: desc,
-          featured: featured
-        })
-      })
-      .then(function(r) {
-        return r.json().then(function(d){ return { ok: r.ok, status: r.status, data: d }; });
-      })
-      .then(function(result) {
-        if (result.ok) {
-          fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.4);color:#5eead4;">' + (result.data.message || 'Etkinlik admin onayina gonderildi!') + '</div>';
-          // Clear form
-          document.getElementById('evTitle').value = '';
-          document.getElementById('evDate').value  = '';
-          document.getElementById('evPrice').value = '';
-          document.getElementById('evLocation').value  = '';
-          document.getElementById('evCapacity').value  = '';
-          document.getElementById('evImage').value     = '';
-          document.getElementById('evDesc').value      = '';
-          document.getElementById('evFeatured').checked = false;
-        } else if (result.status === 401) {
-          fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Oturumunuz sona erdi. Lutfen tekrar giris yapin.</div>';
-          setTimeout(function(){ window.location.href = 'login.html'; }, 2000);
+      var fileInput = document.getElementById('evImageFile');
+      var seatFileInput = document.getElementById('evSeatingImageFile');
+      
+      try {
+        let finalImageUrl = '';
+        let finalSeatingImageUrl = '';
+        
+        // Upload Main Image
+        if (fileInput && fileInput.files.length > 0) {
+            btn.textContent = 'Afiş Yükleniyor...';
+            var formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            let r = await fetch('/api/upload', {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + token },
+              body: formData
+            });
+            let d = await r.json();
+            if (d.url) { finalImageUrl = d.url; }
+            else { throw new Error(d.message || "Afiş yüklenemedi"); }
+        }
+        
+        // Upload Seating Image
+        if (isSeated && seatFileInput && seatFileInput.files.length > 0) {
+            btn.textContent = 'Oturma Planı Görseli Yükleniyor...';
+            var formData2 = new FormData();
+            formData2.append('file', seatFileInput.files[0]);
+            let r2 = await fetch('/api/upload', {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + token },
+              body: formData2
+            });
+            let d2 = await r2.json();
+            if (d2.url) { finalSeatingImageUrl = d2.url; }
+            else { throw new Error(d2.message || "Seating image yüklenemedi"); }
+        }
+        
+        btn.textContent = 'Etkinlik Kaydediliyor...';
+        
+        let res = await fetch('/api/events', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            title: title,
+            category: category,
+            date: date,
+            price: isSeated ? 0 : parseInt(price),
+            location: location,
+            capacity: isSeated ? 0 : parseInt(capacity),
+            image: finalImageUrl || '',
+            description: desc,
+            featured: featured,
+            has_seating: isSeated ? 1 : 0,
+            seating_image: finalSeatingImageUrl || '',
+            zones: zones
+          })
+        });
+        
+        let data = await res.json();
+        if (res.ok) {
+           fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.4);color:#5eead4;">' + (data.message || 'Etkinlik admin onayına gönderildi!') + '</div>';
+           document.getElementById('evTitle').value = '';
+           document.getElementById('evDate').value  = '';
+           if(!isSeated) {
+               document.getElementById('evPrice').value = '';
+               document.getElementById('evCapacity').value  = '';
+           }
+           document.getElementById('evLocation').value  = '';
+           if (fileInput) fileInput.value = '';
+           if (seatFileInput) seatFileInput.value = '';
+           document.getElementById('evDesc').value  = '';
+           document.getElementById('evFeatured').checked = false;
+        } else if (res.status === 401) {
+           fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Oturumunuz sona erdi. Giriş yapın.</div>';
+           setTimeout(function(){ window.location.href = 'login.html'; }, 2000);
         } else {
-          fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Hata: ' + (result.data.message || result.status) + '</div>';
+           fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Hata: ' + (data.message || res.status) + '</div>';
         }
         fb.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      })
-      .catch(function(err) {
-        fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Baglanti hatasi: ' + err.message + '</div>';
+        
+      } catch (err) {
+        fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">İşlem hatası: ' + err.message + '</div>';
         fb.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      })
-      .finally(function() {
-        btn.textContent = 'Etkinlik Olustur';
+      } finally {
+        btn.textContent = 'Etkinlik Oluştur';
         btn.disabled    = false;
-      });
+      }
     });
 
     // ── Revenue ────────────────────────────────────────────────
@@ -308,8 +430,12 @@
           '<div class="glass-panel" style="padding:18px;text-align:center;border-top:2px solid #3b82f6;"><div style="font-size:1.6rem;font-weight:700;color:#3b82f6;">' + d.total_tickets + '</div><div style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">Satilan Bilet</div></div>' +
           '</div>';
         var rows = '';
+        var chartLabels = [];
+        var chartNetData = [];
         for (var i = 0; i < d.breakdown.length; i++) {
           var b = d.breakdown[i];
+          chartLabels.push(b.title);
+          chartNetData.push(b.net_revenue);
           rows += '<tr style="border-bottom:1px solid var(--border);">' +
             '<td style="padding:9px 12px;color:var(--text);">' + b.title + '</td>' +
             '<td style="padding:9px 12px;text-align:right;color:var(--text-muted);">' + b.sold_count + '/' + b.capacity + '</td>' +
@@ -319,8 +445,39 @@
             '</tr>';
         }
         el2.innerHTML = '<div class="glass-panel" style="overflow:auto;margin-top:16px;"><table style="width:100%;border-collapse:collapse;font-size:0.85rem;"><thead><tr style="border-bottom:1px solid var(--border);"><th style="text-align:left;padding:9px 12px;color:var(--text-muted);">Etkinlik</th><th style="text-align:right;padding:9px 12px;color:var(--text-muted);">Satis</th><th style="text-align:right;padding:9px 12px;color:var(--text-muted);">Brut</th><th style="text-align:right;padding:9px 12px;color:var(--text-muted);">Komisyon</th><th style="text-align:right;padding:9px 12px;color:var(--text-muted);">Net</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+        
+        renderChart(chartLabels, chartNetData);
       })
       .catch(function(){ el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yuklenemedi.</p>'; });
+    }
+
+    let revChartInstance = null;
+    function renderChart(labels, data) {
+      if(revChartInstance) revChartInstance.destroy();
+      var ctx = document.getElementById('revenueChart').getContext('2d');
+      Chart.defaults.color = "rgba(255,255,255,0.7)";
+      revChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Net Gelir (TL)',
+            data: data,
+            backgroundColor: 'rgba(139, 92, 246, 0.6)',
+            borderColor: 'rgba(139, 92, 246, 1)',
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, grid: { color: "rgba(255,255,255,0.1)" } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
     }
 
     // ── QR Validate ────────────────────────────────────────────
@@ -338,12 +495,58 @@
       .then(function(r){ return r.json(); })
       .then(function(d) {
         if (d.valid) {
-          el.innerHTML = '<div style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);border-radius:10px;padding:16px;"><p style="color:#6ee7b7;font-weight:700;margin:0 0 8px;">GECERLI BILET' + (method === 'POST' ? ' - Kullanildi' : '') + '</p><p style="margin:0;font-size:0.875rem;">' + d.ticket.title + ' | ' + d.ticket.fullname + '</p></div>';
+          el.innerHTML = '<div style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);border-radius:10px;padding:16px;"><p style="color:#6ee7b7;font-weight:700;margin:0 0 8px;">GECERLI BILET' + (method === 'POST' ? ' - Kullanildi' : '') + '</p><p style="margin:0;font-size:0.875rem;">' + (d.ticket.title || 'Etkinlik') + ' | ' + (d.ticket.fullname || 'Misafir') + '</p></div>';
         } else {
           el.innerHTML = '<div style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:10px;padding:16px;"><p style="color:#fca5a5;font-weight:700;margin:0 0 4px;">GECERSIZ</p><p style="color:var(--text-muted);margin:0;">' + d.message + '</p></div>';
         }
       })
       .catch(function(){ el.innerHTML = '<p style="color:#fca5a5;">Baglanti hatasi.</p>'; });
+    }
+
+    let qrScannerInstance = null;
+    function initQRScanner() {
+      if (qrScannerInstance) return; // already initialized
+      qrScannerInstance = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+      qrScannerInstance.render(onScanSuccess);
+    }
+    
+    function onScanSuccess(decodedText) {
+      document.getElementById('qrInput').value = decodedText;
+      useQR(); // Auto check and use
+      qrScannerInstance.pause(true); // temporary pause
+      setTimeout(() => {
+         try { qrScannerInstance.resume(); } catch(e){}
+      }, 3000); // Resume scanning after 3 sec
+    }
+
+    // ── Seating Plan logic ──────────────────────────────────────
+    function toggleSeating() {
+      var isSeated = document.querySelector('input[name="ticket_type"]:checked').value === 'seated';
+      
+      document.getElementById('typeStandardBox').style.borderColor = !isSeated ? 'var(--accent-purple)' : 'transparent';
+      document.getElementById('typeSeatedBox').style.borderColor = isSeated ? 'var(--accent-purple)' : 'transparent';
+      
+      document.getElementById('seatingPlanBuilder').style.display = isSeated ? 'block' : 'none';
+      
+      // Hide standard fields if seated
+      document.getElementById('standardPriceContainer').style.display = isSeated ? 'none' : 'block';
+      document.getElementById('standardCapContainer').style.display = isSeated ? 'none' : 'block';
+      
+      var container = document.getElementById('zonesContainer');
+      if (isSeated && container.children.length === 0) {
+        addZone();
+      }
+    }
+
+    function addZone() {
+      var container = document.getElementById('zonesContainer');
+      var html = '<div class="zone-item" style="display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr;gap:10px;margin-bottom:10px;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;">' +
+        '<div><label class="form-label" style="font-size:0.75rem;">Blok Adı</label><input type="text" class="form-control z-name" placeholder="Örn: VIP"></div>' +
+        '<div><label class="form-label" style="font-size:0.75rem;">Satır</label><input type="number" class="form-control z-rows" value="5" min="1"></div>' +
+        '<div><label class="form-label" style="font-size:0.75rem;">Sütun</label><input type="number" class="form-control z-cols" value="10" min="1"></div>' +
+        '<div><label class="form-label" style="font-size:0.75rem;">Fiyat (₺)</label><input type="number" class="form-control z-price" value="500" min="0"></div>' +
+        '</div>';
+      container.insertAdjacentHTML('beforeend', html);
     }
 
     // ── Init ───────────────────────────────────────────────────

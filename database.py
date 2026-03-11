@@ -42,7 +42,22 @@ def init_db():
             sold_count INTEGER NOT NULL DEFAULT 0,
             status TEXT NOT NULL DEFAULT 'active',
             organizer_id INTEGER,
+            has_seating INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (organizer_id) REFERENCES users (id)
+        )
+    ''')
+
+    # Seats table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS seats (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id TEXT NOT NULL,
+            zone TEXT NOT NULL,
+            row_label TEXT NOT NULL,
+            col_label TEXT NOT NULL,
+            price INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'available',
+            FOREIGN KEY (event_id) REFERENCES events (id)
         )
     ''')
 
@@ -62,6 +77,17 @@ def init_db():
             FOREIGN KEY (event_id) REFERENCES events (id)
         )
     ''')
+    
+    # Try adding seat_id to tickets if it doesn't exist
+    try:
+        c.execute('ALTER TABLE tickets ADD COLUMN seat_id INTEGER')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
+    try:
+        c.execute('ALTER TABLE events ADD COLUMN has_seating INTEGER NOT NULL DEFAULT 0')
+    except sqlite3.OperationalError:
+        pass
 
     # Wishlist table
     c.execute('''

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ödeme Yap | EVENTİX</title>
+  <link rel="stylesheet" href="./styles/main.css">
+  <link rel="stylesheet" href="./styles/components.css">
+  <style>
+    .checkout-page {
+      padding: 100px 0 60px;
+      min-height: calc(100vh - 80px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .checkout-container {
+      max-width: 600px;
+      width: 100%;
+    }
+    .step-indicator {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      position: relative;
+    }
+    .step-indicator::before {
+      content: '';
+      position: absolute;
+      top: 15px;
+      left: 10%;
+      right: 10%;
+      height: 2px;
+      background: rgba(255,255,255,0.1);
+      z-index: 0;
+    }
+    .step {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #1a1a2e;
+      border: 2px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      position: relative;
+      z-index: 1;
+      transition: all 0.3s;
+    }
+    .step.active {
+      background: var(--accent-purple);
+      border-color: var(--accent-purple);
+      color: white;
+      box-shadow: 0 0 15px rgba(139,92,246,0.6);
+    }
+    .step.completed {
+      background: var(--accent-teal);
+      border-color: var(--accent-teal);
+      color: white;
+    }
+    .checkout-panel {
+      padding: 30px;
+      display: none;
+      animation: fadeIn 0.4s ease forwards;
+    }
+    .checkout-panel.active {
+      display: block;
+    }
+    
+    .summary-box {
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      color: var(--text-muted);
+    }
+    .summary-row.total {
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 16px;
+      margin-bottom: 0;
+      color: white;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+    .event-preview {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+    .event-preview img {
+      width: 80px;
+      height: 80px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+    
+    .checkout-actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 24px;
+    }
+    .checkout-actions button {
+      flex: 1;
+      justify-content: center;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .seat-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 100%; margin-bottom: 15px;}
+    .seat { width: 32px; height: 32px; border-radius: 6px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: all 0.2s; user-select: none;}
+    .seat.available:hover { background: var(--accent-purple); border-color: var(--accent-purple);}
+    .seat.selected { background: var(--accent-purple); border-color: white; color: white; box-shadow: 0 0 8px var(--accent-purple);}
+    .seat.sold { background: rgba(239,68,68,0.3); color: rgba(255,255,255,0.3); border-color: transparent; cursor: not-allowed; }
+    .seat-zone-title { width: 100%; font-size: 0.85rem; color: var(--accent-teal); margin: 10px 0 5px; text-align: center; font-weight: bold;}
+  </style>
+</head>
+<body>
+  <nav class="navbar scrolled">
+    <div class="container nav-container" style="justify-content: center;">
+      <a href="index.html" class="logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="url(#gd)" stroke-width="2"><defs><linearGradient id="gd" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        <span>EVENT<span class="logo-highlight">İX</span> - Güvenli Ödeme</span>
+      </a>
+    </div>
+  </nav>
+
+  <main class="container checkout-page">
+    <div class="checkout-container">
+      
+      <div class="step-indicator">
+        <div class="step active" id="dot-1">1</div>
+        <div class="step" id="dot-attendee" style="display:none;">👤</div>
+        <div class="step" id="dot-2">2</div>
+        <div class="step" id="dot-3">3</div>
+      </div>
+
+      <div class="glass-panel" style="position: relative; overflow: hidden;">
+        <!-- STEP 1: Seçim -->
+        <div class="checkout-panel active" id="step-1">
+          <h2 style="margin-bottom: 24px; font-size: 1.5rem;">Bilet Seçimi</h2>
+          <div id="eventLoading"><p class="loading-text">Etkinlik bilgileri yükleniyor...</p></div>
+          
+          <div id="eventContent" style="display:none;">
+            <div class="event-preview">
+              <img id="evImg" src="" alt="Event Image">
+              <div>
+                <h3 id="evTitle" style="margin:0 0 6px;">Etkinlik Adı</h3>
+                <p id="evDate" style="color:var(--text-muted); font-size:0.875rem; margin:0 0 4px;"></p>
+                <p id="evLoc" style="color:var(--text-muted); font-size:0.875rem; margin:0;"></p>
+              </div>
+            </div>
+            
+            <div class="summary-box">
+              <div class="summary-row">
+                <span>Birim Fiyat</span>
+                <span id="evPrice">0 ₺</span>
+              </div>
+              <div class="summary-row" id="quantityRow" style="align-items: center; margin-top: 15px;">
+                <span>Adet</span>
+                <input type="number" id="ticketQuantity" class="form-control" value="1" min="1" max="10" style="width: 100px; text-align: center;">
+              </div>
+              <div id="seatingGridContainer" style="display:none; margin-top:15px; border-top:1px solid rgba(255,255,255,0.1); padding-top:15px;">
+                <h4 style="margin:0 0 10px; font-size:1rem; text-align:center;">Koltuk Seçimi</h4>
+                <div id="seatingImageWrapper" style="display:none; text-align:center; margin-bottom:15px;">
+                  <img id="evSeatingPlanImg" src="" alt="Oturma Planı" style="max-width:100%; border-radius:10px; border:1px solid rgba(255,255,255,0.2);">
+                </div>
+                <div id="seatsWrapper" style="display:flex; flex-direction:column; gap:8px;"></div>
+              </div>
+              <div class="summary-row total">
+                <span>Ara Toplam</span>
+                <span id="evTotal">0 ₺</span>
+              </div>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">%100 Güvenli Ödeme Altyapısı</p>
+            <div class="checkout-actions">
+              <button class="btn btn-outline" onclick="history.back()">Geri Dön</button>
+              <button class="btn btn-primary" id="goStepAttendee">Devam Et &rarr;</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP - ATTENDEES (Intermediate) -->
+        <div class="checkout-panel" id="step-attendees">
+          <h2 style="margin-bottom: 20px; font-size: 1.5rem;">Bilet Sahipleri</h2>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 20px;">
+            Lütfen her bir bilet için katılımcı ad ve soyadını giriniz.
+          </p>
+          <div id="attendeesFormsContainer" style="display:flex; flex-direction:column; gap:20px; margin-bottom: 20px;">
+             <!-- Dinamik olarak doldurulacak -->
+          </div>
+          <div class="checkout-actions">
+            <button class="btn btn-outline" onclick="showStep(1)">Geri</button>
+            <button class="btn btn-primary" id="goStep2FromAttendees">Ödeme Adımına Geç &rarr;</button>
+          </div>
+        </div>
+
+        <!-- STEP 2: Ödeme -->
+        <div class="checkout-panel" id="step-2">
+          <h2 style="margin-bottom: 20px; font-size: 1.5rem;">Kart Bilgileri</h2>
+          
+          <div class="summary-box" style="padding: 15px 20px; margin-bottom: 20px;">
+            <div class="summary-row total" style="border:none; padding:0;">
+              <span>Ödenecek Tutar</span>
+              <span id="finalTotal" style="color:var(--accent-teal);">0 ₺</span>
+            </div>
+          </div>
+
+          <form id="paymentForm">
+            <div class="form-group">
+              <label class="form-label">Kart Üzerindeki İsim</label>
+              <input type="text" id="cardName" class="form-control" placeholder="Örn: Görkem Çolak" required>
+            </div>
+            <div class="form-group" style="display:grid; grid-template-columns:2fr 1fr; gap:15px;">
+              <div>
+                <label class="form-label">Kart Numarası</label>
+                <input type="text" id="cardNumber" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19" required oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/(\\d{4})(?=\\d)/g, '$1 ');">
+              </div>
+              <div>
+                <label class="form-label">CVC</label>
+                <input type="text" id="cardCVC" class="form-control" placeholder="***" maxlength="4" required oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+              </div>
+            </div>
+             
+             <p style="font-size:0.75rem;color:var(--text-muted);margin-top:20px;text-align:center;">
+               Sipariş tamamlandığında biletiniz güvenli bir şekilde oluşturulur ve anında e-postanıza gönderilir.
+             </p>
+
+            <div class="checkout-actions">
+              <button type="button" class="btn btn-outline" onclick="showStep(1)">Geri</button>
+              <button type="submit" class="btn btn-primary" id="payBtn">Ödemeyi Tamamla 🔒</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- STEP 3: Başarılı -->
+        <div class="checkout-panel" id="step-3" style="text-align: center;">
+          <div style="width:60px; height:60px; background:rgba(16,185,129,0.2); color:#10b981; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <h2 style="margin-bottom: 10px; font-size: 1.75rem;">Satın Alma Başarılı!</h2>
+          <p style="color:var(--text-muted); margin-bottom: 24px;">Bilet bilgileriniz e-postanıza gönderildi.</p>
+          
+          <div id="qrsContainer" style="display:flex; flex-wrap:wrap; justify-content:center; gap:20px; margin-bottom: 24px;">
+            <!-- QR code cards will be generated here dynamically -->
+          </div>
+          
+          <div id="extraTicketsMsg" style="margin-bottom: 20px;"></div>
+
+          <div class="checkout-actions" style="justify-content: center;">
+            <a href="dashboard.html" class="btn btn-primary" style="flex:none; width:200px;">Biletlerim'e Git</a>
+            <a href="index.html" class="btn btn-outline" style="flex:none; width:200px;">Ana Sayfa</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="./scripts/auth.js"></script>
+  <script>
+    let evData = null;
+    let evId = null;
+    let evSeats = [];
+    let selectedSeats = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Must be logged in
+      if (!getToken()) {
+        alert('Devam etmek için lütfen giriş yapın.');
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      evId = urlParams.get('id');
+      
+      if (!evId) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/events/' + evId);
+        if (!res.ok) throw new Error('Etkinlik bulunamadı');
+        evData = await res.json();
+        
+        const remaining = evData.capacity - evData.sold_count;
+        if (remaining <= 0) {
+          alert('Maalesef bu etkinlik için bilet kalmamıştır.');
+          window.location.href = 'index.html';
+          return;
+        }
+
+        document.getElementById('eventLoading').style.display = 'none';
+        document.getElementById('eventContent').style.display = 'block';
+
+        // populate step 1
+        document.getElementById('evImg').src = evData.image;
+        document.getElementById('evTitle').textContent = evData.title;
+        document.getElementById('evDate').textContent = evData.date;
+        document.getElementById('evLoc').textContent = evData.location;
+        document.getElementById('evPrice').textContent = evData.price.toLocaleString('tr-TR') + ' ₺';
+        
+        const qInput = document.getElementById('ticketQuantity');
+        qInput.max = Math.min(10, remaining);
+        
+        if (evData.has_seating) {
+            document.getElementById('quantityRow').style.display = 'none';
+            document.getElementById('seatingGridContainer').style.display = 'block';
+            if (evData.seating_image) {
+                document.getElementById('evSeatingPlanImg').src = evData.seating_image;
+                document.getElementById('seatingImageWrapper').style.display = 'block';
+            }
+            await loadSeats();
+        } else {
+            updateTotals();
+            qInput.addEventListener('input', updateTotals);
+        }
+        
+      } catch (err) {
+        alert('Etkinlik yüklenemedi. Lütfen tekrar deneyin.');
+        window.location.href = 'index.html';
+      }
+    });
+
+    function updateTotals() {
+      if(!evData) return;
+      let q = 1;
+      let totalValue = evData.price;
+
+      if (evData.has_seating) {
+          q = selectedSeats.length;
+          totalValue = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+          document.getElementById('evPrice').innerHTML = q > 0 ? 'Seçili (' + q + ' koltuk)' : 'Seçilmedi';
+      } else {
+          q = parseInt(document.getElementById('ticketQuantity').value) || 1;
+          totalValue = evData.price * q;
+      }
+      
+      const t = totalValue.toLocaleString('tr-TR') + ' ₺';
+      document.getElementById('evTotal').textContent = t;
+      document.getElementById('finalTotal').textContent = t;
+    }
+
+    async function loadSeats() {
+      try {
+        const res = await fetch('/api/events/' + evId + '/seats', { headers: authHeaders() });
+        const seats = await res.json();
+        evSeats = seats;
+        renderSeats(seats);
+        updateTotals();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderSeats(seats) {
+      const wrapper = document.getElementById('seatsWrapper');
+      wrapper.innerHTML = '';
+      
+      // Group by zone
+      const zones = {};
+      seats.forEach(s => {
+        if (!zones[s.zone]) zones[s.zone] = [];
+        zones[s.zone].push(s);
+      });
+      
+      for (const [zName, zSeats] of Object.entries(zones)) {
+        // Create title
+        const zTitle = document.createElement('div');
+        zTitle.className = 'seat-zone-title';
+        zTitle.textContent = zName + ' (' + zSeats[0].price + ' ₺)';
+        wrapper.appendChild(zTitle);
+        
+        const grid = document.createElement('div');
+        grid.className = 'seat-grid';
+        
+        // Sort seats nicely by row then col
+        zSeats.sort((a,b) => {
+          if (a.row_label !== b.row_label) return a.row_label.localeCompare(b.row_label);
+          return parseInt(a.col_label) - parseInt(b.col_label);
+        });
+        
+        zSeats.forEach(s => {
+          const sEl = document.createElement('div');
+          sEl.className = 'seat ' + s.status;
+          sEl.textContent = s.row_label + s.col_label;
+          sEl.title = s.zone + ' ' + s.row_label + s.col_label + ' (' + s.price + '₺)';
+          
+          if (s.status === 'available') {
+            sEl.addEventListener('click', () => {
+              const idx = selectedSeats.findIndex(selected => selected.id === s.id);
+              if (idx > -1) {
+                selectedSeats.splice(idx, 1);
+                sEl.classList.remove('selected');
+              } else {
+                if (selectedSeats.length >= 10) {
+                  alert('En fazla 10 koltuk seçebilirsiniz.');
+                  return;
+                }
+                selectedSeats.push(s);
+                sEl.classList.add('selected');
+              }
+              updateTotals();
+            });
+          }
+          grid.appendChild(sEl);
+        });
+        wrapper.appendChild(grid);
+      }
+    }
+
+    function showStep(s) {
+      document.querySelectorAll('.checkout-panel').forEach(p => p.classList.remove('active'));
+      const mapping = { 1: 'step-1', 'attendees': 'step-attendees', 2: 'step-2', 3: 'step-3' };
+      document.getElementById(mapping[s]).classList.add('active');
+      
+      const dots = document.querySelectorAll('.step');
+      dots.forEach(d => d.className = 'step');
+      
+      // Determine what dots to light up based on step state
+      if (s === 1) {
+          document.getElementById('dot-1').classList.add('active');
+      } else if (s === 'attendees') {
+          document.getElementById('dot-1').classList.add('completed');
+          document.getElementById('dot-attendee').style.display = 'inline-flex';
+          document.getElementById('dot-attendee').classList.add('active');
+      } else if (s === 2) {
+          document.getElementById('dot-1').classList.add('completed');
+          document.getElementById('dot-attendee').style.display = 'inline-flex';
+          document.getElementById('dot-attendee').classList.add('completed');
+          document.getElementById('dot-2').classList.add('active');
+      } else if (s === 3) {
+          document.querySelectorAll('.step').forEach(d => d.classList.add('completed'));
+          document.getElementById('dot-3').classList.add('active');
+      }
+    }
+
+    document.getElementById('goStepAttendee').addEventListener('click', () => {
+      let q = 1;
+      if (evData.has_seating) {
+        if (selectedSeats.length === 0) {
+          alert('Lütfen en az 1 koltuk seçin!');
+          return;
+        }
+        q = selectedSeats.length;
+      } else {
+        q = parseInt(document.getElementById('ticketQuantity').value) || 1;
+      }
+      
+      if (q > evData.capacity - evData.sold_count) {
+        alert('Seçtiğiniz adet kadar bilet bulunmuyor!');
+        return;
+      }
+      
+      // Generate attendee forms dynamically
+      const container = document.getElementById('attendeesFormsContainer');
+      container.innerHTML = '';
+      
+      for(let i=0; i<q; i++) {
+         const seatInfoText = evData.has_seating ? ` (${selectedSeats[i].zone} ${selectedSeats[i].row_label}-${selectedSeats[i].col_label})` : '';
+         const div = document.createElement('div');
+         div.className = 'glass-panel attendee-form';
+         div.style.padding = '15px';
+         div.style.border = '1px solid rgba(255,255,255,0.1)';
+         div.innerHTML = `
+            <h4 style="margin: 0 0 10px; font-size: 1rem; color: var(--accent-purple);">Bilet ${i+1} ${seatInfoText}</h4>
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                   <label class="form-label">Ad</label>
+                   <input type="text" class="form-control attendee-name" placeholder="Ad" required>
+                </div>
+                <div style="flex:1;">
+                   <label class="form-label">Soyad</label>
+                   <input type="text" class="form-control attendee-surname" placeholder="Soyad" required>
+                </div>
+            </div>
+         `;
+         if (evData.has_seating) {
+            div.dataset.seatId = selectedSeats[i].id;
+         }
+         container.appendChild(div);
+      }
+      
+      showStep('attendees');
+    });
+
+    document.getElementById('goStep2FromAttendees').addEventListener('click', () => {
+       const forms = document.querySelectorAll('.attendee-form');
+       let allFilled = true;
+       forms.forEach(f => {
+           const n = f.querySelector('.attendee-name').value.trim();
+           const s = f.querySelector('.attendee-surname').value.trim();
+           if(!n || !s) allFilled = false;
+       });
+       if(!allFilled) {
+           alert("Lütfen tüm bilet sahipleri için ad ve soyad bilgilerini eksiksiz girin.");
+           return;
+       }
+       showStep(2);
+    });
+
+    // Payment Logic
+    document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const btn = document.getElementById('payBtn');
+      btn.innerHTML = '⌛ İşleniyor... Lütfen bekleyin';
+      btn.disabled = true;
+
+      const forms = document.querySelectorAll('.attendee-form');
+      const ticketsInfo = [];
+      forms.forEach(f => {
+         ticketsInfo.push({
+             name: f.querySelector('.attendee-name').value.trim(),
+             surname: f.querySelector('.attendee-surname').value.trim(),
+             seat_id: f.dataset.seatId ? parseInt(f.dataset.seatId) : null
+         });
+      });
+
+      const reqBody = {
+        event_id: evData.id,
+        tickets_info: ticketsInfo, // Array of names, surnames, seat_ids
+        card_name: document.getElementById('cardName').value,
+        card_number: document.getElementById('cardNumber').value,
+        cvc: document.getElementById('cardCVC').value
+      };
+
+      try {
+        const res = await fetch('/api/tickets/buy', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify(reqBody)
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+          // Success
+          // Success
+          if(data.tickets && data.tickets.length > 0) {
+             const cont = document.getElementById('qrsContainer');
+             cont.innerHTML = '';
+             let count = 0;
+             data.tickets.forEach(ticket => {
+                 // Display up to 3 tickets visually to quickly show success. If more, just mention it.
+                 if(count >= 3) return;
+                 
+                 const tBox = document.createElement('div');
+                 tBox.className = "summary-box";
+                 tBox.style.display = "inline-block";
+                 tBox.style.background = "white";
+                 tBox.style.color = "black";
+                 tBox.style.padding = "20px";
+                 tBox.style.borderRadius = "12px";
+                 tBox.style.boxShadow = "0 10px 25px rgba(0,0,0,0.5)";
+                 tBox.style.textAlign = "center";
+                 
+                 tBox.innerHTML = `
+                    <p style="margin:0 0 10px; font-weight:bold; color:var(--accent-purple);">${ticket.name} ${ticket.surname}</p>
+                    <img src="${ticket.qr_code}" alt="QR Kod" style="width:160px; height:160px; display:block; margin:0 auto 15px;">
+                    <p style="margin:0 0 5px; font-size:0.75rem; color:#4b5563;">Bilet Kodu</p>
+                    <p style="margin:0; font-size:1rem; font-weight:bold; letter-spacing:1px;">${ticket.ticket_key}</p>
+                 `;
+                 cont.appendChild(tBox);
+                 count++;
+             });
+             
+             if(data.tickets.length > 3) {
+                 document.getElementById('extraTicketsMsg').innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">+ ${data.tickets.length - 3} adet daha biletiniz oluşturuldu.</p><p style="color:white; font-size:0.95rem;">Tüm detayları E-postanızda veya 'Biletlerim' kısmında görebilirsiniz.</p>`;
+             } else {
+                 document.getElementById('extraTicketsMsg').innerHTML = `<p style="color:white; font-size:0.95rem;">Kodu mekandaki gişe sorumlusuna okutabilirsiniz.</p>`;
+             }
+          }
+          showStep(3);
+        } else {
+          alert('Hata: ' + data.message);
+          btn.innerHTML = 'Ödemeyi Tamamla 🔒';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        alert('İşlem sırasında sunucu iletişiminde bir hata oluştu.');
+        btn.innerHTML = 'Ödemeyi Tamamla 🔒';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

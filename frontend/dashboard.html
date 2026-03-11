@@ -128,9 +128,13 @@
                 <h3 style="color:white;font-size:1rem;margin:0 0 4px;">${t.title}</h3>
                 <span style="background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44;border-radius:20px;padding:2px 10px;font-size:0.75rem;white-space:nowrap;flex-shrink:0;">${statusLabel}</span>
               </div>
+              <p style="color:var(--accent-purple);font-size:0.9rem;font-weight:bold;margin:0 0 8px;">
+                👤 ${t.owner_name && t.owner_surname ? (t.owner_name + ' ' + t.owner_surname) : 'Standart'}
+                ${t.zone ? `(🪑 ${t.zone} ${t.row_label}-${t.col_label})` : ''}
+              </p>
               <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 2px;">📅 ${t.date}</p>
               <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 8px;">📍 ${t.location}</p>
-              <p style="color:var(--text-muted);font-size:0.78rem;margin:0;">Bilet Kodu: <strong style="color:white;font-family:monospace;">${t.ticket_key}</strong> &nbsp;|&nbsp; Adet: ${t.quantity} &nbsp;|&nbsp; Toplam: ${(t.total_price || 0).toLocaleString('tr-TR')} ₺</p>
+              <p style="color:var(--text-muted);font-size:0.78rem;margin:0;">Bilet Kodu: <strong style="color:white;font-family:monospace;">${t.ticket_key}</strong> &nbsp;|&nbsp; Fiyat: ${(t.total_price || 0).toLocaleString('tr-TR')} ₺</p>
             </div>
             ${t.qr_code && t.status === 'valid' ? `
             <div style="flex-shrink:0;text-align:center;">

@@ -167,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderNav();
     initLoginForm();
     initRegisterForm();
+    initPasswordReset();
     window.addEventListener('scroll', () => {
         document.querySelector('.navbar')?.classList.toggle('scrolled', window.scrollY > 40);
     });
@@ -174,6 +175,74 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('mobileMenuBtn')?.addEventListener('click', () => mobileOverlay?.classList.add('active'));
     document.getElementById('closeMobileMenu')?.addEventListener('click', () => mobileOverlay?.classList.remove('active'));
 });
+
+// Password Reset Flow
+function initPasswordReset() {
+    const params = new URLSearchParams(window.location.search);
+    const resetToken = params.get('reset_token');
+    if (resetToken && window.location.pathname.includes('login.html')) {
+        document.querySelector('.auth-title').textContent = 'Şifre Sıfırlama';
+        document.querySelector('.auth-subtitle').textContent = 'Yeni şifrenizi belirleyin.';
+        const form = document.getElementById('loginForm');
+        form.innerHTML = `
+            <div class="form-group">
+                <label class="form-label">Yeni Şifre</label>
+                <div class="password-input-wrapper">
+                    <input type="password" id="new_password" class="form-control" placeholder="••••••••" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary auth-submit">Şifreyi Güncelle</button>
+        `;
+        const grids = document.querySelectorAll('.social-login-grid, .auth-divider');
+        grids.forEach(g => g.style.display = 'none');
+        
+        // Remove old submit listener by replacing form or just overriding onsubmit?
+        // Let's replace the node to clear listeners
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
+        newForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = newForm.querySelector('button');
+            const orig = btn.textContent;
+            btn.textContent = 'Güncelleniyor...';
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/auth/reset-password', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({token: resetToken, new_password: newForm.querySelector('#new_password').value})
+                });
+                const d = await res.json();
+                if (res.ok) {
+                    alert('Şifreniz güncellendi, lütfen yeni şifrenizle giriş yapın.');
+                    window.location.href = 'login.html';
+                } else {
+                    alert(d.message || 'Hata oluştu');
+                    btn.textContent = orig; btn.disabled = false;
+                }
+            } catch (err) { alert('Hata oluştu'); btn.textContent = orig; btn.disabled = false; }
+        });
+        return;
+    }
+
+    // Attach to "Şifremi Unuttum" link
+    const forgotLink = document.querySelector('.forgot-password');
+    if (forgotLink) {
+        forgotLink.onclick = (e) => {
+            e.preventDefault();
+            const email = prompt('Şifre sıfırlama linki almak için kayıtlı e-posta adresinizi girin:');
+            if (email) {
+                fetch('/api/auth/forgot-password', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email})
+                })
+                .then(r => r.json())
+                .then(d => alert(d.message || 'Başarılı'))
+                .catch(err => alert('Bir hata oluştu. Lütfen tekrar deneyin.'));
+            }
+        };
+    }
+}
 
 // Password toggle
 window.togglePassword = id => {
