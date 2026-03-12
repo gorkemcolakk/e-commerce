@@ -27,6 +27,7 @@
         <button class="dash-nav-btn active" onclick="showTab('myevents',this)">Etkinliklerim</button>
         <button class="dash-nav-btn" onclick="showTab('create',this)">+ Etkinlik Oluştur</button>
         <button class="dash-nav-btn" onclick="showTab('revenue',this)">Gelir Raporu</button>
+        <button class="dash-nav-btn" onclick="showTab('promotions',this)">Promosyonlar</button>
         <button class="dash-nav-btn" onclick="showTab('validate',this)">QR Doğrulama</button>
       </nav>
       <button onclick="logout()" class="btn btn-danger" style="width:100%;justify-content:center;margin-top:auto;">Çıkış Yap</button>
@@ -158,23 +159,79 @@
         <div id="revenueBreakdown"></div>
       </section>
 
+      <!-- PROMOTIONS -->
+      <section id="tab-promotions" class="dash-tab" style="display:none;">
+        <h2 class="dash-section-title">Promosyon & İndirim Kodları</h2>
+        
+        <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
+          <!-- Create Form -->
+          <div class="glass-panel" style="flex:1;min-width:300px;padding:24px;">
+            <h3 style="margin:0 0 16px;color:white;font-size:1.1rem;">Yeni Kod Oluştur</h3>
+            <div style="margin-bottom:12px;">
+              <label class="form-label">Etkinlik Seçin *</label>
+              <select id="promoEvent" class="form-control"></select>
+            </div>
+            <div style="margin-bottom:12px;">
+              <label class="form-label">Kupon Kodu *</label>
+              <input type="text" id="promoCode" class="form-control" placeholder="Örn: YAZ20" style="text-transform:uppercase;">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div>
+                <label class="form-label">İndirim Türü *</label>
+                <select id="promoType" class="form-control">
+                  <option value="percentage">Yüzde (%)</option>
+                  <option value="fixed">Sabit Tutar (₺)</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Değer *</label>
+                <input type="number" id="promoValue" class="form-control" placeholder="20" min="1">
+              </div>
+            </div>
+            <div style="margin-bottom:16px;">
+              <label class="form-label">Kullanım Limiti (Opsiyonel)</label>
+              <input type="number" id="promoLimit" class="form-control" placeholder="Limitsiz" min="1">
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="createPromotion()">Kodu Oluştur</button>
+            <div id="promoFeedback" style="margin-top:10px;"></div>
+          </div>
+          
+          <!-- List -->
+          <div class="glass-panel" style="flex:2;min-width:400px;padding:24px;">
+            <h3 style="margin:0 0 16px;color:white;font-size:1.1rem;">Aktif Kodlar</h3>
+            <div id="promoListContainer">
+               <p class="loading-text">Yükleniyor...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- QR VALIDATE -->
       <section id="tab-validate" class="dash-tab" style="display:none;">
-        <h2 class="dash-section-title">QR Bilet Dogrulama</h2>
-        <div class="glass-panel" style="max-width:480px;padding:28px;">
-          
-          <!-- Bilet Scanner UI -->
-          <div id="reader" style="width: 100%; min-height: 250px; background: rgba(0,0,0,0.2); border-radius: 12px; margin-bottom: 20px; overflow: hidden; border: 1px solid var(--border);"></div>
-          
-          <div style="margin-bottom:14px;">
-            <label class="form-label">Manuel Kod Girişi</label>
-            <input type="text" id="qrInput" class="form-control" placeholder="EVENTIX-...">
+        <h2 class="dash-section-title">QR Bilet Doğrulama</h2>
+        <div class="glass-panel" style="max-width:520px;padding:28px;">
+
+          <!-- Etkinlik Seçimi -->
+          <div style="margin-bottom:16px;">
+            <label class="form-label">Etkinlik Seçin (opsiyonel — belirli bir etkinlik filtresi)</label>
+            <select id="qrEventFilter" class="form-control">
+              <option value="">Tüm Etkinliklerim (Filtre Yok)</option>
+            </select>
           </div>
-          <div style="display:flex;gap:10px;">
-            <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="checkQR()">Kontrol Et</button>
-            <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="useQR()">Kullanildi Say</button>
+
+          <!-- Kamera Tarayici -->
+          <div id="reader" style="width:100%;min-height:250px;background:rgba(0,0,0,0.2);border-radius:12px;margin-bottom:16px;overflow:hidden;border:1px solid var(--border);"></div>
+
+          <!-- Manuel Giriş -->
+          <div style="margin-bottom:12px;">
+            <label class="form-label">Manuel QR Kod Girişi</label>
+            <input type="text" id="qrInput" class="form-control" placeholder="EVENTIX-... kodunu yapıştırın">
           </div>
-          <div id="qrValidResult" style="margin-top:16px;"></div>
+          <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="checkQR()">👁 Kontrol Et</button>
+            <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="useQR()">✅ Kullanıldı Say</button>
+          </div>
+          <div id="qrValidResult"></div>
         </div>
       </section>
 
@@ -203,7 +260,8 @@
       if (btn) btn.classList.add('active');
       if (name === 'myevents') loadMyEvents();
       if (name === 'revenue') loadRevenue();
-      if (name === 'validate') initQRScanner();
+      if (name === 'promotions') loadPromotions();
+      if (name === 'validate') initValidateTab();
     }
 
     // ── My Events ─────────────────────────────────────────────
@@ -480,43 +538,178 @@
       });
     }
 
-    // ── QR Validate ────────────────────────────────────────────
-    function checkQR() { validateQR('GET'); }
-    function useQR()   { validateQR('POST'); }
+    // ── Promotions ─────────────────────────────────────────────
+    function loadPromotions() {
+      var evSelect = document.getElementById('promoEvent');
+      var listContainer = document.getElementById('promoListContainer');
+      
+      // Load events into select
+      fetch('/api/organizer/events', { headers: { 'Authorization': 'Bearer ' + getToken() } })
+      .then(r => r.json())
+      .then(events => {
+          evSelect.innerHTML = events.map(e => `<option value="${e.id}">${e.title}</option>`).join('');
+      });
 
-    function validateQR(method) {
+      // Load promos
+      listContainer.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      fetch('/api/organizer/promotions', { headers: { 'Authorization': 'Bearer ' + getToken() } })
+      .then(r => r.json())
+      .then(promos => {
+          if(!promos.length) {
+              listContainer.innerHTML = '<p class="loading-text" style="color:var(--text-muted);">Henüz indirim kodu oluşturmadınız.</p>';
+              return;
+          }
+          var html = '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;color:var(--text);">';
+          html += '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.1);"><th align="left" style="padding:8px;">Etkinlik</th><th align="left" style="padding:8px;">Kod</th><th align="center" style="padding:8px;">İndirim</th><th align="center" style="padding:8px;">Kullanım</th><th align="right" style="padding:8px;">İşlem</th></tr></thead><tbody>';
+          
+          promos.forEach(p => {
+              var val = p.discount_type === 'percentage' ? `%${p.discount_value}` : `${p.discount_value}₺`;
+              var usage = p.usage_limit ? `${p.used_count} / ${p.usage_limit}` : `${p.used_count} / ∞`;
+              html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td style="padding:8px;">${p.event_title}</td>
+                <td style="padding:8px;font-family:monospace;color:var(--accent-teal);font-weight:bold;">${p.code}</td>
+                <td align="center" style="padding:8px;">${val}</td>
+                <td align="center" style="padding:8px;">${usage}</td>
+                <td align="right" style="padding:8px;"><button class="btn btn-danger btn-sm" onclick="deletePromotion(${p.id})">Sil</button></td>
+              </tr>`;
+          });
+          html += '</tbody></table>';
+          listContainer.innerHTML = html;
+      });
+    }
+
+    function createPromotion() {
+       var event_id = document.getElementById('promoEvent').value;
+       var code = document.getElementById('promoCode').value;
+       var type = document.getElementById('promoType').value;
+       var val = document.getElementById('promoValue').value;
+       var limit = document.getElementById('promoLimit').value;
+       var fb = document.getElementById('promoFeedback');
+
+       if(!event_id || !code || !val) {
+           fb.innerHTML = '<span style="color:#fca5a5;font-size:0.85rem;">Etkinlik, kod ve indirim değeri zorunludur.</span>';
+           return;
+       }
+
+       fetch('/api/organizer/promotions', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+           body: JSON.stringify({
+               event_id: event_id, code: code, discount_type: type, 
+               discount_value: parseInt(val), usage_limit: limit ? parseInt(limit) : null
+           })
+       })
+       .then(r => r.json().then(j => ({ok: r.ok, data: j})))
+       .then(res => {
+           if(res.ok) {
+               fb.innerHTML = '<span style="color:#6ee7b7;font-size:0.85rem;">Kod başarıyla oluşturuldu!</span>';
+               document.getElementById('promoCode').value = '';
+               document.getElementById('promoValue').value = '';
+               document.getElementById('promoLimit').value = '';
+               loadPromotions();
+           } else {
+               fb.innerHTML = `<span style="color:#fca5a5;font-size:0.85rem;">${res.data.message}</span>`;
+           }
+       });
+    }
+
+    function deletePromotion(id) {
+       if(!confirm("Kodu silmek istediğinize emin misiniz?")) return;
+       fetch('/api/organizer/promotions/' + id, {
+           method: 'DELETE',
+           headers: { 'Authorization': 'Bearer ' + getToken() }
+       }).then(r => loadPromotions());
+    }
+
+    // ────────────────────────────────────────────
+    // QR Doğrulama - Etkinlik Seçimli
+    // ────────────────────────────────────────────
+    let validateTabInited = false;
+
+    function initValidateTab() {
+      // Etkinlikleri yükle
+      fetch('/api/organizer/events', { headers: { 'Authorization': 'Bearer ' + getToken() } })
+      .then(r => r.json())
+      .then(events => {
+        var sel = document.getElementById('qrEventFilter');
+        sel.innerHTML = '<option value="">Tüm Etkinliklerim (Filtre Yok)</option>';
+        events.forEach(ev => {
+          sel.innerHTML += `<option value="${ev.id}">${ev.title}</option>`;
+        });
+      });
+
+      // QR Tarayici
+      if (!validateTabInited) {
+        validateTabInited = true;
+        initQRScanner();
+      }
+    }
+
+    function checkQR() { doValidate('check'); }
+    function useQR()   { doValidate('use'); }
+
+    function doValidate(action) {
       var code = document.getElementById('qrInput').value.trim();
       var el   = document.getElementById('qrValidResult');
-      if (!code) { el.innerHTML = '<p style="color:#fca5a5;">QR kod giriniz.</p>'; return; }
-      fetch('/api/tickets/validate/' + encodeURIComponent(code), {
-        method: method,
-        headers: { 'Authorization': 'Bearer ' + getToken() }
+      var eventFilter = document.getElementById('qrEventFilter').value;
+
+      if (!code) {
+        el.innerHTML = '<p style="color:#fca5a5;">Lütfen bir QR kod girin.</p>';
+        return;
+      }
+
+      el.innerHTML = '<p style="color:var(--text-muted);">Kontrol ediliyor...</p>';
+
+      fetch('/api/tickets/validate_by_qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+        body: JSON.stringify({ qr_code: code, action: action, event_id: eventFilter || null })
       })
-      .then(function(r){ return r.json(); })
-      .then(function(d) {
+      .then(r => r.json())
+      .then(d => {
         if (d.valid) {
-          el.innerHTML = '<div style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);border-radius:10px;padding:16px;"><p style="color:#6ee7b7;font-weight:700;margin:0 0 8px;">GECERLI BILET' + (method === 'POST' ? ' - Kullanildi' : '') + '</p><p style="margin:0;font-size:0.875rem;">' + (d.ticket.title || 'Etkinlik') + ' | ' + (d.ticket.fullname || 'Misafir') + '</p></div>';
+          var t = d.ticket || {};
+          el.innerHTML = `
+            <div style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);border-radius:10px;padding:16px;">
+              <p style="color:#6ee7b7;font-weight:700;margin:0 0 8px;font-size:1rem;">✅ GEÇERLİ BİLET${ action === 'use' ? ' — Kullanıldı İşaretlendi' : '' }</p>
+              <table style="width:100%;font-size:0.85rem;color:var(--text);border-collapse:collapse;">
+                <tr><td style="padding:3px 6px;color:var(--text-muted);">Etkinlik</td><td style="padding:3px 6px;font-weight:600;">${t.title || '-'}</td></tr>
+                <tr><td style="padding:3px 6px;color:var(--text-muted);">Tarih</td><td style="padding:3px 6px;">${t.date || '-'}</td></tr>
+                <tr><td style="padding:3px 6px;color:var(--text-muted);">Konum</td><td style="padding:3px 6px;">${t.location || '-'}</td></tr>
+                <tr><td style="padding:3px 6px;color:var(--text-muted);">Katılımcı</td><td style="padding:3px 6px;font-weight:600;">${(t.owner_name || '') + ' ' + (t.owner_surname || '') || t.fullname || '-'}</td></tr>
+                <tr><td style="padding:3px 6px;color:var(--text-muted);">Bilet No</td><td style="padding:3px 6px;font-family:monospace;">${t.ticket_key || '-'}</td></tr>
+              </table>
+            </div>`;
         } else {
-          el.innerHTML = '<div style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:10px;padding:16px;"><p style="color:#fca5a5;font-weight:700;margin:0 0 4px;">GECERSIZ</p><p style="color:var(--text-muted);margin:0;">' + d.message + '</p></div>';
+          var color = d.status === 'already_used' ? '#f59e0b' : '#ef4444';
+          var bgColor = d.status === 'already_used' ? 'rgba(245,158,11,.15)' : 'rgba(239,68,68,.15)';
+          var borderColor = d.status === 'already_used' ? 'rgba(245,158,11,.4)' : 'rgba(239,68,68,.4)';
+          var icon = d.status === 'already_used' ? '⚠️' : '❌';
+          var t = d.ticket || {};
+          el.innerHTML = `
+            <div style="background:${bgColor};border:1px solid ${borderColor};border-radius:10px;padding:16px;">
+              <p style="color:${color};font-weight:700;margin:0 0 8px;">${icon} ${d.message}</p>
+              ${t.title ? `<p style="font-size:0.85rem;color:var(--text-muted);margin:0;">Etkinlik: ${t.title} | Bilet: ${t.ticket_key || ''}</p>` : ''}
+            </div>`;
         }
       })
-      .catch(function(){ el.innerHTML = '<p style="color:#fca5a5;">Baglanti hatasi.</p>'; });
+      .catch(() => { el.innerHTML = '<p style="color:#fca5a5;">Bağlantı hatası. Lütfen tekrar deneyin.</p>'; });
     }
 
     let qrScannerInstance = null;
     function initQRScanner() {
-      if (qrScannerInstance) return; // already initialized
+      if (qrScannerInstance) return;
       qrScannerInstance = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
       qrScannerInstance.render(onScanSuccess);
     }
-    
+
     function onScanSuccess(decodedText) {
       document.getElementById('qrInput').value = decodedText;
-      useQR(); // Auto check and use
-      qrScannerInstance.pause(true); // temporary pause
+      doValidate('use');
+      qrScannerInstance.pause(true);
       setTimeout(() => {
-         try { qrScannerInstance.resume(); } catch(e){}
-      }, 3000); // Resume scanning after 3 sec
+        try { qrScannerInstance.resume(); } catch(e) {}
+      }, 3000);
     }
 
     // ── Seating Plan logic ──────────────────────────────────────

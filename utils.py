@@ -5,6 +5,10 @@ import json
 import jwt
 import hmac
 import hashlib
+import smtplib
+import os
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from flask import request, jsonify, g
 from functools import wraps
 from database import get_db_connection
@@ -54,13 +58,50 @@ def create_notification(conn, user_id: int, message: str):
         (user_id, message)
     )
 
+def send_email(to_email: str, subject: str, message: str, html_message: str = None):
+    """
+    Gerçek SMTP kullanarak e-posta gönderir.
+    Çevresel değişkenlerde SMTP ayarları yoksa mock (simülasyon) email atar.
+    """
+    smtp_server = os.environ.get('SMTP_SERVER')
+    smtp_port = os.environ.get('SMTP_PORT', 587)
+    smtp_username = os.environ.get('SMTP_USERNAME')
+    smtp_password = os.environ.get('SMTP_PASSWORD')
+
+    if smtp_server and smtp_username and smtp_password:
+        try:
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = subject
+            msg['From'] = f"Eventix <{smtp_username}>"
+            msg['To'] = to_email
+
+            part1 = MIMEText(message, 'plain')
+            msg.attach(part1)
+
+            if html_message:
+                part2 = MIMEText(html_message, 'html')
+                msg.attach(part2)
+
+            server = smtplib.SMTP(smtp_server, int(smtp_port))
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.send_message(msg)
+            server.quit()
+            print(f"📧 [REAL] EMAIL SENT TO: {to_email}")
+            return
+        except Exception as e:
+            print(f"🚨 SMTP E-Posta Gönderme Hatası: {e}")
+            print("Uyarı: Simülasyon (Mock) e-posta üzerinden devam ediliyor...")
+
+    # Fallback to mock
+    send_mock_email(to_email, subject, message)
+
 def send_mock_email(to_email: str, subject: str, message: str):
     """
     Simulates sending an email by printing formatted output to the console.
-    This is used for the Payment/Ticketing system and Password Reset flow.
     """
     print(f"\n{'='*50}")
-    print(f"📧 EMAIL SENT TO: {to_email}")
+    print(f"📧 [MOCK] EMAIL SENT TO: {to_email}")
     print(f"📝 SUBJECT: {subject}")
     print(f"--------------------------------------------------")
     print(f"{message}")

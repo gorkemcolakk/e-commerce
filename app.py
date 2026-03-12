@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()  # .env dosyasından SMTP ve diğer ayarları yükle
+
 from flask import Flask
 from flask_cors import CORS
 from utils import SECRET_KEY, limiter

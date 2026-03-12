@@ -88,6 +88,16 @@ def init_db():
         c.execute('ALTER TABLE events ADD COLUMN has_seating INTEGER NOT NULL DEFAULT 0')
     except sqlite3.OperationalError:
         pass
+    
+    try:
+        c.execute("ALTER TABLE tickets ADD COLUMN owner_name TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
+    try:
+        c.execute("ALTER TABLE tickets ADD COLUMN owner_surname TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
 
     # Wishlist table
     c.execute('''
@@ -111,6 +121,24 @@ def init_db():
             is_read INTEGER NOT NULL DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
+    # Promotions table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS promotions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id TEXT NOT NULL,
+            code TEXT NOT NULL,
+            discount_type TEXT NOT NULL, -- 'percentage' or 'fixed'
+            discount_value INTEGER NOT NULL,
+            valid_from TIMESTAMP,
+            valid_until TIMESTAMP,
+            usage_limit INTEGER,
+            used_count INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (event_id) REFERENCES events (id),
+            UNIQUE(event_id, code)
         )
     ''')
 

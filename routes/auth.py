@@ -66,7 +66,7 @@ def login():
         }
     }), 200
 
-from utils import send_mock_email
+from utils import send_email
 
 @auth_bp.route('/forgot-password', methods=['POST'])
 @limiter.limit("3 per hour")
@@ -92,7 +92,7 @@ def forgot_password():
 
     reset_link = f"http://localhost:5000/login.html?reset_token={reset_token}"
     email_body = f"Şifrenizi sıfırlamak için aşağıdaki linke tıklayın (15 dk geçerlidir):\n\n{reset_link}"
-    send_mock_email(email, "Şifre Sıfırlama Talebi", email_body)
+    send_email(email, "Şifre Sıfırlama Talebi", email_body)
 
     return jsonify({'message': 'Şifre sıfırlama linki e-postanıza gönderildi.'}), 200
 

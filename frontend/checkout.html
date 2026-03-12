@@ -209,7 +209,12 @@
           <h2 style="margin-bottom: 20px; font-size: 1.5rem;">Kart Bilgileri</h2>
           
           <div class="summary-box" style="padding: 15px 20px; margin-bottom: 20px;">
-            <div class="summary-row total" style="border:none; padding:0;">
+            <div style="display:flex;gap:10px;margin-bottom:15px;align-items:center;">
+               <input type="text" id="promoCodeInput" class="form-control" placeholder="İndirim Kodu" style="text-transform:uppercase;flex:1;">
+               <button type="button" class="btn btn-outline" style="padding:10px 15px;" onclick="applyPromo()">Uygula</button>
+            </div>
+            <div id="promoMessage" style="font-size:0.85rem;margin-bottom:10px;"></div>
+            <div class="summary-row total" style="border-top:1px solid rgba(255,255,255,0.1); padding-top:15px; margin:0;">
               <span>Ödenecek Tutar</span>
               <span id="finalTotal" style="color:var(--accent-teal);">0 ₺</span>
             </div>
@@ -220,10 +225,14 @@
               <label class="form-label">Kart Üzerindeki İsim</label>
               <input type="text" id="cardName" class="form-control" placeholder="Örn: Görkem Çolak" required>
             </div>
-            <div class="form-group" style="display:grid; grid-template-columns:2fr 1fr; gap:15px;">
+            <div class="form-group" style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:15px;">
               <div>
                 <label class="form-label">Kart Numarası</label>
-                <input type="text" id="cardNumber" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19" required oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/(\\d{4})(?=\\d)/g, '$1 ');">
+                <input type="text" id="cardNumber" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19" required oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');">
+              </div>
+              <div>
+                <label class="form-label">SKT</label>
+                <input type="text" id="cardExp" class="form-control" placeholder="AA/YY" maxlength="5" required oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/^([2-9])$/g, '0$1').replace(/^(1[3-9])$/g, '01').replace(/^([0-1][0-9])([0-9]{1,2})$/g, '$1/$2');">
               </div>
               <div>
                 <label class="form-label">CVC</label>
@@ -272,6 +281,8 @@
     let evId = null;
     let evSeats = [];
     let selectedSeats = [];
+    let currentDiscount = { type: null, value: 0 };
+    let validatedPromoCode = '';
 
     document.addEventListener('DOMContentLoaded', async () => {
       // Must be logged in
@@ -333,6 +344,33 @@
       }
     });
 
+    function applyPromo() {
+        const code = document.getElementById('promoCodeInput').value.trim().toUpperCase();
+        const msgCont = document.getElementById('promoMessage');
+        if(!code) return;
+        
+        msgCont.innerHTML = '<span style="color:var(--text-muted);">Kontrol ediliyor...</span>';
+        
+        fetch('/api/tickets/validate_promo', {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ event_id: evData.id, code: code })
+        }).then(r => r.json().then(j => ({ok: r.ok, data: j})))
+        .then(res => {
+            if(res.ok) {
+                currentDiscount = { type: res.data.discount_type, value: res.data.discount_value };
+                validatedPromoCode = code;
+                msgCont.innerHTML = `<span style="color:#6ee7b7;">${res.data.message} ${res.data.discount_type === 'percentage' ? '%'+res.data.discount_value : res.data.discount_value+' ₺'} indirim!</span>`;
+                updateTotals();
+            } else {
+                currentDiscount = { type: null, value: 0 };
+                validatedPromoCode = '';
+                msgCont.innerHTML = `<span style="color:#fca5a5;">${res.data.message}</span>`;
+                updateTotals();
+            }
+        });
+    }
+
     function updateTotals() {
       if(!evData) return;
       let q = 1;
@@ -347,9 +385,23 @@
           totalValue = evData.price * q;
       }
       
-      const t = totalValue.toLocaleString('tr-TR') + ' ₺';
-      document.getElementById('evTotal').textContent = t;
-      document.getElementById('finalTotal').textContent = t;
+      const t1 = totalValue.toLocaleString('tr-TR') + ' ₺';
+      document.getElementById('evTotal').textContent = t1;
+      
+      let finalVal = totalValue;
+      if (currentDiscount.type === 'percentage') {
+          finalVal -= Math.floor(finalVal * currentDiscount.value / 100);
+      } else if (currentDiscount.type === 'fixed') {
+          finalVal -= currentDiscount.value;
+      }
+      if(finalVal < 0) finalVal = 0;
+
+      const t2 = finalVal.toLocaleString('tr-TR') + ' ₺';
+      let finalTotalHtml = t2;
+      if (finalVal !== totalValue) {
+          finalTotalHtml = `<span style="text-decoration:line-through;font-size:0.9rem;color:var(--text-muted);margin-right:10px;">${t1}</span>${t2}`;
+      }
+      document.getElementById('finalTotal').innerHTML = finalTotalHtml;
     }
 
     async function loadSeats() {
@@ -530,9 +582,11 @@
 
       const reqBody = {
         event_id: evData.id,
+        promo_code: validatedPromoCode,
         tickets_info: ticketsInfo, // Array of names, surnames, seat_ids
         card_name: document.getElementById('cardName').value,
         card_number: document.getElementById('cardNumber').value,
+        card_exp: document.getElementById('cardExp').value,
         cvc: document.getElementById('cardCVC').value
       };
 
