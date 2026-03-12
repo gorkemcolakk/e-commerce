@@ -63,6 +63,15 @@
     </div>
   </main>
 
+  <!-- ── PREVIEW MODAL (SENİN TASARIMINA EK) ── -->
+  <div id="previewModal" class="glass-panel" style="display:none; position:fixed; top:5%; left:5%; width:90%; height:90%; z-index:99999; flex-direction:column; padding:0; overflow:hidden; border:1px solid var(--border);">
+    <div style="background:var(--bg-card); padding:15px 25px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border);">
+      <h3 style="margin:0; font-size:1.1rem; color:white;">İlan Önizlemesi</h3>
+      <button onclick="closePreview()" class="btn btn-outline btn-sm" style="border-color:#ef4444; color:#ef4444;">&times; Kapat</button>
+    </div>
+    <iframe id="previewIframe" style="flex:1; border:none; background:white;"></iframe>
+  </div>
+
   <script src="./scripts/auth.js"></script>
   <script>
     const user = getUser();
@@ -81,6 +90,18 @@
       if (name === 'revenue')   loadAdminRevenue();
     }
 
+    // Önizleme Fonksiyonları
+    function openPreview(id) {
+        document.getElementById('previewIframe').src = `event-detail.html?id=${id}`;
+        document.getElementById('previewModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closePreview() {
+        document.getElementById('previewModal').style.display = 'none';
+        document.getElementById('previewIframe').src = '';
+        document.body.style.overflow = 'auto';
+    }
+
     // ── PENDING APPROVAL ──────────────────────────────────────
     async function loadPending() {
       const el = document.getElementById('pendingList');
@@ -88,7 +109,6 @@
       try {
         const r = await fetch('/api/admin/pending-events', { headers: authHeaders() });
         const events = await r.json();
-        // Update badge
         const badge = document.getElementById('pendingBadge');
         badge.style.display = events.length > 0 ? 'inline-flex' : 'none';
         badge.textContent = events.length;
@@ -106,17 +126,18 @@
                 <p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 2px;">📅 ${e.date} &nbsp;|&nbsp; 📍 ${e.location}</p>
                 <p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 8px;">💰 ${e.price.toLocaleString('tr-TR')} ₺ &nbsp;|&nbsp; 🎟 Kapasite: ${e.capacity}</p>
                 <p style="font-size:0.78rem;color:var(--text-sub);background:var(--bg-surface);padding:6px 10px;border-radius:6px;margin:0;">
-                  👤 Organizatör: <strong>${e.organizer_name || 'Bilinmiyor'}</strong> &lt;${e.organizer_email || ''}&gt;
+                  👤 Organizatör: <strong>${e.organizer_name || 'Bilinmiyor'}</strong>
                 </p>
               </div>
+              <button class="btn btn-outline btn-sm" onclick="openPreview('${e.id}')">👁 Önizle</button>
             </div>
             <div style="display:flex;gap:8px;margin-top:14px;">
-              <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="approveEvent('${e.id}', this)">✓ Onayla & Yayınla</button>
+              <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="approveEvent('${e.id}', this)">✓ Onayla</button>
               <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="rejectEvent('${e.id}', this)" id="reject-${e.id}">✗ Reddet</button>
             </div>
             <div id="reject-reason-${e.id}" style="display:none;margin-top:10px;">
-              <input type="text" class="form-control" placeholder="Red gerekçesi (opsiyonel)..." id="reason-${e.id}" style="margin-bottom:8px;">
-              <button class="btn btn-danger btn-sm" style="width:100%;justify-content:center;" onclick="confirmReject('${e.id}')">Red Gönder</button>
+              <input type="text" class="form-control" placeholder="Organizatöre not ilet (red sebebi)..." id="reason-${e.id}" style="margin-bottom:8px;">
+              <button class="btn btn-danger btn-sm" style="width:100%;justify-content:center;" onclick="confirmReject('${e.id}')">Red Mesajını Gönder</button>
             </div>
           </div>`).join('');
       } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yüklenemedi.</p>'; }
@@ -137,7 +158,7 @@
       box.style.display = box.style.display === 'none' ? 'block' : 'none';
     }
 
-    async function confirmReject(id) {
+    async function confirmReject(id, refreshTab = 'pending') {
       const reason = document.getElementById(`reason-${id}`).value || 'Belirtilmedi';
       try {
         const r = await fetch(`/api/admin/events/${id}/reject`, {
@@ -146,7 +167,8 @@
         });
         const d = await r.json();
         showToast(d.message, 'error');
-        loadPending();
+        if (refreshTab === 'pending') loadPending();
+        else loadAllEvents();
       } catch {}
     }
 
@@ -204,8 +226,16 @@
               </div>
               <p style="color:var(--text-muted);font-size:0.78rem;margin:0;">📅 ${e.date} | 📍 ${e.location} | 💰 ${e.price.toLocaleString('tr-TR')} ₺ | 🎟 ${e.sold_count}/${e.capacity}</p>
             </div>
-            ${e.status === 'active' || e.status === 'pending' ? `
-            <button class="btn btn-danger btn-sm" onclick="adminCancelEvent('${e.id}')">İptal</button>` : ''}
+            <div style="display:flex; gap:8px;">
+              ${e.status === 'active' || e.status === 'pending' ? `
+              <button class="btn btn-primary btn-sm" onclick="rejectEvent('${e.id}', this)">Düzenleme Talep Et</button>
+              <button class="btn btn-danger btn-sm" onclick="adminCancelEvent('${e.id}')">İptal</button>` : ''}
+              ${e.status === 'rejected' ? `<button class="btn btn-outline btn-sm" onclick="approveEvent('${e.id}', this)">Tekrar Aktive Et</button>` : ''}
+            </div>
+          </div>
+          <div id="reject-reason-${e.id}" style="display:none;margin-top:10px; padding:0 18px 14px;">
+            <input type="text" class="form-control" placeholder="Organizatöre düzenleme notu ilet..." id="reason-${e.id}" style="margin-bottom:8px;">
+            <button class="btn btn-danger btn-sm" style="width:100%;justify-content:center;" onclick="confirmReject('${e.id}', 'allevents')">Talebi Gönder</button>
           </div>`).join('');
       } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yüklenemedi.</p>'; }
     }

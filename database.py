@@ -43,6 +43,8 @@ def init_db():
             status TEXT NOT NULL DEFAULT 'active',
             organizer_id INTEGER,
             has_seating INTEGER NOT NULL DEFAULT 0,
+            seating_image TEXT,
+            rejection_reason TEXT,
             FOREIGN KEY (organizer_id) REFERENCES users (id)
         )
     ''')
@@ -86,6 +88,16 @@ def init_db():
     
     try:
         c.execute('ALTER TABLE events ADD COLUMN has_seating INTEGER NOT NULL DEFAULT 0')
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        c.execute('ALTER TABLE events ADD COLUMN seating_image TEXT')
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        c.execute('ALTER TABLE events ADD COLUMN rejection_reason TEXT')
     except sqlite3.OperationalError:
         pass
     

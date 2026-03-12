@@ -61,7 +61,13 @@ def get_event_seats(event_id):
 @role_required('organizer', 'admin')
 def create_event():
     data = request.get_json()
-    required = ['title', 'category', 'date', 'location', 'price', 'capacity']
+    is_seated = bool(data.get('has_seating'))
+    
+    # Required fields adjust based on seating type
+    required = ['title', 'category', 'date', 'location']
+    if not is_seated:
+        required.extend(['price', 'capacity'])
+        
     for field in required:
         if not data.get(field) and data.get(field) != 0:
             return jsonify({'message': f'{field} alanı zorunludur'}), 400
@@ -158,6 +164,11 @@ def update_event(event_id):
     
     for col in ['title', 'category', 'date', 'location', 'price', 'capacity', 'description', 'image', 'featured', 'seating_image']:
         if col in data:
+            # Koltuklu etkinliklerde fiyat/kapasite koltuklardan geldiği için 
+            # manuel 0 gönderimini (düzenleme sırasında) yoksayalım.
+            if col in ['price', 'capacity'] and event['has_seating'] and data[col] == 0:
+                continue
+                
             fields.append(f"{col} = ?")
             values.append(data[col])
             if col in significant_fields:
@@ -167,17 +178,43 @@ def update_event(event_id):
         conn.close()
         return jsonify({'message': 'Güncellenecek alan yok'}), 400
 
-    # If an organizer edits their event, bump it back to pending
-    if g.user['role'] == 'organizer' and needs_reapproval and event['status'] == 'active':
+    # If an organizer edits their event and it's not already pending, bump it to pending
+    if g.user['role'] == 'organizer' and needs_reapproval and event['status'] != 'pending':
         fields.append("status = 'pending'")
-        create_notification(conn, g.user['id'], f"'{event['title']}' etkinliğinizde yaptığınız değişiklikler nedeniyle tekrar onaya gönderildi.")
+        fields.append("rejection_reason = NULL") # Önceki red sebebini temizle
+        create_notification(conn, g.user['id'], f"'{event['title']}' etkinliğiniz güncellendi ve tekrar onaya gönderildi.")
 
     values.append(event_id)
     conn.execute(f"UPDATE events SET {', '.join(fields)} WHERE id = ?", values)
+    
+    # Koltuk güncelleme mantığı (Eğer zones gelmişse ve henüz bilet satılmamışsa)
+    zones = data.get('zones')
+    if (event['has_seating'] or data.get('has_seating')) and zones and event['sold_count'] == 0:
+        needs_reapproval = True # Koltuk planı değiştiyse mutlaka onay gereksin
+        # Eski koltukları temizle
+        conn.execute("DELETE FROM seats WHERE event_id = ?", (event_id,))
+        # Yeni koltukları oluştur
+        for z in zones:
+            zone_name = z.get('name', 'Blok')
+            rows = int(z.get('rows', 1))
+            cols = int(z.get('cols', 1))
+            z_price = int(z.get('price', 0))
+            for r in range(1, rows + 1):
+                row_label = chr(64 + r) if rows <= 26 else str(r)
+                for c in range(1, cols + 1):
+                    conn.execute('INSERT INTO seats (event_id, zone, row_label, col_label, price, status) VALUES (?,?,?,?,?,?)',
+                                 (event_id, zone_name, row_label, str(c), z_price, 'available'))
+    
+    # Kapasite ve Fiyat senkronizasyonu (Koltuklu etkinlikse koltukları say)
+    if event['has_seating'] or data.get('has_seating'):
+        stats = conn.execute("SELECT COUNT(*), MIN(price) FROM seats WHERE event_id = ?", (event_id,)).fetchone()
+        if stats and stats[0] > 0:
+            conn.execute("UPDATE events SET capacity = ?, price = ? WHERE id = ?", (stats[0], stats[1], event_id))
+
     conn.commit()
     conn.close()
     
-    if g.user['role'] == 'organizer' and needs_reapproval and event['status'] == 'active':
+    if g.user['role'] == 'organizer' and needs_reapproval and event['status'] != 'pending':
         return jsonify({'message': 'Etkinlik güncellendi ve tekrar admin onayına gönderildi', 'status': 'pending'}), 200
     return jsonify({'message': 'Etkinlik güncellendi', 'status': event['status']}), 200
 

@@ -43,8 +43,12 @@
 
       <!-- CREATE EVENT -->
       <section id="tab-create" class="dash-tab" style="display:none;">
-        <h2 class="dash-section-title">Yeni Etkinlik Oluştur</h2>
+        <h2 class="dash-section-title" id="createTabTitle">Yeni Etkinlik Oluştur</h2>
         <div class="glass-panel" style="max-width:600px;padding:28px;">
+
+          <div id="editNotice" style="display:none; margin-bottom: 20px; padding: 12px; border-radius: 8px; background: rgba(139, 92, 246, 0.1); border: 1px solid var(--accent-purple); color: var(--accent-purple); font-size: 0.9rem;">
+            <strong>Şu an düzenleme modundasınız.</strong> Yapacağınız değişiklikler kaydedildikten sonra ilan tekrar admin onayına sunulacaktır.
+          </div>
 
           <div style="margin-bottom: 24px;">
             <label class="form-label" style="font-size:1.1rem; margin-bottom: 15px; color: white;">Bilet Tipi Seçimi</label>
@@ -134,7 +138,8 @@
             </div>
             <h4 style="margin:0 0 10px; color:white; font-size: 0.95rem;">Oturma Planı Blokları</h4>
             <div id="zonesContainer"></div>
-            <button type="button" class="btn btn-outline" style="width:100%;font-size:0.85rem;margin-top:10px;" onclick="addZone()">+ Alan/Blok Ekle (Örn: VIP, Balkon)</button>
+            <div id="seatingSummaryText" style="margin:10px 0; font-size:0.85rem; color:var(--accent-teal); text-align:right;"></div>
+            <button type="button" class="btn btn-outline" style="width:100%;font-size:0.85rem;" onclick="addZone()">+ Alan/Blok Ekle (Örn: VIP, Balkon)</button>
           </div>
 
           <!-- FEEDBACK BURADA - BUTONUN HEMEN ÜSTÜNDE -->
@@ -142,6 +147,9 @@
 
           <button id="evSubmitBtn" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:1rem;">
             Etkinlik Oluştur
+          </button>
+          <button id="cancelEditBtn" class="btn btn-outline" style="width:100%;justify-content:center;padding:14px;font-size:1rem;margin-top:10px;display:none;" onclick="cancelEditing()">
+            Düzenlemeyi İptal Et
           </button>
         </div>
       </section>
@@ -301,10 +309,21 @@
 
           html += '<p style="color:var(--text-muted);font-size:0.82rem;margin:2px 0;">' + formattedDate + ' | ' + e.location + '</p>';
           html += '<p style="color:var(--text-muted);font-size:0.82rem;margin:2px 0;">' + e.price.toLocaleString('tr-TR') + ' TL | Kapasite: ' + e.sold_count + '/' + e.capacity + '</p>';
-          html += '</div>';
-          if (e.status === 'active' || e.status === 'pending') {
-            html += '<button class="btn btn-danger btn-sm" onclick="cancelEvent(\'' + e.id + '\')">Iptal Et</button>';
+
+          if (e.status === 'rejected') {
+            html += '<div style="margin-top:10px; padding:10px; background:rgba(239,68,68,0.1); border:1px dashed rgba(239,68,68,0.3); border-radius:8px;">';
+            html += '<p style="color:#ef4444; font-size:0.75rem; margin:0; font-weight:bold;">🚨 Admin Notu:</p>';
+            html += '<p style="color:var(--text); font-size:0.8rem; margin:3px 0 0;">' + (e.rejection_reason || 'Düzenleme gerekiyor.') + '</p>';
+            html += '</div>';
           }
+
+          html += '</div>';
+          html += '<div style="display:flex; flex-direction:column; gap:8px;">';
+          if (e.status !== 'cancelled') {
+            html += '<button class="btn btn-primary btn-sm" onclick="editEvent(\'' + e.id + '\')">Düzenle</button>';
+            html += '<button class="btn btn-danger btn-sm" onclick="cancelEvent(\'' + e.id + '\')">İptal Et</button>';
+          }
+          html += '</div>';
           html += '</div>';
         }
         el.innerHTML = html;
@@ -321,8 +340,72 @@
         headers: { 'Authorization': 'Bearer ' + getToken() }
       })
       .then(function(r){ return r.json(); })
-      .then(function(d){ alert(d.message); loadMyEvents(); })
-      .catch(function(){ alert('Hata olustu.'); });
+      .then(function(d){ showToast(d.message); loadMyEvents(); })
+      .catch(function(){ showToast('Hata olustu.', 'error'); });
+    }
+
+    let editingId = null;
+    let oldImageUrl = '';
+    let oldSeatingImageUrl = '';
+
+    function editEvent(id) {
+      editingId = id;
+      fetch('/api/events/' + id)
+      .then(r => r.json())
+      .then(e => {
+        showTab('create', document.querySelector('.dash-nav-btn[onclick*="create"]'));
+        document.getElementById('createTabTitle').textContent = 'Etkinliği Düzenle';
+        document.getElementById('evSubmitBtn').textContent = 'Güncelle ve Onaya Gönder';
+        document.getElementById('cancelEditBtn').style.display = 'flex';
+        document.getElementById('editNotice').style.display = 'block';
+
+        document.getElementById('evTitle').value = e.title;
+        document.getElementById('evCategory').value = e.category;
+        document.getElementById('evLocation').value = e.location;
+        document.getElementById('evDesc').value = e.description || '';
+        document.getElementById('evFeatured').checked = e.featured === 1;
+        
+        // Date format
+        if(e.date) {
+            try {
+                let d = new Date(e.date);
+                let iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                document.getElementById('evDate').value = iso;
+            } catch(err) {}
+        }
+
+        oldImageUrl = e.image;
+        oldSeatingImageUrl = e.seating_image;
+
+        if (e.has_seating) {
+            document.querySelector('input[name="ticket_type"][value="seated"]').checked = true;
+            toggleSeating();
+        } else {
+            document.querySelector('input[name="ticket_type"][value="standard"]').checked = true;
+            toggleSeating();
+            document.getElementById('evPrice').value = e.price;
+            document.getElementById('evCapacity').value = e.capacity;
+        }
+      });
+    }
+
+    function cancelEditing() {
+        editingId = null;
+        document.getElementById('createTabTitle').textContent = 'Yeni Etkinlik Oluştur';
+        document.getElementById('evSubmitBtn').textContent = 'Etkinlik Oluştur';
+        document.getElementById('cancelEditBtn').style.display = 'none';
+        document.getElementById('editNotice').style.display = 'none';
+        
+        // Reset form
+        document.getElementById('evTitle').value = '';
+        document.getElementById('evDate').value = '';
+        document.getElementById('evPrice').value = '';
+        document.getElementById('evCapacity').value = '';
+        document.getElementById('evLocation').value = '';
+        document.getElementById('evDesc').value = '';
+        document.getElementById('evFeatured').checked = false;
+        document.getElementById('evImageFile').value = '';
+        document.getElementById('evSeatingImageFile').value = '';
     }
 
     // ── Create Event ───────────────────────────────────────────
@@ -415,34 +498,43 @@
             else { throw new Error(d2.message || "Seating image yüklenemedi"); }
         }
         
-        btn.textContent = 'Etkinlik Kaydediliyor...';
+        btn.textContent = editingId ? 'Güncelleniyor...' : 'Etkinlik Kaydediliyor...';
         
-        let res = await fetch('/api/events', {
-          method: 'POST',
+        let payload = {
+            title: title,
+            category: category,
+            date: date,
+            location: location,
+            image: finalImageUrl || oldImageUrl,
+            description: desc,
+            featured: featured,
+            has_seating: isSeated ? 1 : 0,
+            seating_image: finalSeatingImageUrl || oldSeatingImageUrl
+        };
+        
+        if (!isSeated) {
+            payload.price = parseInt(price);
+            payload.capacity = parseInt(capacity);
+        }
+
+        if (isSeated) {
+            payload.zones = zones;
+        }
+
+        let res = await fetch(editingId ? '/api/events/' + editingId : '/api/events', {
+          method: editingId ? 'PATCH' : 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + token
           },
-          body: JSON.stringify({
-            title: title,
-            category: category,
-            date: date,
-            price: isSeated ? 0 : parseInt(price),
-            location: location,
-            capacity: isSeated ? 0 : parseInt(capacity),
-            image: finalImageUrl || '',
-            description: desc,
-            featured: featured,
-            has_seating: isSeated ? 1 : 0,
-            seating_image: finalSeatingImageUrl || '',
-            zones: zones
-          })
+          body: JSON.stringify(payload)
         });
         
         let data = await res.json();
         if (res.ok) {
-           fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.4);color:#5eead4;">' + (data.message || 'Etkinlik admin onayına gönderildi!') + '</div>';
-           document.getElementById('evTitle').value = '';
+           showToast(editingId ? 'İlan güncellendi ve tekrar onaya sunuldu.' : 'Etkinlik oluşturuldu ve admin onayına sunuldu.');
+           cancelEditing();
+           showTab('myevents', document.querySelector('.dash-nav-btn[onclick*="myevents"]'));
            document.getElementById('evDate').value  = '';
            if(!isSeated) {
                document.getElementById('evPrice').value = '';
@@ -465,7 +557,11 @@
         fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">İşlem hatası: ' + err.message + '</div>';
         fb.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } finally {
-        btn.textContent = 'Etkinlik Oluştur';
+        if (!editingId) {
+            btn.textContent = 'Etkinlik Oluştur';
+        } else {
+            btn.textContent = 'Güncelle ve Onaya Gönder';
+        }
         btn.disabled    = false;
       }
     });
@@ -731,15 +827,29 @@
       }
     }
 
+    function updateSeatingSummary() {
+      let totalCap = 0;
+      let minPrice = Infinity;
+      document.querySelectorAll('.zone-item').forEach(z => {
+        let r = parseInt(z.querySelector('.z-rows').value) || 0;
+        let c = parseInt(z.querySelector('.z-cols').value) || 0;
+        let pr = parseInt(z.querySelector('.z-price').value) || 0;
+        totalCap += (r * c);
+        if (pr > 0 && pr < minPrice) minPrice = pr;
+      });
+      document.getElementById('seatingSummaryText').innerHTML = (totalCap > 0) ? `Toplam Kapasite: <strong>${totalCap}</strong> | Başlangıç Fiyatı: <strong>${minPrice === Infinity ? 0 : minPrice} ₺</strong>` : '';
+    }
+
     function addZone() {
       var container = document.getElementById('zonesContainer');
       var html = '<div class="zone-item" style="display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr;gap:10px;margin-bottom:10px;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;">' +
         '<div><label class="form-label" style="font-size:0.75rem;">Blok Adı</label><input type="text" class="form-control z-name" placeholder="Örn: VIP"></div>' +
-        '<div><label class="form-label" style="font-size:0.75rem;">Satır</label><input type="number" class="form-control z-rows" value="5" min="1"></div>' +
-        '<div><label class="form-label" style="font-size:0.75rem;">Sütun</label><input type="number" class="form-control z-cols" value="10" min="1"></div>' +
-        '<div><label class="form-label" style="font-size:0.75rem;">Fiyat (₺)</label><input type="number" class="form-control z-price" value="500" min="0"></div>' +
+        '<div><label class="form-label" style="font-size:0.75rem;">Satır</label><input type="number" class="form-control z-rows" value="5" min="1" oninput="updateSeatingSummary()"></div>' +
+        '<div><label class="form-label" style="font-size:0.75rem;">Sütun</label><input type="number" class="form-control z-cols" value="10" min="1" oninput="updateSeatingSummary()"></div>' +
+        '<div><label class="form-label" style="font-size:0.75rem;">Fiyat (₺)</label><input type="number" class="form-control z-price" value="500" min="0" oninput="updateSeatingSummary()"></div>' +
         '</div>';
       container.insertAdjacentHTML('beforeend', html);
+      updateSeatingSummary();
     }
 
     // ── Init ───────────────────────────────────────────────────

@@ -68,10 +68,10 @@ def reject_event(event_id):
     if not event:
         conn.close()
         return jsonify({'message': 'Etkinlik bulunamadı'}), 404
-    conn.execute("UPDATE events SET status = 'rejected' WHERE id = ?", (event_id,))
+    conn.execute("UPDATE events SET status = 'rejected', rejection_reason = ? WHERE id = ?", (reason, event_id))
     if event['organizer_id']:
         create_notification(conn, event['organizer_id'],
-            f"'{event['title']}' etkinliğiniz reddedildi. Sebep: {reason}")
+            f"'{event['title']}' etkinliğiniz için düzenleme talep edildi. Sebep: {reason}")
     conn.commit()
     conn.close()
     return jsonify({'message': 'Etkinlik reddedildi'}), 200
