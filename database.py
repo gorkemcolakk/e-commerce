@@ -45,6 +45,8 @@ def init_db():
             has_seating INTEGER NOT NULL DEFAULT 0,
             seating_image TEXT,
             rejection_reason TEXT,
+            parent_event_id TEXT,
+            recurring_config TEXT,
             FOREIGN KEY (organizer_id) REFERENCES users (id)
         )
     ''')
@@ -103,6 +105,16 @@ def init_db():
     
     try:
         c.execute('ALTER TABLE events ADD COLUMN cancelled_by TEXT')
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        c.execute('ALTER TABLE events ADD COLUMN parent_event_id TEXT')
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        c.execute('ALTER TABLE events ADD COLUMN recurring_config TEXT')
     except sqlite3.OperationalError:
         pass
     

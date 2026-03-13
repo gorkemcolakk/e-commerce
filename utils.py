@@ -9,6 +9,7 @@ import smtplib
 import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.image import MIMEImage
 from flask import request, jsonify, g
 from functools import wraps
 from database import get_db_connection
@@ -45,6 +46,16 @@ def make_qr_base64(data: str) -> str:
     b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
     return f"data:image/png;base64,{b64}"
 
+def make_qr_bytes(data: str) -> bytes:
+    """Generate a QR code image and return raw PNG bytes (for email CID embedding)."""
+    qr = qrcode.QRCode(version=1, box_size=8, border=3)
+    qr.add_data(data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    return buf.getvalue()
+
 def event_to_dict(e):
     evt = dict(e)
     evt['featured'] = bool(evt['featured'])
@@ -58,9 +69,10 @@ def create_notification(conn, user_id: int, message: str):
         (user_id, message)
     )
 
-def send_email(to_email: str, subject: str, message: str, html_message: str = None):
+def send_email(to_email: str, subject: str, message: str, html_message: str = None, images: list = None):
     """
     Gerçek SMTP kullanarak e-posta gönderir.
+    images: [{'cid': 'unique_id', 'data': bytes_of_png}, ...] — CID ile gömülü resimler.
     Çevresel değişkenlerde SMTP ayarları yoksa mock (simülasyon) email atar.
     """
     smtp_server = os.environ.get('SMTP_SERVER')
@@ -70,22 +82,38 @@ def send_email(to_email: str, subject: str, message: str, html_message: str = No
 
     if smtp_server and smtp_username and smtp_password:
         try:
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = subject
-            msg['From'] = f"Eventix <{smtp_username}>"
-            msg['To'] = to_email
+            # Eğer resim varsa related/mixed yapısı kur, yoksa alternative yeterli
+            if images:
+                outer = MIMEMultipart('mixed')
+                outer['Subject'] = subject
+                outer['From'] = f"Eventix <{smtp_username}>"
+                outer['To'] = to_email
 
-            part1 = MIMEText(message, 'plain')
-            msg.attach(part1)
-
-            if html_message:
-                part2 = MIMEText(html_message, 'html')
-                msg.attach(part2)
+                alt = MIMEMultipart('alternative')
+                alt.attach(MIMEText(message, 'plain'))
+                if html_message:
+                    related = MIMEMultipart('related')
+                    related.attach(MIMEText(html_message, 'html'))
+                    for img in images:
+                        mime_img = MIMEImage(img['data'], _subtype='png')
+                        mime_img.add_header('Content-ID', f"<{img['cid']}>")  
+                        mime_img.add_header('Content-Disposition', 'inline', filename=f"{img['cid']}.png")
+                        related.attach(mime_img)
+                    alt.attach(related)
+                outer.attach(alt)
+            else:
+                outer = MIMEMultipart('alternative')
+                outer['Subject'] = subject
+                outer['From'] = f"Eventix <{smtp_username}>"
+                outer['To'] = to_email
+                outer.attach(MIMEText(message, 'plain'))
+                if html_message:
+                    outer.attach(MIMEText(html_message, 'html'))
 
             server = smtplib.SMTP(smtp_server, int(smtp_port))
             server.starttls()
             server.login(smtp_username, smtp_password)
-            server.send_message(msg)
+            server.send_message(outer)
             server.quit()
             print(f"📧 [REAL] EMAIL SENT TO: {to_email}")
             return

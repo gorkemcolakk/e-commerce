@@ -60,86 +60,131 @@ def get_event_seats(event_id):
 @events_bp.route('', methods=['POST'])
 @role_required('organizer', 'admin')
 def create_event():
+    import datetime as dt
+    import calendar as cal_mod
+
     data = request.get_json()
     is_seated = bool(data.get('has_seating'))
-    
-    # Required fields adjust based on seating type
+
     required = ['title', 'category', 'date', 'location']
     if not is_seated:
         required.extend(['price', 'capacity'])
-        
     for field in required:
         if not data.get(field) and data.get(field) != 0:
-            return jsonify({'message': f'{field} alanı zorunludur'}), 400
+            return jsonify({'message': f'{field} alanl\u0131 zorunludur'}), 400
 
-    event_id = 'evt-' + uuid.uuid4().hex.upper()[:8]
+    recurring = data.get('recurring')  # {type: 'daily'|'weekly'|'monthly', end_date: 'YYYY-MM-DDTHH:MM'}
+    if recurring:
+        if not recurring.get('end_date'):
+            return jsonify({'message': 'Tekrarlayan etkinlik i\u00e7in biti\u015f tarihi zorunludur'}), 400
+
     lineup_json = json.dumps(data.get('lineup', []))
-
-    # Default images by category
     default_images = {
         'concert': 'https://images.unsplash.com/photo-1540039155733-5bb30b4a574b?w=800&auto=format&fit=crop',
         'theater': 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=800&auto=format&fit=crop',
         'workshop': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop',
     }
-    image_url = data.get('image', '').strip()
-    if not image_url:
-        image_url = default_images.get(data['category'], default_images['concert'])
+    image_url = data.get('image', '').strip() or default_images.get(data['category'], default_images['concert'])
 
     event_status = 'active' if g.user['role'] == 'admin' else 'pending'
-    
-    has_seating = 1 if data.get('has_seating') else 0
-    zones = data.get('zones', [])
+    has_seating  = 1 if data.get('has_seating') else 0
+    zones        = data.get('zones', [])
 
     conn = get_db_connection()
-    
-    # Calculate starting price if seated
-    base_price = int(data.get('price', 0))
+
+    base_price     = int(data.get('price', 0))
     total_capacity = int(data.get('capacity', 0))
     if has_seating and zones:
-        base_price = min([int(z.get('price', 0)) for z in zones if 'price' in z], default=base_price)
+        base_price     = min([int(z.get('price', 0)) for z in zones if 'price' in z], default=base_price)
         total_capacity = sum([int(z.get('rows', 1)) * int(z.get('cols', 1)) for z in zones])
 
-    conn.execute('''
-        INSERT INTO events (id, title, category, date, location, price, image, featured,
-                            description, lineup_json, capacity, sold_count, status, organizer_id, has_seating, seating_image)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
-    ''', (
-        event_id, data['title'], data['category'], data['date'], data['location'],
-        base_price, image_url, 1 if data.get('featured') else 0,
-        data.get('description', ''), lineup_json, total_capacity,
-        event_status, g.user['id'], has_seating, data.get('seating_image', '')
-    ))
-    
-    if has_seating and zones:
-        for z in zones:
-            zone_name = z.get('name', 'Blok')
-            rows = int(z.get('rows', 1))
-            cols = int(z.get('cols', 1))
-            z_price = int(z.get('price', base_price))
-            
-            for r in range(1, rows + 1):
-                # Rows can be A, B, C or 1, 2, 3. Let's use A, B, C for < 26 rows
-                if rows <= 26:
-                    row_label = chr(64 + r)
-                else:
-                    row_label = str(r)
-                
-                for c in range(1, cols + 1):
-                    col_label = str(c)
-                    conn.execute('''
-                        INSERT INTO seats (event_id, zone, row_label, col_label, price, status)
-                        VALUES (?, ?, ?, ?, ?, 'available')
-                    ''', (event_id, zone_name, row_label, col_label, z_price))
+    # ── helper: insert one event record + its seats ──────────────
+    def _insert_event(ev_id, ev_date_str, parent_id=None, rec_cfg=None):
+        conn.execute('''
+            INSERT INTO events (id, title, category, date, location, price, image, featured,
+                                description, lineup_json, capacity, sold_count, status,
+                                organizer_id, has_seating, seating_image,
+                                parent_event_id, recurring_config)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)
+        ''', (
+            ev_id, data['title'], data['category'], ev_date_str, data['location'],
+            base_price, image_url, 1 if data.get('featured') else 0,
+            data.get('description', ''), lineup_json, total_capacity,
+            event_status, g.user['id'], has_seating, data.get('seating_image', ''),
+            parent_id, json.dumps(rec_cfg) if rec_cfg else None
+        ))
+        if has_seating and zones:
+            for z in zones:
+                zn   = z.get('name', 'Blok')
+                rows = int(z.get('rows', 1))
+                cols = int(z.get('cols', 1))
+                zp   = int(z.get('price', base_price))
+                for r in range(1, rows + 1):
+                    rl = chr(64 + r) if rows <= 26 else str(r)
+                    for c in range(1, cols + 1):
+                        conn.execute(
+                            "INSERT INTO seats (event_id, zone, row_label, col_label, price, status) "
+                            "VALUES (?, ?, ?, ?, ?, 'available')",
+                            (ev_id, zn, rl, str(c), zp)
+                        )
+
+    # ── insert first (parent) event ──────────────────────────────
+    parent_id = 'evt-' + uuid.uuid4().hex.upper()[:8]
+    rec_cfg_save = {'type': recurring['type'], 'end_date': recurring['end_date']} if recurring else None
+    _insert_event(parent_id, data['date'], parent_id=None, rec_cfg=rec_cfg_save)
+    created_count = 1
+
+    # ── generate child occurrences ───────────────────────────────
+    if recurring:
+        try:
+            start_dt = dt.datetime.fromisoformat(data['date'])
+            end_dt   = dt.datetime.fromisoformat(recurring['end_date'])
+            if end_dt <= start_dt:
+                conn.rollback()
+                conn.close()
+                return jsonify({'message': 'Biti\u015f tarihi ba\u015flang\u0131\u00e7 tarihinden sonra olmal\u0131d\u0131r'}), 400
+
+            rec_type = recurring.get('type', 'weekly')
+            current_dt = start_dt
+            while created_count <= 365:
+                if rec_type == 'monthly':
+                    m  = current_dt.month + 1
+                    y  = current_dt.year + (m - 1) // 12
+                    m  = (m - 1) % 12 + 1
+                    d_num = min(current_dt.day, cal_mod.monthrange(y, m)[1])
+                    next_dt = current_dt.replace(year=y, month=m, day=d_num)
+                elif rec_type == 'weekly':
+                    next_dt = current_dt + dt.timedelta(weeks=1)
+                else:  # daily
+                    next_dt = current_dt + dt.timedelta(days=1)
+
+                if next_dt > end_dt:
+                    break
+
+                child_id = 'evt-' + uuid.uuid4().hex.upper()[:8]
+                _insert_event(child_id, next_dt.isoformat(timespec='minutes'), parent_id=parent_id)
+                current_dt = next_dt
+                created_count += 1
+
+        except Exception as ex:
+            conn.rollback()
+            conn.close()
+            return jsonify({'message': f'Tekrar tarihleri olu\u015fturulurken hata: {ex}'}), 500
 
     if event_status == 'pending':
-        create_notification(conn, g.user['id'],
-            f"'{data['title']}' etkinliğiniz admin onayına gönderildi. Onaylandıktan sonra sitede görünecek.")
+        notif = (
+            f"'{data['title']}' etkinli\u011finiz ({created_count} seans) admin onayl\u0131na g\u00f6nderildi."
+            if created_count > 1
+            else f"'{data['title']}' etkinli\u011finiz admin onayl\u0131na g\u00f6nderildi. Onaylandiktan sonra sitede g\u00f6r\u00fcnecek."
+        )
+        create_notification(conn, g.user['id'], notif)
 
     conn.commit()
     conn.close()
 
-    msg = 'Etkinlik oluşturuldu ve admin onayına gönderildi.' if event_status == 'pending' else 'Etkinlik yayınlandı.'
-    return jsonify({'message': msg, 'event_id': event_id, 'status': event_status}), 201
+    suffix = f" ({created_count} seans olu\u015fturuldu)" if created_count > 1 else ""
+    msg = ('Etkinlik olu\u015fturuldu ve admin onayl\u0131na g\u00f6nderildi.' if event_status == 'pending' else 'Etkinlik yayinlandi.') + suffix
+    return jsonify({'message': msg, 'event_id': parent_id, 'status': event_status, 'occurrences': created_count}), 201
 
 @events_bp.route('/<event_id>', methods=['PATCH'])
 @role_required('organizer', 'admin')

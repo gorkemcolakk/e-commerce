@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify, g, Response
 from database import get_db_connection
 from utils import role_required, event_to_dict, COMMISSION_RATE
 
@@ -198,4 +198,119 @@ def delete_promotion(promo_id):
     conn.execute('DELETE FROM promotions WHERE id = ?', (promo_id,))
     conn.commit()
     conn.close()
-    return jsonify({'message': 'Promosyon başarıyla silindi.'}), 200
+    return jsonify({'message': 'Promosyon basariyla silindi.'}), 200
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ATTENDEE HELPERS
+# ─────────────────────────────────────────────────────────────────────────────
+def _query_attendees(event_id):
+    conn = get_db_connection()
+    rows = conn.execute('''
+        SELECT
+            t.ticket_key, t.owner_name, t.owner_surname,
+            u.email, u.fullname,
+            t.status, t.total_price, t.quantity, t.purchase_date,
+            s.zone, s.row_label, s.col_label
+        FROM tickets t
+        JOIN events  e ON t.event_id = e.id
+        JOIN users   u ON t.user_id  = u.id
+        LEFT JOIN seats s ON t.seat_id = s.id
+        WHERE t.event_id = ?
+        ORDER BY t.purchase_date
+    ''', (event_id,)).fetchall()
+    conn.close()
+    return rows
+
+
+def _check_event_access(event_id):
+    conn = get_db_connection()
+    event = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
+    conn.close()
+    if not event:
+        return None, 'not_found'
+    if g.user['role'] != 'admin' and event['organizer_id'] != g.user['id']:
+        return None, 'forbidden'
+    return event, None
+
+
+# ── GET /api/organizer/events/<event_id>/attendees  (JSON) ────────────────────
+@organizer_bp.route('/events/<event_id>/attendees', methods=['GET'])
+@role_required('organizer', 'admin')
+def event_attendees(event_id):
+    event, err = _check_event_access(event_id)
+    if not event:
+        return jsonify({'message': 'Etkinlik bulunamadi veya yetki yok'}), (404 if err == 'not_found' else 403)
+
+    rows = _query_attendees(event_id)
+    attendees = []
+    for r in rows:
+        seat  = f"{r['zone']} {r['row_label']}-{r['col_label']}" if r['zone'] else 'Genel Giris'
+        name  = r['owner_name']   or (r['fullname'] or '').split()[0] or '-'
+        surna = r['owner_surname'] or ' '.join((r['fullname'] or '').split()[1:]) or ''
+        attendees.append({
+            'ticket_key':   r['ticket_key'],
+            'name':         name,
+            'surname':      surna,
+            'full_name':    f"{name} {surna}".strip(),
+            'email':        r['email'],
+            'seat':         seat,
+            'status':       r['status'],
+            'price':        r['total_price'],
+            'quantity':     r['quantity'],
+            'purchased_at': (r['purchase_date'] or '')[:16],
+        })
+    return jsonify({
+        'event_title': event['title'],
+        'event_date':  event['date'],
+        'total':       len(attendees),
+        'attendees':   attendees
+    }), 200
+
+
+# ── GET /api/organizer/events/<event_id>/attendees/export  (CSV) ──────────────
+@organizer_bp.route('/events/<event_id>/attendees/export', methods=['GET'])
+@role_required('organizer', 'admin')
+def export_attendees(event_id):
+    import io, csv
+
+    event, err = _check_event_access(event_id)
+    if not event:
+        return jsonify({'message': 'Etkinlik bulunamadi veya yetki yok'}), (404 if err == 'not_found' else 403)
+
+    rows = _query_attendees(event_id)
+    buf  = io.StringIO()
+    w    = csv.writer(buf)
+    w.writerow(['Bilet Kodu', 'Ad', 'Soyad', 'E-posta',
+                'Koltuk / Tip', 'Durum', 'Fiyat (TL)', 'Adet', 'Satin Alma Tarihi'])
+
+    status_map = {'valid': 'Gecerli', 'used': 'Kullanildi',
+                  'refund_pending': 'Iade Bekliyor', 'cancelled': 'Iptal'}
+
+    for r in rows:
+        seat = f"{r['zone']} {r['row_label']}-{r['col_label']}" if r['zone'] else 'Genel Giris'
+        w.writerow([
+            r['ticket_key'],
+            r['owner_name']    or (r['fullname'] or '-').split()[0],
+            r['owner_surname'] or ' '.join((r['fullname'] or '').split()[1:]) or '-',
+            r['email'],
+            seat,
+            status_map.get(r['status'], r['status']),
+            r['total_price'],
+            r['quantity'],
+            (r['created_at'] or r['purchase_date'] or '')[:16],
+        ])
+
+    # UTF-8 BOM — Excel opens without encoding prompt
+    csv_bytes = b'\xef\xbb\xbf' + buf.getvalue().encode('utf-8')
+    safe  = ''.join(c if c.isalnum() or c in ' _-' else '_' for c in (event['title'] or 'Etkinlik'))
+    fname = f"Katilimcilar_{safe}.csv"
+
+    return Response(
+        csv_bytes,
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': f'attachment; filename="{fname}"',
+            'Content-Type': 'text/csv; charset=utf-8',
+        }
+    )

@@ -180,52 +180,83 @@ document.addEventListener('DOMContentLoaded', () => {
 function initPasswordReset() {
     const params = new URLSearchParams(window.location.search);
     const resetToken = params.get('reset_token');
-    if (resetToken && window.location.pathname.includes('login.html')) {
-        document.querySelector('.auth-title').textContent = 'Şifre Sıfırlama';
-        document.querySelector('.auth-subtitle').textContent = 'Yeni şifrenizi belirleyin.';
-        const form = document.getElementById('loginForm');
+    const form = document.getElementById('loginForm');
+
+    // loginForm yoksa bu sayfa login sayfası değildir
+    if (!form) return;
+
+    if (resetToken) {
+        // Başlıkları güncelle
+        const title = document.querySelector('.auth-title');
+        const subtitle = document.querySelector('.auth-subtitle');
+        if (title) title.textContent = 'Şifre Sıfırlama';
+        if (subtitle) subtitle.textContent = 'Yeni şifrenizi belirleyin.';
+
         form.innerHTML = `
             <div class="form-group">
                 <label class="form-label">Yeni Şifre</label>
                 <div class="password-input-wrapper">
-                    <input type="password" id="new_password" class="form-control" placeholder="••••••••" required>
+                    <input type="password" id="new_password" class="form-control" placeholder="••••••••" required minlength="6">
+                    <button type="button" class="password-toggle" onclick="togglePassword('new_password')">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Yeni Şifre (Tekrar)</label>
+                <div class="password-input-wrapper">
+                    <input type="password" id="new_password_confirm" class="form-control" placeholder="••••••••" required minlength="6">
                 </div>
             </div>
             <button type="submit" class="btn btn-primary auth-submit">Şifreyi Güncelle</button>
         `;
-        const grids = document.querySelectorAll('.social-login-grid, .auth-divider');
-        grids.forEach(g => g.style.display = 'none');
-        
-        // Remove old submit listener by replacing form or just overriding onsubmit?
-        // Let's replace the node to clear listeners
+
+        // Social login ve divider'ı gizle
+        document.querySelectorAll('.social-login-grid, .auth-divider').forEach(g => g.style.display = 'none');
+
+        // Düğmeyi değiştirerek eski event listener'ları temizle
         const newForm = form.cloneNode(true);
         form.parentNode.replaceChild(newForm, form);
-        
+
         newForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = newForm.querySelector('button');
+            const btn = newForm.querySelector('button[type="submit"]');
             const orig = btn.textContent;
+            const newPass = newForm.querySelector('#new_password').value;
+            const confirmPass = newForm.querySelector('#new_password_confirm').value;
+
+            if (newPass !== confirmPass) {
+                setFeedback(newForm, 'Şifreler eşleşmiyor!', 'error');
+                return;
+            }
+
             btn.textContent = 'Güncelleniyor...';
             btn.disabled = true;
             try {
                 const res = await fetch('/api/auth/reset-password', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({token: resetToken, new_password: newForm.querySelector('#new_password').value})
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({token: resetToken, new_password: newPass})
                 });
                 const d = await res.json();
                 if (res.ok) {
-                    alert('Şifreniz güncellendi, lütfen yeni şifrenizle giriş yapın.');
-                    window.location.href = 'login.html';
+                    setFeedback(newForm, 'Şifreniz güncellendi! Giriş sayfasına yönlendiriliyorsunuz...', 'success');
+                    setTimeout(() => { window.location.href = 'login.html'; }, 2000);
                 } else {
-                    alert(d.message || 'Hata oluştu');
-                    btn.textContent = orig; btn.disabled = false;
+                    setFeedback(newForm, d.message || 'Hata oluştu. Token süresi dolmuş olabilir.', 'error');
+                    btn.textContent = orig;
+                    btn.disabled = false;
                 }
-            } catch (err) { alert('Hata oluştu'); btn.textContent = orig; btn.disabled = false; }
+            } catch (err) {
+                setFeedback(newForm, 'Sunucu bağlantı hatası', 'error');
+                btn.textContent = orig;
+                btn.disabled = false;
+            }
         });
         return;
     }
 
-    // Attach to "Şifremi Unuttum" link
+    // "Şifremi Unuttum" bağlantısını işle
     const forgotLink = document.querySelector('.forgot-password');
     if (forgotLink) {
         forgotLink.onclick = (e) => {
@@ -238,7 +269,7 @@ function initPasswordReset() {
                 })
                 .then(r => r.json())
                 .then(d => alert(d.message || 'Başarılı'))
-                .catch(err => alert('Bir hata oluştu. Lütfen tekrar deneyin.'));
+                .catch(() => alert('Bir hata oluştu. Lütfen tekrar deneyin.'));
             }
         };
     }

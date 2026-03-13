@@ -1,9 +1,237 @@
 import uuid
 from flask import Blueprint, request, jsonify, g
 from database import get_db_connection
-from utils import token_required, make_qr_base64, create_notification, sign_ticket_data, verify_ticket_signature, send_email, limiter
+from utils import token_required, make_qr_base64, make_qr_bytes, create_notification, sign_ticket_data, verify_ticket_signature, send_email, limiter
 
 tickets_bp = Blueprint('tickets', __name__, url_prefix='/api/tickets')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GUEST TICKET PURCHASE — No JWT required
+# ─────────────────────────────────────────────────────────────────────────────
+@tickets_bp.route('/guest-buy', methods=['POST'])
+@limiter.limit("5 per minute")
+def guest_buy_ticket():
+    """
+    Misafir bilet satın alma endpoint'i.
+    Kullanıcı giriş yapmadan e-posta, ad, soyad ve ödeme bilgilerini göndererek bilet satın alabilir.
+    """
+    data = request.get_json()
+    event_id     = data.get('event_id')
+    guest_email  = (data.get('guest_email') or '').strip().lower()
+    guest_name   = (data.get('guest_name')  or '').strip()
+    guest_surname= (data.get('guest_surname') or '').strip()
+    promo_code   = data.get('promo_code', '').strip().upper()
+    tickets_info = data.get('tickets_info', [])
+    quantity     = len(tickets_info)
+
+    # ── Validation ──────────────────────────────────────────────
+    if not event_id:
+        return jsonify({'message': 'event_id zorunludur'}), 400
+    if not guest_email or '@' not in guest_email:
+        return jsonify({'message': 'Geçerli bir e-posta adresi giriniz'}), 400
+    if not guest_name or not guest_surname:
+        return jsonify({'message': 'Ad ve soyad zorunludur'}), 400
+    if quantity < 1 or quantity > 10:
+        return jsonify({'message': 'Tek seferde 1 ile 10 arasında bilet alabilirsiniz'}), 400
+
+    card_name   = data.get('card_name', '').strip()
+    card_number = data.get('card_number', '').replace(' ', '')
+    card_exp    = data.get('card_exp', '').strip()
+    cvc         = data.get('cvc', '').strip()
+    if not card_name or not card_number or not cvc or not card_exp:
+        return jsonify({'message': 'Ödeme bilgileri eksik! Lütfen tüm kart bilgilerinizi giriniz.'}), 400
+
+    conn = get_db_connection()
+    c = conn.cursor()
+
+    # ── Get or create a guest user for this e-mail ───────────────
+    existing = c.execute("SELECT * FROM users WHERE email = ? AND role = 'guest'", (guest_email,)).fetchone()
+    if existing:
+        guest_user_id = existing['id']
+        guest_fullname = existing['fullname']
+    else:
+        # Also check if a real account with this email already exists
+        real_user = c.execute("SELECT id FROM users WHERE email = ? AND role != 'guest'", (guest_email,)).fetchone()
+        if real_user:
+            conn.close()
+            return jsonify({'message': 'Bu e-posta ile kayıtlı bir hesap mevcut. Lütfen giriş yaparak satın alın.'}), 409
+
+        import secrets
+        from werkzeug.security import generate_password_hash
+        random_pw = generate_password_hash(secrets.token_hex(32))
+        guest_fullname = f"{guest_name} {guest_surname}"
+        c.execute(
+            "INSERT INTO users (fullname, email, password, role) VALUES (?, ?, ?, 'guest')",
+            (guest_fullname, guest_email, random_pw)
+        )
+        guest_user_id = c.lastrowid
+
+    # ── Event check ─────────────────────────────────────────────
+    event = c.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
+    if not event:
+        conn.close()
+        return jsonify({'message': 'Etkinlik bulunamadı'}), 404
+    if event['status'] == 'cancelled':
+        conn.close()
+        return jsonify({'message': 'Bu etkinlik iptal edildi'}), 400
+
+    total_price = 0
+    seat_labels_str = "Standart"
+    seats_dict = {}
+
+    if event['has_seating']:
+        seat_ids = [t.get('seat_id') for t in tickets_info if t.get('seat_id')]
+        if len(seat_ids) != quantity:
+            conn.close()
+            return jsonify({'message': 'Oturma planlı etkinlikler için her biletin koltuk seçimi zorunludur.'}), 400
+
+        placeholders = ','.join(['?'] * len(seat_ids))
+        params = list(seat_ids) + [event_id]
+        seats = c.execute(
+            f"SELECT * FROM seats WHERE id IN ({placeholders}) AND event_id = ? AND status = 'available'",
+            params
+        ).fetchall()
+
+        if len(seats) != quantity:
+            conn.close()
+            return jsonify({'message': 'Seçtiğiniz koltuklardan bazıları satılmış veya geçersiz.'}), 400
+
+        for s in seats:
+            total_price += s['price']
+            seats_dict[str(s['id'])] = s
+        seat_labels_str = ", ".join(f"{s['zone']} {s['row_label']}-{s['col_label']}" for s in seats)
+        c.execute(f"UPDATE seats SET status = 'sold' WHERE id IN ({placeholders})", seat_ids)
+        c.execute("UPDATE events SET sold_count = sold_count + ? WHERE id = ?", (quantity, event_id))
+    else:
+        c.execute(
+            "UPDATE events SET sold_count = sold_count + ? WHERE id = ? AND capacity - sold_count >= ? AND status = 'active'",
+            (quantity, event_id, quantity)
+        )
+        if c.rowcount == 0:
+            rechk = c.execute('SELECT capacity, sold_count FROM events WHERE id = ?', (event_id,)).fetchone()
+            remaining = rechk['capacity'] - rechk['sold_count']
+            conn.close()
+            if remaining <= 0:
+                return jsonify({'message': 'Kapasite dolu! Bu etkinlik için bilet kalmadı.'}), 400
+            return jsonify({'message': f'Yalnızca {remaining} bilet kaldı'}), 400
+
+        unit_price  = event['price']
+        total_price = unit_price * quantity
+
+    # ── Promo code ──────────────────────────────────────────────
+    promo_record = None
+    if promo_code:
+        promo_record = c.execute(
+            'SELECT * FROM promotions WHERE event_id = ? AND code = ?', (event_id, promo_code)
+        ).fetchone()
+        if not promo_record:
+            conn.close()
+            return jsonify({'message': 'Geçersiz promosyon kodu.'}), 400
+        if promo_record['usage_limit'] and promo_record['used_count'] >= promo_record['usage_limit']:
+            conn.close()
+            return jsonify({'message': 'Promosyon kodunun kullanım hakkı dolmuş.'}), 400
+
+        if promo_record['discount_type'] == 'percentage':
+            total_price -= (total_price * promo_record['discount_value']) // 100
+        elif promo_record['discount_type'] == 'fixed':
+            total_price -= promo_record['discount_value']
+        if total_price < 0:
+            total_price = 0
+
+    # ── Payment ──────────────────────────────────────────────────
+    from payment import PaymentGateway
+    payment_result = PaymentGateway.process_payment(
+        amount=total_price,
+        card_name=card_name,
+        card_number=card_number,
+        exp_date=card_exp,
+        cvc=cvc
+    )
+    if not payment_result['success']:
+        conn.close()
+        return jsonify({'message': payment_result['message']}), 400
+
+    if promo_record:
+        c.execute('UPDATE promotions SET used_count = used_count + 1 WHERE id = ?', (promo_record['id'],))
+
+    # ── Generate tickets ─────────────────────────────────────────
+    generated_tickets = []
+    email_images = []
+
+    for t_info in tickets_info:
+        ticket_key = uuid.uuid4().hex.upper()[:12]
+        qr_data    = sign_ticket_data(f"EVENTIX-{ticket_key}-{event_id}")
+        qr_base64  = make_qr_base64(qr_data)
+        qr_bytes   = make_qr_bytes(qr_data)
+        qr_cid     = f"qr_{ticket_key}"
+
+        t_price    = event['price'] if not event['has_seating'] else seats_dict[str(t_info['seat_id'])]['price']
+        seat_id_val = t_info.get('seat_id') if event['has_seating'] else None
+
+        c.execute(
+            "INSERT INTO tickets (user_id, event_id, ticket_key, qr_code, quantity, total_price, status, owner_name, owner_surname, seat_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, 'valid', ?, ?, ?)",
+            (guest_user_id, event_id, ticket_key, qr_data, 1, t_price,
+             t_info.get('name'), t_info.get('surname'), seat_id_val)
+        )
+        email_images.append({'cid': qr_cid, 'data': qr_bytes})
+        generated_tickets.append({
+            'ticket_key': ticket_key,
+            'qr_code':    qr_base64,
+            'qr_data':    qr_data,
+            'name':       t_info.get('name'),
+            'surname':    t_info.get('surname'),
+            'price':      t_price
+        })
+
+    # ── Confirmation e-mail ──────────────────────────────────────
+    plain_body = f"Merhaba {guest_fullname},\n\n'{event['title']}' için biletleriniz oluşturuldu.\n\n"
+    for gt in generated_tickets:
+        plain_body += f"🎟️ {gt['name']} {gt['surname']} | #{gt['ticket_key']}\n"
+    # Rebuild proper HTML with correct CIDs
+    tickets_html_parts = ""
+    for gt, ei in zip(generated_tickets, email_images):
+        tickets_html_parts += f"""
+        <div style="border:1px dashed #ccc;padding:15px;margin-bottom:15px;text-align:center;border-radius:8px;background:#fafafa;">
+          <p style="margin:0 0 10px;font-weight:bold;">{gt['name']} {gt['surname']}</p>
+          <img src="cid:{ei['cid']}" alt="QR Kod" style="width:180px;height:180px;display:block;margin:0 auto;border-radius:5px;" />
+          <p style="margin:10px 0 0;font-family:monospace;font-size:1.1em;color:#8b5cf6;">#{gt['ticket_key']}</p>
+        </div>"""
+
+    final_html = f"""
+    <html><body style="font-family:Arial,sans-serif;background:#f4f4f9;padding:20px;color:#333;">
+      <div style="max-width:600px;margin:0 auto;background:white;border-radius:10px;padding:25px;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+        <h2 style="color:#8b5cf6;text-align:center;">🎟️ Biletleriniz Hazır!</h2>
+        <p>Merhaba <strong>{guest_fullname}</strong>,</p>
+        <p><strong>{event['title']}</strong> için biletleriniz oluşturuldu.</p>
+        <hr style="border:none;border-top:1px solid #eee;margin:20px 0;">
+        <p>📅 <strong>Tarih:</strong> {event['date']}<br>
+           📍 <strong>Konum:</strong> {event['location']}<br>
+           🪑 <strong>Koltuk(lar):</strong> {seat_labels_str}<br>
+           💳 <strong>Ödenen Tutar:</strong> {total_price} ₺</p>
+        <h3>Biletler:</h3>
+        {tickets_html_parts}
+        <p style="text-align:center;color:#999;font-size:0.85em;">© 2026 Eventix Biletleme Platformu</p>
+      </div></body></html>"""
+
+    send_email(
+        guest_email,
+        f"Biletleriniz Hazır - {event['title']}",
+        plain_body,
+        final_html,
+        images=email_images
+    )
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'message': 'Bilet satın alındı! Biletleriniz e-posta adresinize gönderildi.',
+        'tickets': generated_tickets,
+        'total_price': total_price,
+        'quantity': quantity
+    }), 201
 
 @tickets_bp.route('/buy', methods=['POST'])
 @token_required
@@ -142,6 +370,9 @@ def buy_ticket():
         qr_data = sign_ticket_data(f"EVENTIX-{ticket_key}-{event_id}")
         qr_base64 = make_qr_base64(qr_data)
         
+        qr_bytes = make_qr_bytes(qr_data)   # Ham PNG byte'ları (e-posta CID için)
+        qr_cid = f"qr_{ticket_key}"            # Benzersiz CID
+        
         t_price = unit_price if not event['has_seating'] else seats_dict[str(t_info['seat_id'])]['price']
         seat_id_val = t_info.get('seat_id') if event['has_seating'] else None
         
@@ -154,6 +385,8 @@ def buy_ticket():
             'ticket_key': ticket_key,
             'qr_code': qr_base64,
             'qr_data': qr_data,
+            'qr_bytes': qr_bytes,
+            'qr_cid': qr_cid,
             'name': t_info.get('name'),
             'surname': t_info.get('surname'),
             'price': t_price
@@ -165,6 +398,9 @@ def buy_ticket():
     )
 
     email_body = f"Merhaba {g.user['fullname']},\n\n'{event['title']}' etkinliği için biletleriniz başarıyla oluşturuldu.\n\n"
+    
+    # CID gömülü resimler için liste
+    email_images = []
     
     html_body = f"""
     <html>
@@ -186,11 +422,13 @@ def buy_ticket():
     """
 
     for gt in generated_tickets:
-         email_body += f"🎫 İsim: {gt['name']} {gt['surname']} | Bilet Kodunuz: #{gt['ticket_key']}\n"
+         email_body += f"🎟️ İsim: {gt['name']} {gt['surname']} | Bilet Kodunuz: #{gt['ticket_key']}\n"
+         # CID listesine ekle
+         email_images.append({'cid': gt['qr_cid'], 'data': gt['qr_bytes']})
          html_body += f"""
           <div style="border: 1px dashed #ccc; padding: 15px; margin-bottom: 15px; text-align: center; border-radius: 8px; background-color: #fafafa;">
             <p style="margin: 0 0 10px; font-weight: bold; color: #333;">Yolcu: {gt['name']} {gt['surname']}</p>
-            <img src="{gt['qr_code']}" alt="QR Kod" style="width: 150px; height: 150px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
+            <img src="cid:{gt['qr_cid']}" alt="QR Kod" style="width: 180px; height: 180px; display: block; margin: 0 auto; border-radius: 5px;" />
             <p style="margin: 10px 0 0; font-family: monospace; font-size: 1.1em; color: #8b5cf6; letter-spacing: 1px;">#{gt['ticket_key']}</p>
           </div>
          """
@@ -211,7 +449,7 @@ def buy_ticket():
     </html>
     """
 
-    send_email(g.user['email'], f"Biletleriniz Hazır - {event['title']}", email_body, html_body)
+    send_email(g.user['email'], f"Biletleriniz Hazır - {event['title']}", email_body, html_body, images=email_images)
 
     conn.commit()
     conn.close()

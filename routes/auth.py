@@ -4,6 +4,7 @@ import jwt
 import datetime
 from database import get_db_connection
 from utils import SECRET_KEY, limiter
+import os
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
@@ -90,9 +91,30 @@ def forgot_password():
         'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=15)
     }, SECRET_KEY, algorithm="HS256")
 
-    reset_link = f"http://localhost:5000/login.html?reset_token={reset_token}"
-    email_body = f"Şifrenizi sıfırlamak için aşağıdaki linke tıklayın (15 dk geçerlidir):\n\n{reset_link}"
-    send_email(email, "Şifre Sıfırlama Talebi", email_body)
+    # Host'u isteğin geldiği yerden al; yoksa .env'deki FRONTEND_URL'i kullan
+    base_url = os.environ.get('FRONTEND_URL', '').rstrip('/')
+    if not base_url:
+        host = request.host  # örn: localhost:5000 veya 192.168.x.x:5000
+        base_url = f"http://{host}"
+
+    reset_link = f"{base_url}/login.html?reset_token={reset_token}"
+    email_body = f"""
+    <html><body style="font-family:Arial,sans-serif;background:#0f0f1a;color:#e2e8f0;padding:32px;">
+      <div style="max-width:480px;margin:0 auto;background:#1a1a2e;border-radius:12px;padding:32px;border:1px solid #2d2d4e;">
+        <h2 style="color:#a78bfa;margin-top:0;">🔐 Şifre Sıfırlama</h2>
+        <p>Merhaba <strong>{user['fullname']}</strong>,</p>
+        <p>Şifrenizi sıfırlamak için aşağıdaki butona tıklayın. Link <strong>15 dakika</strong> geçerlidir.</p>
+        <a href="{reset_link}" style="display:inline-block;margin:16px 0;padding:12px 24px;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Şifremi Sıfırla</a>
+        <p style="font-size:12px;color:#94a3b8;">Butona tıklayamıyorsanız bu linki tarayıcınıza kopyalayın:<br>
+          <a href="{reset_link}" style="color:#a78bfa;word-break:break-all;">{reset_link}</a>
+        </p>
+        <hr style="border:none;border-top:1px solid #2d2d4e;margin:24px 0;">
+        <p style="font-size:12px;color:#64748b;">Bu isteği siz yapmadıysanız bu e-postayı görmezden gelin.</p>
+      </div>
+    </body></html>
+    """
+    plain_text = f"Şifrenizi sıfırlamak için bu linke gidin (15 dk geçerlidir):\n{reset_link}"
+    send_email(email, "Şifre Sıfırlama Talebi", plain_text, html_message=email_body)
 
     return jsonify({'message': 'Şifre sıfırlama linki e-postanıza gönderildi.'}), 200
 
