@@ -221,6 +221,7 @@ def update_event(event_id):
 @events_bp.route('/<event_id>', methods=['DELETE'])
 @role_required('organizer', 'admin')
 def cancel_event(event_id):
+    permanent = request.args.get('permanent', 'false').lower() == 'true'
     conn = get_db_connection()
     event = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
     if not event:
@@ -229,9 +230,49 @@ def cancel_event(event_id):
 
     if g.user['role'] == 'organizer' and event['organizer_id'] != g.user['id']:
         conn.close()
-        return jsonify({'message': 'Bu etkinliği iptal etme yetkiniz yok'}), 403
+        return jsonify({'message': 'Bu etkinliği yönetme yetkiniz yok'}), 403
 
-    conn.execute("UPDATE events SET status = 'cancelled' WHERE id = ?", (event_id,))
+    if permanent:
+        # Önce biletleri kontrol et ve iade sürecini başlat (para yanmasın)
+        tickets = conn.execute(
+            "SELECT * FROM tickets WHERE event_id = ? AND status = 'valid'", (event_id,)
+        ).fetchall()
+        for ticket in tickets:
+            conn.execute(
+                "UPDATE tickets SET status = 'refund_pending' WHERE id = ?", (ticket['id'],)
+            )
+            create_notification(
+                conn, ticket['user_id'],
+                f"'{event['title']}' etkinliği sistemden kaldırıldı. Biletiniz (#{ticket['ticket_key']}) iade sürecine alındı."
+            )
+
+        # Foreign Key kısıtlamalarını geçici olarak kapat (blok3 gibi verili ilanları silebilmek için)
+        conn.execute("PRAGMA foreign_keys = OFF")
+        
+        # Tüm bağlı verileri temizle
+        conn.execute("DELETE FROM seats WHERE event_id = ?", (event_id,))
+        conn.execute("DELETE FROM wishlist WHERE event_id = ?", (event_id,))
+        conn.execute("DELETE FROM promotions WHERE event_id = ?", (event_id,))
+        conn.execute("DELETE FROM events WHERE id = ?", (event_id,))
+        
+        # Foreign Key kısıtlamalarını geri aç
+        conn.execute("PRAGMA foreign_keys = ON")
+        
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Bilet sahiplerine iade bildirimi gönderildi ve etkinlik her yerden silindi'}), 200
+
+    # Mevcut iptal mantığı
+    reason = request.args.get('reason', 'Organizatör tarafından iptal edildi')
+    cancelled_by = g.user['role'] # 'admin' or 'organizer'
+    
+    conn.execute("UPDATE events SET status = 'cancelled', rejection_reason = ?, cancelled_by = ? WHERE id = ?", 
+                 (reason, cancelled_by, event_id))
+
+    # Organizatöre bildirim gönder (Eğer admin iptal ettiyse)
+    if cancelled_by == 'admin' and event['organizer_id']:
+        create_notification(conn, event['organizer_id'], 
+                            f"'{event['title']}' etkinliğiniz admin tarafından iptal edildi. Sebep: {reason}")
 
     tickets = conn.execute(
         "SELECT * FROM tickets WHERE event_id = ? AND status = 'valid'", (event_id,)

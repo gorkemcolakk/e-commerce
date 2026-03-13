@@ -116,6 +116,14 @@
       try {
         const res = await fetch('/api/tickets/my-tickets', { headers: authHeaders() });
         const tickets = await res.json();
+        const fDate = ds => {
+          try {
+            const d = new Date(ds);
+            if(isNaN(d)) return ds;
+            return d.toLocaleDateString("tr-TR", {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+          } catch { return ds; }
+        };
+
         if (!tickets.length) { el.innerHTML = '<p class="loading-text">Henüz bilet satın almadınız.</p>'; return; }
         el.innerHTML = tickets.map(t => {
           const statusColor = { valid: '#10b981', used: '#6b7280', refund_pending: '#f59e0b' }[t.status] || '#6b7280';
@@ -132,7 +140,7 @@
                 👤 ${t.owner_name && t.owner_surname ? (t.owner_name + ' ' + t.owner_surname) : 'Standart'}
                 ${t.zone ? `(🪑 ${t.zone} ${t.row_label}-${t.col_label})` : ''}
               </p>
-              <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 2px;">📅 ${t.date}</p>
+              <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 2px;">📅 ${fDate(t.date)}</p>
               <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 8px;">📍 ${t.location}</p>
               <p style="color:var(--text-muted);font-size:0.78rem;margin:0;">Bilet Kodu: <strong style="color:white;font-family:monospace;">${t.ticket_key}</strong> &nbsp;|&nbsp; Fiyat: ${(t.total_price || 0).toLocaleString('tr-TR')} ₺</p>
             </div>
@@ -171,7 +179,7 @@
               <img src="${e.image}" alt="${e.title}" class="event-img" loading="lazy">
             </div>
             <div class="event-content">
-              <div class="event-date">${e.date}</div>
+              <div class="event-date">${fDate(e.date)}</div>
               <h3 class="event-title">${e.title}</h3>
               <div class="event-location">📍 ${e.location}</div>
               <div class="event-footer">

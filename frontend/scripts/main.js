@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── INIT ──────────────────────────────────────────────────
   let currentPage = 1;
-  const itemsPerPage = 8;
+  const itemsPerPage = 48;
   const loadMoreBtn = document.createElement('button');
   loadMoreBtn.className = 'btn btn-outline';
   loadMoreBtn.style.margin = '30px auto';

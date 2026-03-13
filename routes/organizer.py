@@ -33,7 +33,7 @@ def organizer_revenue():
         SELECT t.total_price, t.quantity, t.status, e.title
         FROM tickets t
         JOIN events e ON t.event_id = e.id
-        WHERE t.status = 'valid' {event_filter}
+        WHERE t.status IN ('valid', 'used') {event_filter}
     ''', params).fetchall()
 
     total_revenue = sum(t['total_price'] for t in tickets)
@@ -41,26 +41,69 @@ def organizer_revenue():
     commission = round(total_revenue * COMMISSION_RATE)
     net_revenue = total_revenue - commission
 
-    events = conn.execute(f'''
-        SELECT e.id, e.title, e.sold_count, e.capacity, e.price, e.status
+    # Etkinlik bazlı döküm
+    events_stats = conn.execute(f'''
+        SELECT 
+            e.id, 
+            e.title, 
+            e.capacity, 
+            e.price, 
+            e.status,
+            u.fullname as organizer_name,
+            COALESCE(SUM(CASE WHEN t.status IN ('valid', 'used') THEN t.quantity ELSE 0 END), 0) as real_sold_count,
+            COALESCE(SUM(CASE WHEN t.status IN ('valid', 'used') THEN t.total_price ELSE 0 END), 0) as real_gross
         FROM events e
-        WHERE 1=1 {event_filter.replace('e.organizer_id', 'organizer_id')}
+        LEFT JOIN users u ON e.organizer_id = u.id
+        LEFT JOIN tickets t ON e.id = t.event_id
+        WHERE 1=1 {event_filter.replace('e.organizer_id', 'e.organizer_id')}
+        GROUP BY e.id
         ORDER BY e.id
     ''', params).fetchall()
 
     breakdown = []
-    for ev in events:
-        gross = ev['sold_count'] * ev['price']
+    for ev in events_stats:
+        gross = ev['real_gross']
         breakdown.append({
             'event_id': ev['id'],
             'title': ev['title'],
-            'sold_count': ev['sold_count'],
+            'organizer_name': ev['organizer_name'],
+            'sold_count': ev['real_sold_count'],
             'capacity': ev['capacity'],
             'gross_revenue': gross,
             'commission': round(gross * COMMISSION_RATE),
             'net_revenue': round(gross * (1 - COMMISSION_RATE)),
             'status': ev['status']
         })
+
+    organizer_breakdown = []
+    if g.user['role'] == 'admin':
+        orgs_stats = conn.execute('''
+            SELECT 
+                u.id as organizer_id,
+                u.fullname as organizer_name,
+                u.email as organizer_email,
+                COALESCE(SUM(t.quantity), 0) as total_tickets,
+                COALESCE(SUM(t.total_price), 0) as total_gross
+            FROM users u
+            JOIN events e ON u.id = e.organizer_id
+            LEFT JOIN tickets t ON e.id = t.event_id AND t.status IN ('valid', 'used')
+            WHERE u.role = 'organizer'
+            GROUP BY u.id
+            HAVING total_tickets > 0
+            ORDER BY total_gross DESC
+        ''').fetchall()
+        
+        for org in orgs_stats:
+            gross = org['total_gross']
+            organizer_breakdown.append({
+                'organizer_id': org['organizer_id'],
+                'name': org['organizer_name'],
+                'email': org['organizer_email'],
+                'total_tickets': org['total_tickets'],
+                'gross_revenue': gross,
+                'commission': round(gross * COMMISSION_RATE),
+                'net_revenue': round(gross * (1 - COMMISSION_RATE))
+            })
 
     conn.close()
     return jsonify({
@@ -69,7 +112,8 @@ def organizer_revenue():
         'commission': commission,
         'net_revenue': net_revenue,
         'commission_rate': COMMISSION_RATE,
-        'breakdown': breakdown
+        'breakdown': breakdown,
+        'organizer_breakdown': organizer_breakdown
     }), 200
 
 @organizer_bp.route('/promotions', methods=['GET'])

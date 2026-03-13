@@ -317,11 +317,24 @@
             html += '</div>';
           }
 
+          if (e.status === 'cancelled' && e.cancelled_by) {
+            const byAdmin = e.cancelled_by === 'admin';
+             html += '<div style="margin-top:10px; padding:10px; background:rgba(239,68,68,0.1); border:1px dashed rgba(239,68,68,0.3); border-radius:8px;">';
+             html += '<p style="color:#ef4444; font-size:0.75rem; margin:0; font-weight:bold;">🚨 ' + (byAdmin ? 'Admin Tarafından İptal Edildi' : 'Sizin Tarafınızdan İptal Edildi') + ':</p>';
+             if(byAdmin) {
+                html += '<p style="color:var(--text); font-size:0.8rem; margin:3px 0 0;">' + (e.rejection_reason || 'Sebep belirtilmedi.') + '</p>';
+             }
+             html += '</div>';
+          }
+
           html += '</div>';
           html += '<div style="display:flex; flex-direction:column; gap:8px;">';
           if (e.status !== 'cancelled') {
             html += '<button class="btn btn-primary btn-sm" onclick="editEvent(\'' + e.id + '\')">Düzenle</button>';
             html += '<button class="btn btn-danger btn-sm" onclick="cancelEvent(\'' + e.id + '\')">İptal Et</button>';
+          } else {
+            html += '<button class="btn btn-primary btn-sm" onclick="editEvent(\'' + e.id + '\')" style="background:var(--accent-teal); border-color:var(--accent-teal); color:black;">Düzenle ve Tekrar Aktif Et</button>';
+            html += '<button class="btn btn-danger btn-sm" onclick="cancelEvent(\'' + e.id + '\', true)">Kalıcı Olarak Sil</button>';
           }
           html += '</div>';
           html += '</div>';
@@ -333,14 +346,18 @@
       });
     }
 
-    function cancelEvent(id) {
-      if (!confirm('Bu etkinligi iptal etmek istediginize emin misiniz?')) return;
-      fetch('/api/events/' + id, {
+    function cancelEvent(id, permanent = false) {
+      const msg = permanent ? 'Bu etkinliği TÜM verileriyle birlikte KALICI olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.' : 'Bu etkinliği iptal etmek istediğinize emin misiniz?';
+      if (!confirm(msg)) return;
+      fetch('/api/events/' + id + (permanent ? '?permanent=true' : ''), {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer ' + getToken() }
       })
-      .then(function(r){ return r.json(); })
-      .then(function(d){ showToast(d.message); loadMyEvents(); })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        alert(res.message);
+        loadMyEvents();
+      })
       .catch(function(){ showToast('Hata olustu.', 'error'); });
     }
 

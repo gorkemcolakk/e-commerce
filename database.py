@@ -102,6 +102,11 @@ def init_db():
         pass
     
     try:
+        c.execute('ALTER TABLE events ADD COLUMN cancelled_by TEXT')
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
         c.execute("ALTER TABLE tickets ADD COLUMN owner_name TEXT")
     except sqlite3.OperationalError:
         pass  # Column already exists
