@@ -96,13 +96,17 @@
 
         <!-- Map Section -->
         <h3 style="margin-top:40px;color:var(--text);margin-bottom:16px;">Konum</h3>
-        <div id="mapContainer" style="position:relative;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-color);">
-          <div style="background:#1a1a2e;height:280px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-            <p id="mapLocText" style="color:var(--text-muted);font-size:0.95rem;text-align:center;padding:0 20px;"></p>
-            <a id="mapsLink" href="#" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:0.875rem;gap:6px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-              Google Maps'te Aç
+        <div id="mapContainer" style="position:relative;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-color);height:280px;background:#1a1a2e;">
+          <!-- Live Interactive Map with Dark Mode Filter -->
+          <iframe id="mapIframe" width="100%" height="100%" style="border:0; filter: invert(92%) hue-rotate(180deg) brightness(85%) contrast(1.2);" allowfullscreen="" loading="lazy" src=""></iframe>
+          
+          <div style="position:absolute; bottom:0; left:0; width:100%; padding:20px 20px 16px; background:linear-gradient(to top, rgba(9,9,15,0.95), transparent); display:flex; justify-content:space-between; align-items:flex-end; pointer-events:none;">
+            <div style="flex:1; padding-right:16px;">
+              <p id="mapLocText" style="color:#fff;font-weight:600;font-size:0.95rem;text-shadow:0 2px 4px rgba(0,0,0,0.8);"></p>
+            </div>
+            <a id="mapsLink" href="#" target="_blank" rel="noopener" class="btn btn-outline" style="font-size:0.85rem;padding:8px 16px;gap:6px;background:rgba(255,255,255,0.1);backdrop-filter:blur(4px);pointer-events:auto;color:#fff;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              Haritada Aç
             </a>
           </div>
         </div>
@@ -280,12 +284,13 @@
         document.getElementById('d-date').textContent = formatDate(event.date);
         document.getElementById('d-loc').textContent = event.location;
 
-        // Google Maps link
+        // Google Maps link & Live Iframe
         const mapsQuery = encodeURIComponent(event.location);
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
         document.getElementById('d-loc-link').href = mapsUrl;
         document.getElementById('mapsLink').href = mapsUrl;
         document.getElementById('mapLocText').textContent = event.location;
+        document.getElementById('mapIframe').src = `https://maps.google.com/maps?q=${mapsQuery}&t=m&z=15&ie=UTF8&iwloc=&output=embed`;
 
         // Price
         document.getElementById('d-price').textContent = event.price.toLocaleString('tr-TR') + ' ₺';
