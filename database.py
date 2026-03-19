@@ -1,13 +1,97 @@
-import sqlite3
 import os
+import sqlite3
+from dotenv import load_dotenv
+
+load_dotenv()
+
+TURSO_DB_URL = os.getenv('TURSO_DB_URL')
+if TURSO_DB_URL and TURSO_DB_URL.startswith('libsql://'):
+    TURSO_DB_URL = TURSO_DB_URL.replace('libsql://', 'https://')
+TURSO_AUTH_TOKEN = os.getenv('TURSO_AUTH_TOKEN')
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
 
+USING_TURSO = False
+try:
+    if TURSO_DB_URL and TURSO_AUTH_TOKEN:
+        import libsql_client
+        _client = libsql_client.create_client_sync(url=TURSO_DB_URL, auth_token=TURSO_AUTH_TOKEN)
+        USING_TURSO = True
+except Exception as e:
+    print("Turso init_db error:", e)
+
+class TursoRowFakeDict:
+    def __init__(self, libsql_row, columns):
+        self._row = libsql_row
+        self._columns = columns
+        
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            try:
+                idx = self._columns.index(key)
+                return self._row[idx]
+            except ValueError:
+                raise KeyError(key)
+        return self._row[key]
+        
+    def keys(self):
+        return self._columns
+
+class TursoCursor:
+    def __init__(self):
+        self._result = None
+        self.lastrowid = None
+        
+    def execute(self, sql, parameters=()):
+        args = list(parameters) if parameters else []
+        try:
+            self._result = _client.execute(sql, args)
+            if hasattr(self._result, 'rows_affected') and self._result.rows_affected > 0:
+                self.lastrowid = self._result.last_insert_rowid
+        except Exception as e:
+            # SQLite taklidi yapıp hatayı sqlite3 bekleyen try-catch lere gönderiyoruz
+            raise sqlite3.OperationalError(str(e))
+        return self
+        
+    def fetchone(self):
+        if self._result and len(self._result.rows) > 0:
+            return TursoRowFakeDict(self._result.rows[0], self._result.columns)
+        return None
+        
+    def fetchall(self):
+        if self._result and self._result.rows:
+            return [TursoRowFakeDict(r, self._result.columns) for r in self._result.rows]
+        return []
+        
+    def close(self):
+        pass
+
+class TursoConnection:
+    def __init__(self):
+        self.row_factory = sqlite3.Row  # Fake property to pass validation
+        
+    def cursor(self):
+        return TursoCursor()
+        
+    def execute(self, sql, parameters=()):
+        cur = self.cursor()
+        cur.execute(sql, parameters)
+        return cur
+        
+    def commit(self):
+        pass
+        
+    def close(self):
+        pass
+
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    if USING_TURSO:
+        return TursoConnection()
+    else:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
+        return conn
 
 def init_db():
     conn = get_db_connection()
