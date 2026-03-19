@@ -7,7 +7,83 @@
   <link rel="stylesheet" href="./styles/main.css">
   <link rel="stylesheet" href="./styles/components.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
+    /* Hidden Ticket Template for PDF Generation */
+    #hiddenTicketTemplate {
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      width: 595px; /* A4 width in pixels roughly at 72dpi, but html2pdf handles this */
+      background: white;
+      color: black;
+      font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    .pdf-ticket {
+      width: 100%;
+      padding: 0;
+      margin-bottom: 20px;
+      background: white;
+    }
+    .pdf-header {
+      background: linear-gradient(135deg, #5a19a0, #8b5cf6);
+      padding: 30px 40px;
+      color: white;
+    }
+    .pdf-logo {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+    .pdf-body {
+      padding: 40px;
+    }
+    .pdf-title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #f3f4f6;
+      padding-bottom: 15px;
+      color: #111;
+    }
+    .pdf-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 200px;
+      gap: 30px;
+    }
+    .pdf-field {
+      margin-bottom: 20px;
+    }
+    .pdf-label {
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .pdf-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111;
+    }
+    .pdf-qr-box {
+      border: 1px solid #e5e7eb;
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .pdf-qr-img {
+      width: 170px;
+      height: 170px;
+    }
+    .pdf-footer {
+      background: #f9fafb;
+      padding: 20px;
+      text-align: center;
+      font-size: 10px;
+      color: #9ca3af;
+      border-top: 1px dashed #e5e7eb;
+    }
     .checkout-page {
       padding: 100px 0 60px;
       min-height: calc(100vh - 80px);
@@ -307,8 +383,9 @@
       <div class="step-indicator">
         <div class="step active" id="dot-1">1</div>
         <div class="step" id="dot-attendee" style="display:none;">👤</div>
-        <div class="step" id="dot-2">2</div>
-        <div class="step" id="dot-3">3</div>
+        <div class="step" id="dot-summary">📋</div>
+        <div class="step" id="dot-2">💳</div>
+        <div class="step" id="dot-3">✓</div>
       </div>
 
       <div class="glass-panel" style="position: relative; overflow: hidden;">
@@ -413,7 +490,120 @@
           </div>
           <div class="checkout-actions">
             <button class="btn btn-outline" onclick="showStep(1)">Geri</button>
-            <button class="btn btn-primary" id="goStep2FromAttendees">Ödeme Adımına Geç &rarr;</button>
+            <button class="btn btn-primary" id="goStep2FromAttendees">Sipariş Özetine Geç &rarr;</button>
+          </div>
+        </div>
+
+        <!-- STEP - SUMMARY: Sipariş Özeti & Sözleşmeler -->
+        <div class="checkout-panel" id="step-summary">
+          <h2 style="margin-bottom: 6px; font-size: 1.5rem;">📋 Sipariş Özeti</h2>
+          <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:20px;">Lütfen bilgilerinizi kontrol edin ve sözleşmeleri onaylayın.</p>
+
+          <!-- Etkinlik Bilgileri -->
+          <div class="summary-box" style="margin-bottom:16px;">
+            <h4 style="margin:0 0 14px; color:var(--accent-purple); font-size:0.95rem; display:flex; align-items:center; gap:8px;">
+              🎭 Etkinlik Bilgileri
+            </h4>
+            <div id="summaryEventInfo" style="display:grid; grid-template-columns:1fr 1fr; gap:10px 20px; font-size:0.9rem;"></div>
+          </div>
+
+          <!-- Bilet Sahipleri -->
+          <div class="summary-box" style="margin-bottom:16px;">
+            <h4 style="margin:0 0 14px; color:var(--accent-purple); font-size:0.95rem; display:flex; align-items:center; gap:8px;">
+              👥 Bilet Sahipleri
+            </h4>
+            <div id="summaryTicketHolders" style="display:flex; flex-direction:column; gap:10px;"></div>
+          </div>
+
+          <!-- Fiyat Özeti -->
+          <div class="summary-box" style="margin-bottom:20px;">
+            <h4 style="margin:0 0 14px; color:var(--accent-purple); font-size:0.95rem; display:flex; align-items:center; gap:8px;">
+              💰 Ödeme Detayları
+            </h4>
+            <div id="summaryPriceBreakdown" style="font-size:0.9rem;"></div>
+          </div>
+
+          <!-- Sözleşmeler -->
+          <div style="background:linear-gradient(135deg, rgba(139,92,246,0.06), rgba(45,212,191,0.03)); border:1px solid rgba(139,92,246,0.2); border-radius:16px; padding:24px; margin-bottom:20px; position:relative; overflow:hidden;">
+            <!-- Üst başlık -->
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.08);">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:36px; height:36px; background:linear-gradient(135deg, var(--accent-purple), #ec4899); border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div>
+                  <h4 style="margin:0; color:white; font-size:1rem; font-weight:700;">Yasal Bildirimler</h4>
+                  <p style="margin:0; color:var(--text-muted); font-size:0.72rem;">Devam etmek için tüm maddeleri onaylamanız gerekmektedir.</p>
+                </div>
+              </div>
+              <span style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:0.78rem; color:var(--accent-teal); font-weight:600; padding:6px 12px; border-radius:8px; border:1px solid rgba(45,212,191,0.2); background:rgba(45,212,191,0.05); transition:all 0.2s;"
+                     onmouseover="this.style.background='rgba(45,212,191,0.15)'" onmouseout="this.style.background='rgba(45,212,191,0.05)'"
+                     onclick="var c=!document.getElementById('agreeSales').checked; document.getElementById('agreeSales').checked=c; document.getElementById('agreePrivacy').checked=c; document.getElementById('agreeRules').checked=c;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Tümünü Onayla
+              </span>
+            </div>
+            
+            <!-- Madde 1 -->
+            <label style="display:flex; align-items:flex-start; gap:14px; cursor:pointer; margin-bottom:12px; padding:14px 16px; border-radius:12px; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.06); transition:all 0.25s ease;" 
+                   onmouseover="this.style.borderColor='rgba(139,92,246,0.35)'; this.style.background='rgba(139,92,246,0.06)'" 
+                   onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'; this.style.background='rgba(0,0,0,0.25)'">
+              <input type="checkbox" id="agreeSales" style="margin-top:2px; accent-color:var(--accent-purple); width:18px; height:18px; flex-shrink:0;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                  <span style="background:rgba(139,92,246,0.15); color:var(--accent-purple); padding:2px 8px; border-radius:6px; font-size:0.68rem; font-weight:700; letter-spacing:0.5px;">MADDE 1</span>
+                  <strong style="color:white; font-size:0.88rem;">Mesafeli Satis Sözlesmesi</strong>
+                </div>
+                <span style="color:var(--text-muted); font-size:0.8rem; line-height:1.6; display:block;">
+                  6502 sayili Tüketicinin Korunmasi Hakkinda Kanun ve Mesafeli Sözlesmeler Yönetmeligi kapsaminda isbu sözlesmeyi okudum, anladim ve kabul ediyorum. Satin alinan biletlerin, etkinlik organizatörü tarafindan iptal edilmedigi sürece iade edilemeyecegini biliyorum.
+                </span>
+              </div>
+            </label>
+
+            <!-- Madde 2 -->
+            <label style="display:flex; align-items:flex-start; gap:14px; cursor:pointer; margin-bottom:12px; padding:14px 16px; border-radius:12px; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.06); transition:all 0.25s ease;"
+                   onmouseover="this.style.borderColor='rgba(139,92,246,0.35)'; this.style.background='rgba(139,92,246,0.06)'" 
+                   onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'; this.style.background='rgba(0,0,0,0.25)'">
+              <input type="checkbox" id="agreePrivacy" style="margin-top:2px; accent-color:var(--accent-purple); width:18px; height:18px; flex-shrink:0;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                  <span style="background:rgba(139,92,246,0.15); color:var(--accent-purple); padding:2px 8px; border-radius:6px; font-size:0.68rem; font-weight:700; letter-spacing:0.5px;">MADDE 2</span>
+                  <strong style="color:white; font-size:0.88rem;">KVKK & Gizlilik Politikasi</strong>
+                </div>
+                <span style="color:var(--text-muted); font-size:0.8rem; line-height:1.6; display:block;">
+                  6698 sayili Kisisel Verilerin Korunmasi Kanunu kapsaminda hazirlanan Aydinlatma Metni'ni ve Gizlilik Politikasi'ni okudum. Kisisel verilerimin (ad, soyad, e-posta, ödeme bilgileri) bilet satis islemleri ve yasal yükümlülükler çerçevesinde islenmesine onay veriyorum.
+                </span>
+              </div>
+            </label>
+
+            <!-- Madde 3 -->
+            <label style="display:flex; align-items:flex-start; gap:14px; cursor:pointer; padding:14px 16px; border-radius:12px; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.06); transition:all 0.25s ease;"
+                   onmouseover="this.style.borderColor='rgba(139,92,246,0.35)'; this.style.background='rgba(139,92,246,0.06)'" 
+                   onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'; this.style.background='rgba(0,0,0,0.25)'">
+              <input type="checkbox" id="agreeRules" style="margin-top:2px; accent-color:var(--accent-purple); width:18px; height:18px; flex-shrink:0;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                  <span style="background:rgba(139,92,246,0.15); color:var(--accent-purple); padding:2px 8px; border-radius:6px; font-size:0.68rem; font-weight:700; letter-spacing:0.5px;">MADDE 3</span>
+                  <strong style="color:white; font-size:0.88rem;">Etkinlik Katilim Kosullari</strong>
+                </div>
+                <span style="color:var(--text-muted); font-size:0.8rem; line-height:1.6; display:block;">
+                  Etkinlik alanina giriste QR kodlu e-biletimi ibraz edecegimi, organizatörün güvenlik gerekçesiyle kimlik kontrolü yapabilecegini ve etkinlik kurallarina uyacagimi kabul ve taahhüt ediyorum.
+                </span>
+              </div>
+            </label>
+
+            <!-- Alt bilgi -->
+            <div style="display:flex; align-items:center; gap:8px; margin-top:16px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.06);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <p style="margin:0; color:var(--text-muted); font-size:0.72rem; line-height:1.4;">
+                Bu sözlesmeler 6502 sayili Tüketicinin Korunmasi Hakkinda Kanun ve 6698 sayili KVKK kapsaminda düzenlenmistir. Eventix Biletleme Platformu © 2026
+              </p>
+            </div>
+          </div>
+
+          <div class="checkout-actions">
+            <button class="btn btn-outline" onclick="showStep('attendees')">← Geri</button>
+            <button class="btn btn-primary" id="goPaymentFromSummary">Ödemeye Geç 💳</button>
           </div>
         </div>
 
@@ -458,7 +648,7 @@
              </p>
 
             <div class="checkout-actions">
-              <button type="button" class="btn btn-outline" onclick="showStep(1)">Geri</button>
+              <button type="button" class="btn btn-outline" onclick="showStep('summary')">Geri</button>
               <button type="submit" class="btn btn-primary" id="payBtn">Ödemeyi Tamamla 🔒</button>
             </div>
           </form>
@@ -495,6 +685,57 @@
 
     </div>
   </main>
+  
+  <!-- Hidden Ticket Template for PDF Generation -->
+  <div id="hiddenTicketTemplate">
+    <div class="pdf-ticket">
+      <div class="pdf-header">
+        <div class="pdf-logo">EVENT <span style="color:#fcd34d;">İX</span></div>
+        <div style="font-size:10px; margin-top:5px; opacity:0.9; font-weight:600;">RESMİ E-BİLET & KONFİRMASYON</div>
+      </div>
+      <div class="pdf-body">
+        <div class="pdf-title" id="pdfEventTitle">Etkinlik Adı</div>
+        <div class="pdf-info-grid">
+          <div>
+            <div class="pdf-field">
+              <div class="pdf-label">Tarih & Saat</div>
+              <div class="pdf-value" id="pdfEventDate">...</div>
+            </div>
+            <div class="pdf-field">
+              <div class="pdf-label">Konum</div>
+              <div class="pdf-value" id="pdfEventLocation">...</div>
+            </div>
+            <div class="pdf-field">
+              <div class="pdf-label">Katılımcı</div>
+              <div class="pdf-value" id="pdfAttendeeName">...</div>
+            </div>
+            <div class="pdf-field" id="pdfSeatField" style="display:none;">
+              <div class="pdf-label">Koltuk</div>
+              <div class="pdf-value" id="pdfSeatInfo">-</div>
+            </div>
+            <div class="pdf-field">
+              <div class="pdf-label">Fiyat</div>
+              <div class="pdf-value" id="pdfTicketPrice">...</div>
+            </div>
+          </div>
+          <div class="pdf-qr-box">
+            <img src="" id="pdfQrImage" class="pdf-qr-img" alt="QR Kod">
+            <div class="pdf-label" style="margin-top:10px;">Bilet Kodu</div>
+            <div style="font-family:monospace; font-weight:700; font-size:14px; letter-spacing:1px;" id="pdfTicketKey">XXXX-XXXX-XXXX</div>
+          </div>
+        </div>
+        
+        <div style="margin-top:40px; padding:20px; background:#f5f3ff; border-radius:12px; border:1px solid #ddd; text-align:center;">
+           <span style="display:block; font-size:10px; color:#7c3aed; font-weight:700; margin-bottom:5px;">ÖNEMLİ NOT</span>
+           <span style="font-size:12px; color:#4b5563;">Bu bilet kişiye özeldir. Lütfen girişteki görevliye QR kodu okutunuz.</span>
+        </div>
+      </div>
+      <div class="pdf-footer">
+        Bu belge EVENTİX Biletleme Platformu tarafından otomatik olarak oluşturulmuştur. 
+        Sahteciliğe karşı korunmaktadır. © 2026
+      </div>
+    </div>
+  </div>
 
   <script src="./scripts/auth.js"></script>
   <script>
@@ -823,6 +1064,7 @@
         'guest':  'step-guest',
         1: 'step-1',
         'attendees': 'step-attendees',
+        'summary': 'step-summary',
         2: 'step-2',
         3: 'step-3'
       };
@@ -832,7 +1074,7 @@
       if (panelId) document.getElementById(panelId).classList.add('active');
 
       // Width control
-      if (s === 'attendees' || s === 2 || s === 3) {
+      if (s === 'attendees' || s === 'summary' || s === 2 || s === 3) {
           container.classList.remove('wide');
           container.classList.add('medium');
       } else if (s === 1) {
@@ -855,10 +1097,16 @@
           document.getElementById('dot-1').classList.add('completed');
           document.getElementById('dot-attendee').style.display = 'inline-flex';
           document.getElementById('dot-attendee').classList.add('active');
+      } else if (s === 'summary') {
+          document.getElementById('dot-1').classList.add('completed');
+          document.getElementById('dot-attendee').style.display = 'inline-flex';
+          document.getElementById('dot-attendee').classList.add('completed');
+          document.getElementById('dot-summary').classList.add('active');
       } else if (s === 2) {
           document.getElementById('dot-1').classList.add('completed');
           document.getElementById('dot-attendee').style.display = 'inline-flex';
           document.getElementById('dot-attendee').classList.add('completed');
+          document.getElementById('dot-summary').classList.add('completed');
           document.getElementById('dot-2').classList.add('active');
       } else if (s === 3) {
           document.querySelectorAll('.step').forEach(d => d.classList.add('completed'));
@@ -927,7 +1175,116 @@
            alert("Lütfen tüm bilet sahipleri için ad ve soyad bilgilerini eksiksiz girin.");
            return;
        }
-       showStep(2);
+       populateOrderSummary();
+       showStep('summary');
+    });
+
+    function populateOrderSummary() {
+      // --- Tarih formatlama ---
+      const fDate = ds => {
+        try {
+          const d = new Date(ds);
+          if(isNaN(d)) return ds;
+          return d.toLocaleDateString("tr-TR", {day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'});
+        } catch { return ds; }
+      };
+
+      // --- Etkinlik Bilgileri ---
+      const eventInfoEl = document.getElementById('summaryEventInfo');
+      eventInfoEl.innerHTML = `
+        <div><span style="color:var(--text-muted);">Etkinlik</span><br><strong style="color:white;">${evData.title}</strong></div>
+        <div><span style="color:var(--text-muted);">Tarih & Saat</span><br><strong style="color:white;">${fDate(evData.date)}</strong></div>
+        <div><span style="color:var(--text-muted);">Konum</span><br><strong style="color:white;">${evData.location}</strong></div>
+        <div><span style="color:var(--text-muted);">Bilet Adedi</span><br><strong style="color:white;">${evData.has_seating ? selectedSeats.length : (parseInt(document.getElementById('ticketQuantity').value) || 1)} Adet</strong></div>
+      `;
+
+      // --- Bilet Sahipleri ---
+      const holdersEl = document.getElementById('summaryTicketHolders');
+      holdersEl.innerHTML = '';
+      const forms = document.querySelectorAll('.attendee-form');
+      forms.forEach((f, i) => {
+        const name = f.querySelector('.attendee-name').value.trim();
+        const surname = f.querySelector('.attendee-surname').value.trim();
+        let seatInfo = '';
+        if (evData.has_seating && selectedSeats[i]) {
+          const seat = selectedSeats[i];
+          seatInfo = `<span style="background:rgba(139,92,246,0.15); color:var(--accent-purple); padding:3px 10px; border-radius:20px; font-size:0.78rem; font-weight:600;">${seat.zone} ${seat.row_label}-${seat.col_label}</span>`;
+        }
+        holdersEl.innerHTML += `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:rgba(0,0,0,0.2); border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="background:var(--accent-purple); color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700;">${i+1}</span>
+              <span style="color:white; font-weight:500;">${name} ${surname}</span>
+            </div>
+            ${seatInfo}
+          </div>
+        `;
+      });
+
+      // --- Fiyat Ozeti ---
+      const priceEl = document.getElementById('summaryPriceBreakdown');
+      let q, totalValue;
+      if (evData.has_seating) {
+        q = selectedSeats.length;
+        totalValue = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+      } else {
+        q = parseInt(document.getElementById('ticketQuantity').value) || 1;
+        totalValue = evData.price * q;
+      }
+
+      let priceHTML = `
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:var(--text-muted);">
+          <span>${q} x Bilet</span>
+          <span>${totalValue.toLocaleString('tr-TR')} TL</span>
+        </div>
+      `;
+
+      let finalVal = totalValue;
+      if (currentDiscount.type === 'percentage') {
+        const discAmt = Math.floor(finalVal * currentDiscount.value / 100);
+        finalVal -= discAmt;
+        priceHTML += `
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:#6ee7b7;">
+            <span>İndirim (%${currentDiscount.value})</span>
+            <span>-${discAmt.toLocaleString('tr-TR')} TL</span>
+          </div>
+        `;
+      } else if (currentDiscount.type === 'fixed') {
+        finalVal -= currentDiscount.value;
+        priceHTML += `
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:#6ee7b7;">
+            <span>İndirim</span>
+            <span>-${currentDiscount.value.toLocaleString('tr-TR')} TL</span>
+          </div>
+        `;
+      }
+      if (finalVal < 0) finalVal = 0;
+
+      priceHTML += `
+        <div style="display:flex; justify-content:space-between; border-top:1px solid rgba(255,255,255,0.1); padding-top:12px; margin-top:8px;">
+          <span style="color:white; font-weight:700; font-size:1.1rem;">Toplam</span>
+          <span style="color:var(--accent-teal); font-weight:800; font-size:1.2rem;">${finalVal.toLocaleString('tr-TR')} TL</span>
+        </div>
+      `;
+      priceEl.innerHTML = priceHTML;
+
+      // Reset checkboxes
+      document.getElementById('agreeSales').checked = false;
+      document.getElementById('agreePrivacy').checked = false;
+      document.getElementById('agreeRules').checked = false;
+    }
+
+    // --- Summary -> Payment ---
+    document.getElementById('goPaymentFromSummary').addEventListener('click', () => {
+      const c1 = document.getElementById('agreeSales').checked;
+      const c2 = document.getElementById('agreePrivacy').checked;
+      const c3 = document.getElementById('agreeRules').checked;
+
+      if (!c1 || !c2 || !c3) {
+        alert('Devam etmek için lütfen tüm sözleşmeleri okuyup onaylayın.');
+        return;
+      }
+      showStep(2);
     });
 
     // Payment Logic
@@ -1048,135 +1405,138 @@
     });
 
     // ─── PDF Generation ──────────────────────────────────
-    function buildTicketPDF(tickets) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const pageW = doc.internal.pageSize.getWidth();
-      const pageH = doc.internal.pageSize.getHeight();
+    // ─── PDF Generation (Bulletproof Raw HTML String Method) ───
+    const generateTicketHTML = (ticket) => {
+      const fDate = ds => {
+        try {
+          const d = new Date(ds);
+          if (isNaN(d)) return ds;
+          return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        } catch { return ds; }
+      };
+      
+      const oTitle = ticket.eventTitle || ticket.title || 'Etkinlik';
+      const oDate = fDate(ticket.eventDate || ticket.date);
+      const oLoc = ticket.eventLocation || ticket.location || '-';
+      
+      let oName = 'Standart';
+      if(ticket.name && ticket.surname) oName = ticket.name + ' ' + ticket.surname;
+      else if(ticket.owner_name && ticket.owner_surname) oName = ticket.owner_name + ' ' + ticket.owner_surname;
+      else if(ticket.owner_name) oName = ticket.owner_name;
 
-      tickets.forEach((ticket, i) => {
-        if (i > 0) doc.addPage();
+      const oPrice = ticket.price ? ticket.price.toLocaleString('tr-TR') : (ticket.total_price ? ticket.total_price.toLocaleString('tr-TR') : '0');
+      
+      let oSeatDisp = 'none';
+      let oSeatVal = '-';
+      if (ticket.seat_info) { oSeatDisp = 'block'; oSeatVal = ticket.seat_info; }
+      else if (ticket.zone) { oSeatDisp = 'block'; oSeatVal = `${ticket.zone} ${ticket.row_label}-${ticket.col_label}`; }
 
-        // Purple gradient header (simulated with rect)
-        doc.setFillColor(90, 25, 160);
-        doc.rect(0, 0, pageW, 40, 'F');
-        doc.setFillColor(139, 92, 246);
-        doc.rect(0, 33, pageW, 8, 'F');
+      let qrSrc = ticket.qr_code || '';
+      if (qrSrc && !qrSrc.startsWith('data:')) {
+        qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrSrc)}`;
+      }
 
-        // Logo text
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.setFont('helvetica', 'bold');
-        doc.text('EVENT', 20, 20);
-        doc.setTextColor(252, 211, 77);
-        doc.text('İX', 49, 20);
+      return `
+        <div style="width: 595px; background: white; color: black; font-family: 'Inter', 'Segoe UI', Arial, sans-serif; padding: 0; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #5a19a0, #8b5cf6); padding: 30px 40px; color: white;">
+            <div style="font-size: 28px; font-weight: 800; letter-spacing: 1px;">EVENT <span style="color:#fcd34d;">İX</span></div>
+            <div style="font-size:10px; margin-top:5px; opacity:0.9; font-weight:600;">RESMİ E-BİLET & KONFİRMASYON</div>
+          </div>
+          <div style="padding: 40px;">
+            <div style="font-size: 24px; font-weight: 800; margin-bottom: 30px; border-bottom: 2px solid #f3f4f6; padding-bottom: 15px; color: #111;">
+              ${oTitle}
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 30px;">
+              <div style="flex: 1;">
+                <div style="margin-bottom: 20px;">
+                  <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Tarih & Saat</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #111;">${oDate}</div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                  <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Konum</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #111;">${oLoc}</div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                  <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Katılımcı</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #111;">${oName}</div>
+                </div>
+                <div style="margin-bottom: 20px; display: ${oSeatDisp};">
+                  <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Koltuk</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #111;">${oSeatVal}</div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                  <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Fiyat</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #111;">${oPrice} ₺</div>
+                </div>
+              </div>
+              <div style="border: 1px solid #e5e7eb; padding: 15px; border-radius: 12px; text-align: center; width: 170px; height: 230px;">
+                <img src="${qrSrc}" alt="QR Kod" style="width: 170px; height: 170px; display: block; margin: 0 auto; object-fit: contain;">
+                <div style="margin-top:10px; font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: 700;">Bilet Kodu</div>
+                <div style="font-family:monospace; font-weight:700; font-size:14px; letter-spacing:1px; color: #111; margin-top: 5px;">${ticket.ticket_key}</div>
+              </div>
+            </div>
+            
+            <div style="margin-top:40px; padding:20px; background:#f5f3ff; border-radius:12px; border:1px solid #ddd; text-align:center;">
+               <span style="display:block; font-size:10px; color:#7c3aed; font-weight:700; margin-bottom:5px;">ÖNEMLİ NOT</span>
+               <span style="font-size:12px; color:#4b5563;">Bu bilet kişiye özeldir. Lütfen girişteki görevliye QR kodu okutunuz.</span>
+            </div>
+          </div>
+          <div style="background: #f9fafb; padding: 20px; text-align: center; font-size: 10px; color: #9ca3af; border-top: 1px dashed #e5e7eb;">
+            Bu belge EVENTİX Biletleme Platformu tarafından otomatik olarak oluşturulmuştur.<br>Sahteciliğe karşı korunmaktadır. © 2026
+          </div>
+        </div>
+      `;
+    };
 
-        // "E-BİLET" badge
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('RESMI E-BİLET', 20, 30);
-
-        // Event title
-        doc.setTextColor(30, 30, 30);
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
-        const titleLines = doc.splitTextToSize(ticket.eventTitle || 'Etkinlik', pageW - 40);
-        doc.text(titleLines, 20, 58);
-
-        // Divider
-        doc.setDrawColor(200, 200, 200);
-        doc.line(20, 68, pageW - 20, 68);
-
-        // Info fields
-        const infoY = 76;
-        const labelColor = [120, 120, 140];
-        const valueColor = [20, 20, 20];
-
-        const fDate = ds => {
-          try {
-            const d = new Date(ds);
-            if (isNaN(d)) return ds;
-            return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-          } catch { return ds; }
-        };
-
-        const fields = [
-          ['📅  Tarih', fDate(ticket.eventDate)],
-          ['📍  Konum', ticket.eventLocation || '-'],
-          ['👤  Katılımcı', `${ticket.name || ''} ${ticket.surname || ''}`],
-          ['💳  Fiyat', ticket.price ? ticket.price.toLocaleString('tr-TR') + ' ₺' : '-'],
-        ];
-
-        fields.forEach(([label, value], fi) => {
-          const y = infoY + fi * 14;
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(...labelColor);
-          doc.text(label, 20, y);
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(...valueColor);
-          doc.text(value, 20, y + 5.5);
-        });
-
-        // QR code
-        const qrSize = 70;
-        const qrX = pageW - qrSize - 20;
-        const qrY = infoY - 8;
-        doc.setDrawColor(230, 230, 230);
-        doc.setFillColor(255, 255, 255);
-        doc.roundedRect(qrX - 4, qrY - 4, qrSize + 8, qrSize + 18, 3, 3, 'FD');
-        doc.addImage(ticket.qr_code, 'PNG', qrX, qrY, qrSize, qrSize);
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100, 100, 120);
-        doc.text(ticket.ticket_key, qrX + qrSize / 2, qrY + qrSize + 11, { align: 'center' });
-
-        // Dashed separator line (ticket stub style)
-        doc.setDrawColor(180, 180, 200);
-        doc.setLineDash([2, 2]);
-        doc.line(20, infoY + 58, pageW - 20, infoY + 58);
-        doc.setLineDash([]);
-
-        // Ticket key bar
-        doc.setFillColor(245, 243, 255);
-        doc.roundedRect(20, infoY + 62, pageW - 40, 20, 3, 3, 'F');
-        doc.setFontSize(9);
-        doc.setTextColor(100, 80, 160);
-        doc.setFont('helvetica', 'normal');
-        doc.text('BİLET KODU', pageW / 2, infoY + 70, { align: 'center' });
-        doc.setFontSize(14);
-        doc.setFont('courier', 'bold');
-        doc.setTextColor(90, 25, 160);
-        doc.text(ticket.ticket_key, pageW / 2, infoY + 79, { align: 'center' });
-
-        // Footer
-        doc.setFillColor(245, 243, 255);
-        doc.rect(0, pageH - 20, pageW, 20, 'F');
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(130, 100, 200);
-        doc.text('Bu bilet EVENTİX platformu tarafından oluşturulmuştur. Sahte biletlere karşı kriptografik imza korumalıdır.', pageW / 2, pageH - 9, { align: 'center' });
-      });
-
-      return doc;
-    }
-
-    function downloadAllTicketsPDF() {
-      const tickets = window._purchasedTickets;
-      if (!tickets || tickets.length === 0) return;
-      const doc = buildTicketPDF(tickets);
-      const safeName = (tickets[0].eventTitle || 'Biletlerim').replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ ]/g, '').trim();
-      doc.save(`Eventix_Biletler_${safeName}.pdf`);
-    }
-
-    function downloadSingleTicketPDF(index) {
+    async function downloadSingleTicketPDF(index) {
       const tickets = window._purchasedTickets;
       if (!tickets || !tickets[index]) return;
-      const doc = buildTicketPDF([tickets[index]]);
-      const t = tickets[index];
-      doc.save(`Eventix_${t.name}_${t.surname}_${t.ticket_key}.pdf`);
+      
+      const ticket = tickets[index];
+      const htmlStr = generateTicketHTML(ticket);
+      
+      const opt = {
+        margin:       0,
+        filename:     `Eventix_${ticket.name}_${ticket.surname}_${ticket.ticket_key}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, letterRendering: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      try {
+        await html2pdf().set(opt).from(htmlStr).save();
+      } catch (err) {
+        console.error('PDF error:', err);
+        alert('PDF oluşturulurken bir hata oluştu.');
+      }
+    }
+
+    async function downloadAllTicketsPDF() {
+      const tickets = window._purchasedTickets;
+      if (!tickets || tickets.length === 0) return;
+
+      let combinedHtml = '<div style="background:white;width:595px;margin:0 auto;">';
+      for (let i = 0; i < tickets.length; i++) {
+        if (i > 0) combinedHtml += '<div class="html2pdf__page-break"></div>';
+        combinedHtml += generateTicketHTML(tickets[i]);
+      }
+      combinedHtml += '</div>';
+
+      const safeName = (tickets[0].eventTitle || 'Biletlerim').replace(/[^a-zA-Z0-9 ]/g, '').trim();
+      const opt = {
+        margin:       0,
+        filename:     `Eventix_Biletler_${safeName}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, letterRendering: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      try {
+        await html2pdf().set(opt).from(combinedHtml).save();
+      } catch (err) {
+        console.error('PDF error:', err);
+        alert('PDF oluşturulurken bir hata oluştu.');
+      }
     }
   </script>
 </body>

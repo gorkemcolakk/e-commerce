@@ -90,6 +90,7 @@ def send_email(to_email: str, subject: str, message: str, html_message: str = No
                 outer['Subject'] = subject
                 outer['From'] = f"{from_name} <{smtp_username}>"
                 outer['To'] = to_email
+                outer['Reply-To'] = smtp_username
 
                 alt = MIMEMultipart('alternative')
                 alt.attach(MIMEText(message, 'plain'))
@@ -108,6 +109,7 @@ def send_email(to_email: str, subject: str, message: str, html_message: str = No
                 outer['Subject'] = subject
                 outer['From'] = f"{from_name} <{smtp_username}>"
                 outer['To'] = to_email
+                outer['Reply-To'] = smtp_username
                 outer.attach(MIMEText(message, 'plain'))
                 if html_message:
                     outer.attach(MIMEText(html_message, 'html'))
