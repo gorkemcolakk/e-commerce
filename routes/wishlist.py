@@ -9,15 +9,19 @@ wishlist_bp = Blueprint('wishlist', __name__, url_prefix='/api/wishlist')
 def get_wishlist():
     conn = get_db_connection()
     items = conn.execute('''
-        SELECT e.id, e.title, e.category, e.date, e.location, e.price, e.image,
-               e.featured, e.capacity, e.sold_count, e.status, e.description, e.lineup_json
+        SELECT e.* 
         FROM wishlist w
         JOIN events e ON w.event_id = e.id
         WHERE w.user_id = ?
         ORDER BY w.added_at DESC
     ''', (g.user['id'],)).fetchall()
     conn.close()
-    return jsonify([event_to_dict(e) for e in items]), 200
+    try:
+        data = [event_to_dict(e) for e in items]
+        return jsonify(data), 200
+    except Exception as e:
+        print(f"Wishlist mapping error: {e}")
+        return jsonify([]), 200 # Hata olsa bile bos liste dondur ki arayuz cokmesin
 
 @wishlist_bp.route('/<event_id>', methods=['POST'])
 @token_required

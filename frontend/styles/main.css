@@ -51,24 +51,24 @@
 
 /* ── LIGHT MODE ──────────────────────────────────────────── */
 [data-theme="light"] {
-  --bg-base:     #fafaf7;
-  --bg-surface:  #f3f2ed;
+  --bg-base:     #f8f7f2; /* Softer silk white */
+  --bg-surface:  #f0efea;
   --bg-card:     #ffffff;
-  --bg-hover:    #fafaf7;
-  --border:      rgba(0,0,0,0.09);
+  --bg-hover:    #f0efea;
+  --border:      rgba(0,0,0,0.12); /* Slightly clearer border */
   --border-hi:   rgba(217,119,6,0.5);
 
-  --gold:        #d97706;
-  --gold-dim:    #b45309;
-  --gold-glow:   rgba(217,119,6,0.15);
+  --gold:        #b45309; /* Slightly darker gold for light mode readability */
+  --gold-dim:    #92400e;
+  --gold-glow:   rgba(217,119,6,0.1);
 
-  --text:        #111118;
-  --text-sub:    #4b5563;
-  --text-muted:  #6b7280;
+  --text:        #1a1a24; /* Darker near-black */
+  --text-sub:    #374151; /* Deeper grey */
+  --text-muted:  #525a66; /* Much more readable muted text */
   --text-inv:    #ffffff;
 
-  --shadow:      0 8px 40px rgba(0,0,0,0.12);
-  --shadow-card: 0 2px 16px rgba(0,0,0,0.08);
+  --shadow:      0 8px 40px rgba(0,0,0,0.08);
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.05);
 
   --border-color: var(--border);
   --bg-card-alt: var(--bg-surface);

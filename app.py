@@ -3,7 +3,11 @@ load_dotenv()  # .env dosyasından SMTP ve diğer ayarları yükle
 
 from flask import Flask
 from flask_cors import CORS
-from utils import SECRET_KEY, limiter
+from utils import SECRET_KEY, limiter, send_birthday_emails
+import threading
+import time
+from datetime import datetime
+import os
 
 from routes.auth import auth_bp
 from routes.users import users_bp
@@ -46,7 +50,24 @@ def serve_static(path):
     except Exception:
         return app.send_static_file('index.html')
 
+def birthday_job():
+    """Arka planda sürekli çalışır ve saat tam 00:00 olduğunda mailleri gönderir."""
+    while True:
+        now = datetime.now()
+        if now.hour == 0 and now.minute == 0:
+            send_birthday_emails()
+            time.sleep(65) # Aynı dakika içinde tekrar tetiklenmesini önle
+        else:
+            time.sleep(30)
+
 if __name__ == '__main__':
     from database import init_db
     init_db()
+    
+    # Reload dev mekanizmasının çift thead başlatmasını önlemek için check koyuyoruz
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
+        t = threading.Thread(target=birthday_job, daemon=True)
+        t.start()
+        print(">>> Doğum Günü Arkaplan Servisi Başlatıldı (Tam 00:00'ı bekliyor)")
+        
     app.run(debug=True, port=5000)

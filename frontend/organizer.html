@@ -38,7 +38,7 @@
     .att-modal-header {
       display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; flex-shrink:0;
     }
-    .att-modal-title  { font-size:1.2rem; font-weight:700; color:white; }
+    .att-modal-title  { font-size:1.2rem; font-weight:700; color:var(--text); }
     .att-modal-sub    { font-size:.82rem; color:var(--text-muted); margin-top:2px; }
     .att-close-btn {
       background:rgba(255,255,255,0.08); border:none; color:var(--text-muted);
@@ -55,7 +55,7 @@
       background:rgba(255,255,255,0.04); border:1px solid var(--border);
       border-radius:10px; padding:10px 14px; text-align:center;
     }
-    .att-stat-val { font-size:1.4rem; font-weight:700; color:white; }
+    .att-stat-val { font-size:1.4rem; font-weight:700; color:var(--text); }
     .att-stat-lbl { font-size:.72rem; color:var(--text-muted); margin-top:2px; }
     .att-toolbar {
       display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; flex-shrink:0;
@@ -63,7 +63,7 @@
     .att-search {
       flex:1; min-width:180px; background:rgba(255,255,255,0.06);
       border:1px solid var(--border); border-radius:8px;
-      padding:8px 14px; color:white; font-size:.85rem;
+      padding:8px 14px; color:var(--text); font-size:.85rem;
     }
     .att-search::placeholder { color:var(--text-muted); }
     .att-table-wrap { overflow:auto; flex:1; border-radius:10px; border:1px solid var(--border); }
@@ -98,13 +98,13 @@
       <div class="dash-name" id="orgName">Organizatör</div>
       <div class="dash-role-badge">Organizatör</div>
       <nav class="dash-nav">
-        <button class="dash-nav-btn active" onclick="showTab('myevents',this)">Etkinliklerim</button>
-        <button class="dash-nav-btn" onclick="showTab('create',this)">+ Etkinlik Oluştur</button>
-        <button class="dash-nav-btn" onclick="showTab('revenue',this)">Gelir Raporu</button>
-        <button class="dash-nav-btn" onclick="showTab('promotions',this)">Promosyonlar</button>
-        <button class="dash-nav-btn" onclick="showTab('validate',this)">QR Doğrulama</button>
+        <button class="dash-nav-btn active" onclick="showTab('myevents',this)">🎪 Etkinliklerim</button>
+        <button class="dash-nav-btn" onclick="showTab('create',this)">➕ Etkinlik Oluştur</button>
+        <button class="dash-nav-btn" onclick="showTab('revenue',this)">💰 Gelir Raporu</button>
+        <button class="dash-nav-btn" onclick="showTab('promotions',this)">🎫 Promosyonlar</button>
+        <button class="dash-nav-btn" onclick="showTab('validate',this)">🔍 QR Doğrulama</button>
       </nav>
-      <button onclick="logout()" class="btn btn-danger" style="width:100%;justify-content:center;margin-top:auto;">Çıkış Yap</button>
+      <button onclick="logout()" class="btn btn-danger" style="width:100%;justify-content:center;margin-top:auto;padding:10px;">🚪 Çıkış Yap</button>
     </aside>
 
     <div class="dash-content">
@@ -125,19 +125,19 @@
           </div>
 
           <div style="margin-bottom: 24px;">
-            <label class="form-label" style="font-size:1.1rem; margin-bottom: 15px; color: white;">Bilet Tipi Seçimi</label>
+            <label class="form-label" style="font-size:1.1rem; margin-bottom: 15px; color: var(--text);">Bilet Tipi Seçimi</label>
             <div style="display: flex; gap: 15px;">
               <label style="flex:1; cursor:pointer;">
                 <input type="radio" name="ticket_type" value="standard" checked onchange="toggleSeating()" style="display:none;">
                 <div class="ticket-type-box glass-panel" style="padding:15px; text-align:center; border: 2px solid var(--accent-purple); border-radius:10px; transition: all 0.3s;" id="typeStandardBox">
-                  <div style="font-weight:bold; color:white; margin-bottom:5px;">Genel Giriş</div>
+                  <div style="font-weight:bold; color:var(--text); margin-bottom:5px;">Genel Giriş</div>
                   <div style="font-size:0.8rem; color:var(--text-muted);">Tek tip bilet havuzu oluşturur. (Ayakta / Numarasız)</div>
                 </div>
               </label>
               <label style="flex:1; cursor:pointer;">
                 <input type="radio" name="ticket_type" value="seated" onchange="toggleSeating()" style="display:none;">
                 <div class="ticket-type-box glass-panel" style="padding:15px; text-align:center; border: 2px solid transparent; border-radius:10px; transition: all 0.3s;" id="typeSeatedBox">
-                  <div style="font-weight:bold; color:white; margin-bottom:5px;">Koltuk Seçimli Seçimli</div>
+                  <div style="font-weight:bold; color:var(--text); margin-bottom:5px;">Koltuk Seçimli</div>
                   <div style="font-size:0.8rem; color:var(--text-muted);">Farklı blok ve fiyatlandırmalar ile numaralı koltuk planı.</div>
                 </div>
               </label>
@@ -210,7 +210,7 @@
               <input type="file" id="evSeatingImageFile" class="form-control" accept="image/*" style="padding:10px;">
               <p style="font-size:0.75rem; color:var(--text-muted); margin-top:5px;">Müşterilerin bilet alırken konumu daha iyi anlaması için sahne dizilim şeması ekleyebilirsiniz.</p>
             </div>
-            <h4 style="margin:0 0 10px; color:white; font-size: 0.95rem;">Oturma Planı Blokları</h4>
+            <h4 style="margin:0 0 10px; color:var(--text); font-size: 0.95rem;">Oturma Planı Blokları</h4>
             <div id="zonesContainer"></div>
             <div id="seatingSummaryText" style="margin:10px 0; font-size:0.85rem; color:var(--accent-teal); text-align:right;"></div>
             <button type="button" class="btn btn-outline" style="width:100%;font-size:0.85rem;" onclick="addZone()">+ Alan/Blok Ekle (Örn: VIP, Balkon)</button>
@@ -270,7 +270,7 @@
         <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
           <!-- Create Form -->
           <div class="glass-panel" style="flex:1;min-width:300px;padding:24px;">
-            <h3 style="margin:0 0 16px;color:white;font-size:1.1rem;">Yeni Kod Oluştur</h3>
+            <h3 style="margin:0 0 16px;color:var(--text);font-size:1.1rem;">Yeni Kod Oluştur</h3>
             <div style="margin-bottom:12px;">
               <label class="form-label">Etkinlik Seçin *</label>
               <select id="promoEvent" class="form-control"></select>
@@ -302,7 +302,7 @@
           
           <!-- List -->
           <div class="glass-panel" style="flex:2;min-width:400px;padding:24px;">
-            <h3 style="margin:0 0 16px;color:white;font-size:1.1rem;">Aktif Kodlar</h3>
+            <h3 style="margin:0 0 16px;color:var(--text);font-size:1.1rem;">Aktif Kodlar</h3>
             <div id="promoListContainer">
                <p class="loading-text">Yükleniyor...</p>
             </div>
@@ -336,6 +336,53 @@
             <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="useQR()">✅ Kullanıldı Say</button>
           </div>
           <div id="qrValidResult"></div>
+        </div>
+      </section>
+
+      <!-- PROFILE -->
+      <section id="tab-profile" class="dash-tab" style="display:none;">
+        <h2 class="dash-section-title">Profilimi Güncelle</h2>
+        <div class="glass-panel" style="max-width:480px;padding:28px;">
+          <div id="profileFeedback"></div>
+          <div class="form-group">
+            <label class="form-label">Ad Soyad</label>
+            <input type="text" id="profileName" class="form-control" placeholder="Ad Soyad">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telefon Numarası</label>
+            <input type="tel" id="profilePhone" class="form-control" placeholder="05XX XXX XX XX">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Doğum Tarihi</label>
+            <input type="date" id="profileBirthdate" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-posta (değiştirilemez)</label>
+            <input type="email" id="profileEmail" class="form-control" disabled style="opacity:0.6;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rol</label>
+            <input type="text" id="profileRole" class="form-control" disabled style="opacity:0.6;">
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;" onclick="saveProfile()">Kaydet</button>
+        </div>
+
+        <h2 class="dash-section-title" style="margin-top:32px;">Şifremi Değiştir</h2>
+        <div class="glass-panel" style="max-width:480px;padding:28px;">
+          <div id="passwordFeedback"></div>
+          <div class="form-group">
+            <label class="form-label">Mevcut Şifre</label>
+            <input type="password" id="currentPassword" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Yeni Şifre</label>
+            <input type="password" id="newPassword" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Yeni Şifre (Tekrar)</label>
+            <input type="password" id="confirmPassword" class="form-control">
+          </div>
+          <button class="btn btn-outline" style="width:100%;justify-content:center;padding:12px;border-color:var(--gold);color:var(--gold);margin-top:8px;" onclick="changePassword()">Şifreyi Güncelle</button>
         </div>
       </section>
 
@@ -400,16 +447,106 @@
 
     // ── Tab Switch ─────────────────────────────────────────────
     function showTab(name, btn) {
-      var tabs = document.querySelectorAll('.dash-tab');
-      for (var i = 0; i < tabs.length; i++) tabs[i].style.display = 'none';
+      document.querySelectorAll('.dash-tab').forEach(t => t.style.display = 'none');
       document.getElementById('tab-' + name).style.display = 'block';
-      var navBtns = document.querySelectorAll('.dash-nav-btn');
-      for (var j = 0; j < navBtns.length; j++) navBtns[j].classList.remove('active');
-      if (btn) btn.classList.add('active');
+      document.querySelectorAll('.dash-nav-btn').forEach(b => b.classList.remove('active'));
+      
+      var targetBtn = btn;
+      if (!targetBtn) {
+        targetBtn = Array.from(document.querySelectorAll('.dash-nav-btn')).find(b => b.getAttribute('onclick')?.includes(`'${name}'`));
+      }
+      if (targetBtn) targetBtn.classList.add('active');
+
       if (name === 'myevents') loadMyEvents();
       if (name === 'revenue') loadRevenue();
       if (name === 'promotions') loadPromotions();
       if (name === 'validate') initValidateTab();
+      if (name === 'profile') loadProfile();
+    }
+
+    function loadProfile() {
+      const u = getUser();
+      if (!u) return;
+      document.getElementById('profileName').value = u.fullname || '';
+      document.getElementById('profilePhone').value = u.phone || '';
+      document.getElementById('profileBirthdate').value = u.birthdate || '';
+      document.getElementById('profileEmail').value = u.email || '';
+      document.getElementById('profileRole').value = u.role === 'organizer' ? 'Organizatör' : u.role === 'admin' ? 'Admin' : 'Müşteri';
+    }
+
+    async function saveProfile() {
+      const fb = document.getElementById('profileFeedback');
+      const fullname = document.getElementById('profileName').value.trim();
+      const phone = document.getElementById('profilePhone').value.trim();
+      const birthdate = document.getElementById('profileBirthdate').value;
+      if (!fullname) return;
+      
+      try {
+        const res = await fetch('/api/users/me', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + getToken()
+          },
+          body: JSON.stringify({ fullname, phone, birthdate })
+        });
+        if (res.ok) {
+          fb.innerHTML = '<p style="color:#6ee7b7;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ Profil güncellendi!</p>';
+          const u = getUser();
+          u.fullname = fullname;
+          u.phone = phone;
+          u.birthdate = birthdate;
+          localStorage.setItem('user', JSON.stringify(u));
+          document.getElementById('orgName').textContent = fullname;
+          if (window.renderNav) renderNav();
+        } else {
+          fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Hata oluştu.</p>';
+        }
+      } catch {
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Sunucu hatası.</p>';
+      }
+    }
+
+    async function changePassword() {
+      const current_password = document.getElementById('currentPassword').value;
+      const new_password = document.getElementById('newPassword').value;
+      const confirm_password = document.getElementById('confirmPassword').value;
+      const fb = document.getElementById('passwordFeedback');
+
+      if (!current_password || !new_password || !confirm_password) {
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Tüm alanları doldurun.</p>';
+        return;
+      }
+      if (new_password.length < 6) {
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Şifre en az 6 karakter olmalıdır.</p>';
+        return;
+      }
+      if (new_password !== confirm_password) {
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Yeni şifreler eşleşmiyor.</p>';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/users/change-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + getToken()
+          },
+          body: JSON.stringify({ current_password, new_password })
+        });
+        const d = await res.json();
+        if (res.ok) {
+          fb.innerHTML = '<p style="color:#6ee7b7;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ Şifre başarıyla güncellendi!</p>';
+          document.getElementById('currentPassword').value = '';
+          document.getElementById('newPassword').value = '';
+          document.getElementById('confirmPassword').value = '';
+        } else {
+          fb.innerHTML = `<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ ${d.message || 'Hata oluştu'}</p>`;
+        }
+      } catch {
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Sunucu hatası.</p>';
+      }
     }
 
     // ── My Events ─────────────────────────────────────────────
@@ -815,10 +952,19 @@
     }
 
     let revChartInstance = null;
+    let lastChartLabels = null, lastChartData = null;
+
     function renderChart(labels, data) {
+      lastChartLabels = labels; lastChartData = data;
       if(revChartInstance) revChartInstance.destroy();
-      var ctx = document.getElementById('revenueChart').getContext('2d');
-      Chart.defaults.color = "rgba(255,255,255,0.7)";
+      var ctxPanel = document.getElementById('revenueChart');
+      if (!ctxPanel) return;
+      var ctx = ctxPanel.getContext('2d');
+      
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light' || document.body.classList.contains('light-mode');
+      const textColor = isLight ? '#4b5563' : 'rgba(255,255,255,0.7)';
+      const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
+
       revChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -835,13 +981,29 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: textColor } }
+          },
           scales: {
-            y: { beginAtZero: true, grid: { color: "rgba(255,255,255,0.1)" } },
-            x: { grid: { display: false } }
+            y: { 
+              beginAtZero: true, 
+              ticks: { color: textColor },
+              grid: { color: gridColor } 
+            },
+            x: { 
+              ticks: { color: textColor },
+              grid: { display: false } 
+            }
           }
         }
       });
     }
+
+    document.addEventListener('themeChanged', () => {
+      if (lastChartLabels && lastChartData) {
+        renderChart(lastChartLabels, lastChartData);
+      }
+    });
 
     // ── Promotions ─────────────────────────────────────────────
     function loadPromotions() {
@@ -865,12 +1027,12 @@
               return;
           }
           var html = '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;color:var(--text);">';
-          html += '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.1);"><th align="left" style="padding:8px;">Etkinlik</th><th align="left" style="padding:8px;">Kod</th><th align="center" style="padding:8px;">İndirim</th><th align="center" style="padding:8px;">Kullanım</th><th align="right" style="padding:8px;">İşlem</th></tr></thead><tbody>';
+          html += '<thead><tr style="border-bottom:1px solid var(--border);"><th align="left" style="padding:8px;">Etkinlik</th><th align="left" style="padding:8px;">Kod</th><th align="center" style="padding:8px;">İndirim</th><th align="center" style="padding:8px;">Kullanım</th><th align="right" style="padding:8px;">İşlem</th></tr></thead><tbody>';
           
           promos.forEach(p => {
               var val = p.discount_type === 'percentage' ? `%${p.discount_value}` : `${p.discount_value}₺`;
               var usage = p.usage_limit ? `${p.used_count} / ${p.usage_limit}` : `${p.used_count} / ∞`;
-              html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              html += `<tr style="border-bottom:1px solid var(--border);">
                 <td style="padding:8px;">${p.event_title}</td>
                 <td style="padding:8px;font-family:monospace;color:var(--accent-teal);font-weight:bold;">${p.code}</td>
                 <td align="center" style="padding:8px;">${val}</td>
@@ -1088,11 +1250,16 @@
         var valid = _allAttendees.filter(function(a){ return a.status === 'valid'; }).length;
         var used  = _allAttendees.filter(function(a){ return a.status === 'used';  }).length;
         var rev   = _allAttendees.reduce(function(s,a){ return s + (a.price||0); }, 0);
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light' || document.body.classList.contains('light-mode');
+        const cGreen = isLight ? '#059669' : '#6ee7b7';
+        const cBlue  = isLight ? '#2563eb' : '#93c5fd';
+        const cGold  = isLight ? '#ca8a04' : '#fde68a';
+
         document.getElementById('attStatsRow').innerHTML =
           attStat(data.total, 'Toplam Bilet', '') +
-          attStat(valid, 'Geçerli', '#6ee7b7') +
-          attStat(used,  'Kullanıldı', '#93c5fd') +
-          attStat(rev.toLocaleString('tr-TR') + ' ₺', 'Toplam Gelir', '#fde68a');
+          attStat(valid, 'Geçerli', cGreen) +
+          attStat(used,  'Kullanıldı', cBlue) +
+          attStat(rev.toLocaleString('tr-TR') + ' ₺', 'Toplam Gelir', cGold);
         renderAttendees(_allAttendees);
       })
       .catch(function() {
@@ -1174,7 +1341,11 @@
     }
 
     // ── Init ──────────────────────────────────────────────────────────
-    loadMyEvents();
+    window.addEventListener('DOMContentLoaded', () => {
+      const p = new URLSearchParams(window.location.search);
+      const t = p.get('tab') || 'myevents';
+      showTab(t);
+    });
   </script>
 </body>
 </html>

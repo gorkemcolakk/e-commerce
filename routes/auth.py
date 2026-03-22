@@ -15,9 +15,15 @@ def register():
     if not data or not data.get('email') or not data.get('password') or not data.get('fullname'):
         return jsonify({'message': 'Eksik veri'}), 400
 
+    if len(data['password']) < 6:
+        return jsonify({'message': 'Şifre en az 6 karakter olmalıdır'}), 400
+
     role = data.get('role', 'customer')
     if role not in ('customer', 'organizer'):
         role = 'customer'
+        
+    phone = data.get('phone', '')
+    birthdate = data.get('birthdate', '')
 
     conn = get_db_connection()
     c = conn.cursor()
@@ -28,8 +34,8 @@ def register():
 
     hashed_pw = generate_password_hash(data['password'])
     c.execute(
-        'INSERT INTO users (fullname, email, password, role) VALUES (?, ?, ?, ?)',
-        (data['fullname'], data['email'], hashed_pw, role)
+        'INSERT INTO users (fullname, email, password, role, phone, birthdate) VALUES (?, ?, ?, ?, ?, ?)',
+        (data['fullname'], data['email'], hashed_pw, role, phone, birthdate)
     )
     conn.commit()
     conn.close()
@@ -63,7 +69,9 @@ def login():
             'id': user['id'],
             'email': user['email'],
             'fullname': user['fullname'],
-            'role': user['role']
+            'role': user['role'],
+            'phone': user['phone'] if 'phone' in user.keys() else '',
+            'birthdate': user['birthdate'] if 'birthdate' in user.keys() else ''
         }
     }), 200
 
@@ -127,6 +135,9 @@ def reset_password():
 
     if not token or not new_password:
         return jsonify({'message': 'Eksik veri'}), 400
+
+    if len(new_password) < 6:
+        return jsonify({'message': 'Şifre en az 6 karakter olmalıdır'}), 400
 
     try:
         decoded = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])

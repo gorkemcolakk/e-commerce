@@ -212,6 +212,21 @@ def init_db():
     except sqlite3.OperationalError:
         pass  # Column already exists
 
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN phone TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN birthdate TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN bday_promo_used_year INTEGER")
+    except sqlite3.OperationalError:
+        pass
+
     # Wishlist table
     c.execute('''
         CREATE TABLE IF NOT EXISTS wishlist (

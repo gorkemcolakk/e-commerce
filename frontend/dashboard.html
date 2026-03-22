@@ -43,7 +43,6 @@
   </nav>
 
   <main class="container dashboard-page">
-    <!-- Sidebar -->
     <aside class="dash-sidebar glass-panel">
       <div class="dash-avatar" id="avatarInitials">?</div>
       <div class="dash-name" id="sidebarName">Yükleniyor...</div>
@@ -57,10 +56,9 @@
         </button>
         <button class="dash-nav-btn" onclick="showTab('profile',this)">👤 Profilim</button>
       </nav>
-      <button onclick="logout()" class="btn" style="width:100%;margin-top:auto;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;padding:10px;">Çıkış Yap</button>
+      <button onclick="logout()" class="btn" style="width:100%;margin-top:auto;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--coral);padding:10px;">🚪 Çıkış Yap</button>
     </aside>
 
-    <!-- Content -->
     <div class="dash-content">
 
       <!-- === TICKETS TAB === -->
@@ -94,6 +92,14 @@
             <input type="text" id="profileName" class="form-control" placeholder="Ad Soyad">
           </div>
           <div class="form-group">
+            <label class="form-label">Telefon Numarası</label>
+            <input type="tel" id="profilePhone" class="form-control" placeholder="05XX XXX XX XX">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Doğum Tarihi</label>
+            <input type="date" id="profileBirthdate" class="form-control">
+          </div>
+          <div class="form-group">
             <label class="form-label">E-posta (değiştirilemez)</label>
             <input type="email" id="profileEmail" class="form-control" disabled style="opacity:0.6;">
           </div>
@@ -102,6 +108,24 @@
             <input type="text" id="profileRole" class="form-control" disabled style="opacity:0.6;">
           </div>
           <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;" onclick="saveProfile()">Kaydet</button>
+        </div>
+
+        <h2 class="dash-section-title" style="margin-top:32px;">Şifremi Değiştir</h2>
+        <div class="glass-panel" style="max-width:480px;padding:28px;">
+          <div id="passwordFeedback"></div>
+          <div class="form-group">
+            <label class="form-label">Mevcut Şifre</label>
+            <input type="password" id="currentPassword" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Yeni Şifre</label>
+            <input type="password" id="newPassword" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Yeni Şifre (Tekrar)</label>
+            <input type="password" id="confirmPassword" class="form-control">
+          </div>
+          <button class="btn btn-outline" style="width:100%;justify-content:center;padding:12px;border-color:var(--gold);color:var(--gold);margin-top:8px;" onclick="changePassword()">Şifreyi Güncelle</button>
         </div>
       </section>
 
@@ -157,14 +181,24 @@
     const user = getUser();
     if (!user) { window.location.href = 'login.html'; }
 
-    // Sidebar
     if (user) {
       document.getElementById('sidebarName').textContent = user.fullname;
       document.getElementById('sidebarEmail').textContent = user.email;
       document.getElementById('avatarInitials').textContent = user.fullname.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
       document.getElementById('profileName').value = user.fullname;
+      document.getElementById('profilePhone').value = user.phone || '';
+      document.getElementById('profileBirthdate').value = user.birthdate || '';
       document.getElementById('profileEmail').value = user.email;
       document.getElementById('profileRole').value = user.role === 'customer' ? '🎟 Müşteri' : user.role === 'organizer' ? '🎪 Organizatör' : '⚙ Admin';
+    }
+
+    // Date formatting helper
+    function fDate(ds) {
+      try {
+        const d = new Date(ds);
+        if(isNaN(d)) return ds;
+        return d.toLocaleDateString("tr-TR", {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+      } catch { return ds; }
     }
 
     // Tab switching
@@ -172,7 +206,13 @@
       document.querySelectorAll('.dash-tab').forEach(t => t.style.display = 'none');
       document.getElementById('tab-' + name).style.display = 'block';
       document.querySelectorAll('.dash-nav-btn').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
+      
+      let targetBtn = btn;
+      if (!targetBtn) {
+        targetBtn = Array.from(document.querySelectorAll('.dash-nav-btn')).find(b => b.getAttribute('onclick')?.includes(`'${name}'`));
+      }
+      if (targetBtn) targetBtn.classList.add('active');
+      
       if (name === 'tickets') loadTickets();
       if (name === 'wishlist') loadWishlist();
       if (name === 'notifications') loadNotifications();
@@ -190,14 +230,6 @@
         const tickets = await res.json();
         window._myTickets = tickets;
 
-        const fDate = ds => {
-          try {
-            const d = new Date(ds);
-            if(isNaN(d)) return ds;
-            return d.toLocaleDateString("tr-TR", {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
-          } catch { return ds; }
-        };
-
         if (!tickets.length) { el.innerHTML = '<p class="loading-text">Henüz bilet satın almadınız.</p>'; return; }
         el.innerHTML = tickets.map((t, idx) => {
           const statusColor = { valid: '#10b981', used: '#6b7280', refund_pending: '#f59e0b' }[t.status] || '#6b7280';
@@ -210,16 +242,16 @@
             <img src="${t.image || ''}" alt="${t.title}" style="width:90px;height:90px;object-fit:cover;border-radius:10px;flex-shrink:0;" onerror="this.style.display='none'">
             <div style="flex:1;min-width:0;">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
-                <h3 style="color:white;font-size:1rem;margin:0 0 4px;">${t.title}</h3>
+                <h3 style="color:var(--text);font-size:1rem;margin:0 0 4px;">${t.title}</h3>
                 <span style="background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44;border-radius:20px;padding:2px 10px;font-size:0.75rem;white-space:nowrap;flex-shrink:0;">${statusLabel}</span>
               </div>
-              <p style="color:var(--accent-purple);font-size:0.9rem;font-weight:bold;margin:0 0 8px;">
+              <p style="color:var(--gold);font-size:0.9rem;font-weight:bold;margin:0 0 8px;">
                 👤 ${t.owner_name && t.owner_surname ? (t.owner_name + ' ' + t.owner_surname) : 'Standart'}
                 ${seatInfo}
               </p>
               <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 2px;">📅 ${fDate(t.date)}</p>
               <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 8px;">📍 ${t.location}</p>
-              <p style="color:var(--text-muted);font-size:0.78rem;margin:0;">Bilet Kodu: <strong style="color:white;font-family:monospace;">${t.ticket_key}</strong> &nbsp;|&nbsp; Fiyat: ${(t.total_price || 0).toLocaleString('tr-TR')} ₺</p>
+              <p style="color:var(--text-muted);font-size:0.78rem;margin:0;">Bilet Kodu: <strong style="color:var(--text);font-family:monospace;">${t.ticket_key}</strong> &nbsp;|&nbsp; Fiyat: ${(t.total_price || 0).toLocaleString('tr-TR')} ₺</p>
             </div>
             ${t.qr_code && t.status === 'valid' ? `
             <div style="flex-shrink:0;text-align:center;display:flex;flex-direction:column;gap:8px;justify-content:center;">
@@ -358,14 +390,17 @@
             <div class="event-content">
               <div class="event-date">${fDate(e.date)}</div>
               <h3 class="event-title">${e.title}</h3>
-              <div class="event-location">📍 ${e.location}</div>
+              <div class="event-location" style="display:flex;align-items:center;gap:4px;">📍 ${e.location}</div>
               <div class="event-footer">
-                <div class="event-price">${e.price.toLocaleString('tr-TR')} ₺</div>
+                <div class="event-price">${(e.price || 0).toLocaleString('tr-TR')} ₺</div>
                 <button class="btn btn-outline" style="font-size:0.8rem;padding:6px 12px;" onclick="event.stopPropagation();removeWish('${e.id}',this.closest('.event-card'))">❤ Çıkar</button>
               </div>
             </div>
           </div>`).join('');
-      } catch { el.innerHTML = '<p class="loading-text" style="grid-column:1/-1;color:#f87171;">Favoriler yüklenemedi.</p>'; }
+      } catch (err) { 
+        console.error(err);
+        el.innerHTML = `<p class="loading-text" style="grid-column:1/-1;color:#f87171;">Favoriler yüklenemedi: ${err.message || 'Bilinmeyen hata'}</p>`; 
+      }
     }
 
     async function removeWish(eventId, card) {
@@ -388,10 +423,10 @@
         badge.textContent = unread;
         if (!notifs.length) { el.innerHTML = '<p class="loading-text">Bildirim yok.</p>'; return; }
         el.innerHTML = notifs.map(n => `
-          <div class="glass-panel" style="padding:14px 18px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;border-left:3px solid ${n.is_read ? 'transparent' : '#8b5cf6'};">
+          <div class="glass-panel" style="padding:14px 18px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;border-left:3px solid ${n.is_read ? 'transparent' : 'var(--gold)'};">
             <span style="font-size:1.2rem;flex-shrink:0;">${n.is_read ? '🔔' : '🔔'}</span>
             <div style="flex:1;">
-              <p style="color:${n.is_read ? 'var(--text-muted)' : 'white'};margin:0 0 4px;font-size:0.9rem;">${n.message}</p>
+              <p style="color:var(--text); opacity:${n.is_read ? '0.6' : '1'}; margin:0 0 4px; font-size:0.9rem;">${n.message}</p>
               <p style="color:var(--text-muted);font-size:0.75rem;margin:0;">${new Date(n.created_at).toLocaleString('tr-TR')}</p>
             </div>
             ${!n.is_read ? `<button class="btn btn-outline" style="font-size:0.75rem;padding:4px 10px;flex-shrink:0;" onclick="readOne(${n.id},this)">Okundu</button>` : ''}
@@ -403,7 +438,8 @@
       try {
         await fetch(`/api/notifications/${id}/read`, { method: 'PATCH', headers: authHeaders() });
         btn.closest('.glass-panel').style.borderLeftColor = 'transparent';
-        btn.closest('.glass-panel').querySelector('p').style.color = 'var(--text-muted)';
+        const msgPara = btn.closest('.glass-panel').querySelector('p');
+        msgPara.style.opacity = '0.6';
         btn.remove();
         loadNotifications();
       } catch {}
@@ -419,29 +455,76 @@
     // ── PROFILE ──────────────────────────────────────────
     async function saveProfile() {
       const fullname = document.getElementById('profileName').value.trim();
+      const phone = document.getElementById('profilePhone').value.trim();
+      const birthdate = document.getElementById('profileBirthdate').value;
       if (!fullname) return;
       try {
         const res = await fetch('/api/users/me', {
           method: 'PATCH',
           headers: authHeaders(),
-          body: JSON.stringify({ fullname })
+          body: JSON.stringify({ fullname, phone, birthdate })
         });
         const fb = document.getElementById('profileFeedback');
         if (res.ok) {
           fb.innerHTML = '<p style="color:#6ee7b7;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ Profil güncellendi!</p>';
           const u = getUser();
           u.fullname = fullname;
+          u.phone = phone;
+          u.birthdate = birthdate;
           localStorage.setItem('user', JSON.stringify(u));
           document.getElementById('sidebarName').textContent = fullname;
           document.getElementById('avatarInitials').textContent = fullname.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+          if (window.renderNav) renderNav();
         } else {
           fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Hata oluştu.</p>';
         }
       } catch {}
     }
 
-    // Initial load
-    loadTickets();
+    async function changePassword() {
+      const current_password = document.getElementById('currentPassword').value;
+      const new_password = document.getElementById('newPassword').value;
+      const confirm_password = document.getElementById('confirmPassword').value;
+      const fb = document.getElementById('passwordFeedback');
+
+      if (!current_password || !new_password || !confirm_password) {
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Tüm alanları doldurun.</p>';
+        return;
+      }
+      if (new_password.length < 6) {
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Şifre en az 6 karakter olmalıdır.</p>';
+        return;
+      }
+      if (new_password !== confirm_password) {
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Yeni şifreler eşleşmiyor.</p>';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/users/change-password', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ current_password, new_password })
+        });
+        const d = await res.json();
+        if (res.ok) {
+          fb.innerHTML = '<p style="color:#6ee7b7;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ Şifre başarıyla güncellendi!</p>';
+          document.getElementById('currentPassword').value = '';
+          document.getElementById('newPassword').value = '';
+          document.getElementById('confirmPassword').value = '';
+        } else {
+          fb.innerHTML = `<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ ${d.message || 'Hata oluştu'}</p>`;
+        }
+      } catch {
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Sunucu hatası.</p>';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const p = new URLSearchParams(window.location.search);
+      const t = p.get('tab') || 'tickets';
+      showTab(t);
+    });
   </script>
 </body>
 </html>

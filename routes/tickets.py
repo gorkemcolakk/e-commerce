@@ -122,9 +122,14 @@ def guest_buy_ticket():
     # ── Promo code ──────────────────────────────────────────────
     promo_record = None
     if promo_code:
-        promo_record = c.execute(
-            'SELECT * FROM promotions WHERE event_id = ? AND code = ?', (event_id, promo_code)
-        ).fetchone()
+        if promo_code == 'BDAY26':
+            conn.close()
+            return jsonify({'message': 'Doğum günü kampanyanızı kullanmak için lütfen hesabınıza giriş yapın.'}), 400
+        else:
+            promo_record = c.execute(
+                'SELECT * FROM promotions WHERE event_id = ? AND code = ?', (event_id, promo_code)
+            ).fetchone()
+            
         if not promo_record:
             conn.close()
             return jsonify({'message': 'Geçersiz promosyon kodu.'}), 400
@@ -152,7 +157,7 @@ def guest_buy_ticket():
         conn.close()
         return jsonify({'message': payment_result['message']}), 400
 
-    if promo_record:
+    if promo_record and promo_record.get('id', 0) != 0:
         c.execute('UPDATE promotions SET used_count = used_count + 1 WHERE id = ?', (promo_record['id'],))
 
     # ── Generate tickets ─────────────────────────────────────────
@@ -300,7 +305,25 @@ def buy_ticket():
 
     promo_record = None
     if promo_code:
-        promo_record = c.execute('SELECT * FROM promotions WHERE event_id = ? AND code = ?', (event_id, promo_code)).fetchone()
+        if promo_code == 'BDAY26':
+            user_bday_check = c.execute('SELECT birthdate, bday_promo_used_year FROM users WHERE id = ?', (g.user['id'],)).fetchone()
+            from datetime import datetime
+            now_dt = datetime.now()
+            today_md = now_dt.strftime('%m-%d')
+            c_bdate = user_bday_check['birthdate'] if user_bday_check else ''
+            
+            if not c_bdate or len(c_bdate) < 10 or c_bdate[5:10] != today_md:
+                conn.close()
+                return jsonify({'message': 'Bu özel indirim kodu yalnızca doğum gününüzde geçerlidir!'}), 400
+                
+            if user_bday_check['bday_promo_used_year'] == now_dt.year:
+                conn.close()
+                return jsonify({'message': 'Doğum günü kodunuzu bu yıl zaten kullandınız!'}), 400
+                
+            promo_record = {'id': 0, 'discount_type': 'percentage', 'discount_value': 15, 'usage_limit': None, 'used_count': 0, 'is_bday': True}
+        else:
+            promo_record = c.execute('SELECT * FROM promotions WHERE event_id = ? AND code = ?', (event_id, promo_code)).fetchone()
+            
         if not promo_record:
             conn.close()
             return jsonify({'message': 'Geçersiz promosyon kodu.'}), 400
@@ -335,9 +358,13 @@ def buy_ticket():
         conn.close() # SQL tarafında commit edilmediği için tüm güncelleme veya koltuk kilitleme iptal olur.
         return jsonify({'message': payment_result['message']}), 400
 
-    # İşlem başarılı. Promosyon kodu kullanıldıysa sayacını artır.
+    # İşlem başarılı. Promosyon kodu kullanıldıysa sayacını artır veya doğum yılını işaretle.
     if promo_record:
-        c.execute('UPDATE promotions SET used_count = used_count + 1 WHERE id = ?', (promo_record['id'],))
+        if promo_record.get('is_bday'):
+            from datetime import datetime
+            c.execute('UPDATE users SET bday_promo_used_year = ? WHERE id = ?', (datetime.now().year, g.user['id']))
+        elif promo_record.get('id', 0) != 0:
+            c.execute('UPDATE promotions SET used_count = used_count + 1 WHERE id = ?', (promo_record['id'],))
 
     generated_tickets = []
     email_images = []
@@ -548,6 +575,29 @@ def validate_promo():
 
     if not event_id or not code:
         return jsonify({'valid': False, 'message': 'Eksik bilgi.'}), 400
+
+    if code == 'BDAY26':
+        conn = get_db_connection()
+        user_check = conn.execute('SELECT birthdate, bday_promo_used_year FROM users WHERE id = ?', (g.user['id'],)).fetchone()
+        conn.close()
+        
+        from datetime import datetime
+        now = datetime.now()
+        today_md = now.strftime('%m-%d')
+        bdate = user_check['birthdate'] if user_check else ''
+        
+        if not bdate or len(bdate) < 10 or bdate[5:10] != today_md:
+            return jsonify({'valid': False, 'message': 'Bu özel indirim kodu yalnızca doğum gününüzde geçerlidir!'}), 400
+            
+        if user_check['bday_promo_used_year'] == now.year:
+            return jsonify({'valid': False, 'message': 'Doğum günü kodunuzu bu yıl zaten kullandınız!'}), 400
+            
+        return jsonify({
+            'valid': True,
+            'discount_type': 'percentage',
+            'discount_value': 15,
+            'message': 'Doğum günü indirimi başarıyla uygulandı! 🎉'
+        }), 200
 
     conn = get_db_connection()
     promo = conn.execute('''

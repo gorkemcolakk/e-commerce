@@ -27,6 +27,8 @@ window.logout = () => {
 function applyTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     localStorage.setItem('eventix-theme', t);
+    document.body.classList.toggle('light-mode', t === 'light');
+    document.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: t } }));
 }
 window.toggleTheme = () => {
     const cur = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -44,21 +46,110 @@ const THEME_BTN = `
 
 function renderNav() {
     const token = getToken(), user = getUser();
-    document.querySelectorAll('.user-controls').forEach(ctrl => {
+    const ctrls = document.querySelectorAll('.user-controls');
+    
+    ctrls.forEach(ctrl => {
         if (token && user) {
-            const href = user.role === 'admin' ? 'admin.html' : user.role === 'organizer' ? 'organizer.html' : 'dashboard.html';
-            ctrl.innerHTML = `${THEME_BTN}
-              <a href="${href}" class="btn btn-outline" style="font-size:.85rem;display:flex;align-items:center;gap:6px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                ${user.fullname.split(' ')[0]}
-              </a>
-              <button onclick="logout()" class="btn btn-primary" style="font-size:.85rem;">Çıkış</button>`;
+            const firstName = user.fullname.split(' ')[0];
+            const dashBase = user.role === 'admin' ? 'admin.html' : user.role === 'organizer' ? 'organizer.html' : 'dashboard.html';
+            
+            let dropLinks = '';
+            const commonLinks = `
+              <hr style="border:0; border-top:1px solid var(--border); margin:4px 0;">
+              <a href="dashboard.html?tab=tickets" class="dropdown-item">🎟 Biletlerim</a>
+              <a href="dashboard.html?tab=wishlist" class="dropdown-item">❤ Favorilerim</a>
+              <a href="dashboard.html?tab=notifications" class="dropdown-item">🔔 Bildirimler</a>
+            `;
+
+            if (user.role === 'admin') {
+              dropLinks = `
+                <a href="admin.html?tab=pending" class="dropdown-item">⏳ Onay Bekleyenler</a>
+                <a href="admin.html?tab=users" class="dropdown-item">👥 Kullanıcılar</a>
+                <a href="admin.html?tab=allevents" class="dropdown-item">📋 Tüm Etkinlikler</a>
+                <a href="admin.html?tab=revenue" class="dropdown-item">💰 Platform Geliri</a>
+                ${commonLinks}
+              `;
+            } else if (user.role === 'organizer') {
+              dropLinks = `
+                <a href="organizer.html?tab=myevents" class="dropdown-item">🎪 Etkinliklerim</a>
+                <a href="organizer.html?tab=create" class="dropdown-item">➕ Etkinlik Oluştur</a>
+                <a href="organizer.html?tab=revenue" class="dropdown-item">💰 Gelir Raporu</a>
+                <a href="organizer.html?tab=promotions" class="dropdown-item">🎫 Promosyonlar</a>
+                <a href="organizer.html?tab=validate" class="dropdown-item">🔍 QR Doğrulama</a>
+                ${commonLinks}
+              `;
+            } else {
+              dropLinks = `
+                <a href="dashboard.html?tab=tickets" class="dropdown-item">🎟 Biletlerim</a>
+                <a href="dashboard.html?tab=wishlist" class="dropdown-item">❤ Favorilerim</a>
+                <a href="dashboard.html?tab=notifications" class="dropdown-item">🔔 Bildirimler</a>
+              `;
+            }
+
+            ctrl.innerHTML = `
+              ${THEME_BTN}
+              <div class="user-dropdown-wrapper">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <a href="${dashBase}?tab=profile" class="btn btn-outline" style="font-size:.85rem;display:flex;align-items:center;gap:6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    ${firstName}
+                  </a>
+                  <button class="btn btn-outline" style="padding: 8px; font-size: 1.1rem;" onclick="event.stopPropagation(); window.toggleUserDropdown()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                  </button>
+                </div>
+                <div id="userDropdown" class="user-dropdown-menu">
+                  ${dropLinks}
+                  <hr style="border:0; border-top:1px solid var(--border); margin:4px 0;">
+                  <button onclick="logout()" class="dropdown-item" style="width:100%; border:0; background:none; cursor:pointer; color:var(--coral); text-align:left;">🚪 Çıkış Yap</button>
+                </div>
+              </div>`;
         } else {
             ctrl.innerHTML = `${THEME_BTN}
               <a href="login.html" class="btn btn-outline" style="font-size:.85rem;">Giriş Yap</a>
               <a href="register.html" class="btn btn-primary" style="font-size:.85rem;">Kayıt Ol</a>`;
         }
     });
+
+    // Handle dropdown closing
+    window.toggleUserDropdown = () => {
+        const menu = document.getElementById('userDropdown');
+        if (menu) menu.classList.toggle('active');
+    };
+
+    document.addEventListener('click', () => {
+        document.getElementById('userDropdown')?.classList.remove('active');
+    });
+    // Ensure theme toggle is present even if .user-controls is missing
+    if (ctrls.length === 0) {
+        if (!document.querySelector('.theme-toggle')) {
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = THEME_BTN;
+            const btn = wrapper.firstElementChild;
+            
+            const navC = document.querySelector('.navbar .container');
+            if (navC) {
+                btn.style.marginLeft = 'auto'; // push to the right
+                navC.appendChild(btn);
+            } else {
+                // No navbar exists (e.g. login/register), float it top right
+                btn.style.position = 'absolute';
+                btn.style.top = '25px';
+                btn.style.right = '25px';
+                btn.style.zIndex = '9999';
+                btn.style.background = 'var(--bg-card)';
+                btn.style.border = '1px solid var(--border-color)';
+                btn.style.borderRadius = '50%';
+                btn.style.width = '42px';
+                btn.style.height = '42px';
+                btn.style.display = 'flex';
+                btn.style.alignItems = 'center';
+                btn.style.justifyContent = 'center';
+                btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                document.body.appendChild(btn);
+            }
+        }
+    }
 }
 
 // ── WISHLIST ──────────────────────────────────────────────────
@@ -137,15 +228,22 @@ function initRegisterForm() {
     form.addEventListener('submit', async e => {
         e.preventDefault();
         const btn = form.querySelector('[type=submit]'), orig = btn.textContent;
-        btn.textContent = 'Hesap oluşturuluyor...'; btn.disabled = true;
+        const password = document.getElementById('password').value;
+        if (password.length < 6) {
+          setFeedback(form, 'Şifre en az 6 karakter olmalıdır', 'error');
+          btn.textContent = orig; btn.disabled = false;
+          return;
+        }
         const role = document.getElementById('role')?.value || 'customer';
         try {
             const r = await fetch('/api/auth/register', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     fullname: `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`,
+                    phone: document.getElementById('phone').value,
+                    birthdate: document.getElementById('birthdate').value,
                     email: document.getElementById('email').value,
-                    password: document.getElementById('password').value, role
+                    password: password, role
                 })
             });
             const d = await r.json();
@@ -165,6 +263,8 @@ function setFeedback(form, msg, type) {
 // ── INIT ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     renderNav();
+    loadWishlistIds();
+    loadNotifBadge();
     initLoginForm();
     initRegisterForm();
     initPasswordReset();
@@ -224,6 +324,11 @@ function initPasswordReset() {
             const orig = btn.textContent;
             const newPass = newForm.querySelector('#new_password').value;
             const confirmPass = newForm.querySelector('#new_password_confirm').value;
+
+            if (newPass.length < 6) {
+                setFeedback(newForm, 'Şifre en az 6 karakter olmalıdır!', 'error');
+                return;
+            }
 
             if (newPass !== confirmPass) {
                 setFeedback(newForm, 'Şifreler eşleşmiyor!', 'error');

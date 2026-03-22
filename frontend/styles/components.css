@@ -171,6 +171,10 @@
 }
 .wish-btn:hover   { color: var(--coral); border-color: rgba(239,68,68,0.5); transform: scale(1.1); }
 .wish-btn.wished  { color: var(--coral); border-color: rgba(239,68,68,0.5); }
+.wish-btn.wished svg {
+  fill: #ef4444 !important; /* İkisinde de içi kırmızı olsun */
+  stroke: #ef4444 !important;
+}
 
 [data-theme="light"] .wish-btn {
   background: rgba(255,255,255,0.85);
@@ -483,3 +487,23 @@ textarea.form-control { resize: vertical; min-height: 90px; }
   margin-top: 6px;
 }
 .forgot-password:hover { color: var(--gold-dim); }
+
+/* ── USER DROPDOWN ───────────────────────────────────────── */
+.user-dropdown-wrapper { position: relative; }
+.user-dropdown-menu {
+    position: absolute; top: calc(100% + 10px); right: 0;
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: var(--radius-md); box-shadow: var(--shadow);
+    width: 190px; display: none; z-index: 1500; padding: 6px;
+    animation: fadeIn 0.2s ease;
+}
+.user-dropdown-menu.active { display: block; }
+.dropdown-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    color: var(--text-sub); font-size: 0.82rem; border-radius: var(--radius-sm);
+    transition: var(--transition); text-decoration: none;
+    font-weight: 500; width: 100%; border: 0; background: none; text-align: left;
+    cursor: pointer; cursor: pointer; font-family: inherit;
+}
+.dropdown-item:hover { background: var(--gold-glow); color: var(--gold); }
+

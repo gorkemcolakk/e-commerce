@@ -119,10 +119,10 @@ def send_email(to_email: str, subject: str, message: str, html_message: str = No
             server.login(smtp_username, smtp_password)
             server.send_message(outer)
             server.quit()
-            print(f"📧 [REAL] EMAIL SENT TO: {to_email}")
+            print(f"[REAL] EMAIL SENT TO: {to_email}")
             return
         except Exception as e:
-            print(f"🚨 SMTP E-Posta Gönderme Hatası: {e}")
+            print(f"[ERROR] SMTP E-Posta Gonderme Hatasi: {e}")
             print("Uyarı: Simülasyon (Mock) e-posta üzerinden devam ediliyor...")
 
     # Fallback to mock
@@ -133,11 +133,77 @@ def send_mock_email(to_email: str, subject: str, message: str):
     Simulates sending an email by printing formatted output to the console.
     """
     print(f"\n{'='*50}")
-    print(f"📧 [MOCK] EMAIL SENT TO: {to_email}")
-    print(f"📝 SUBJECT: {subject}")
+    print(f"[MOCK] EMAIL SENT TO: {to_email}")
+    print(f"SUBJECT: {subject}")
     print(f"--------------------------------------------------")
     print(f"{message}")
     print(f"{'='*50}\n")
+
+def send_birthday_emails():
+    """
+    Her gün çağrılıp, doğum günü bugün olan kullanıcılara HTML tasarımlı şık kutlama mailleri atar.
+    Veritabanındaki format 'YYYY-MM-DD' olduğu için son 5 karakter (MM-DD) alınıp bugünün tarihi ile eşlenir.
+    """
+    from database import get_db_connection
+    from datetime import datetime
+    import os
+
+    today_mm_dd = datetime.now().strftime("%m-%d")
+    
+    conn = get_db_connection()
+    c = conn.cursor()
+    # Tum kayitlari alip python ile MM-DD filter yapmak cloud sqlite (Turso vs) icin en guvenlisidir.
+    users = c.execute("SELECT fullname, email, birthdate FROM users WHERE birthdate IS NOT NULL AND birthdate != ''").fetchall()
+    conn.close()
+
+    base_url = os.environ.get('FRONTEND_URL', 'http://localhost:5000').rstrip('/')
+
+    count = 0
+    for u in users:
+        bdate = u['birthdate'] # format expected: YYYY-MM-DD
+        if len(bdate) >= 10 and bdate[5:10] == today_mm_dd:
+            name = u['fullname']
+            email = u['email']
+
+            subject = "🎂 İyi ki Doğdun! - EVENTİX Özel Sürpriz"
+            plain_body = f"İyi ki doğdun {name}! Eventix olarak sana harika bir yıl diliyoruz. Gününü özel kılmak için sana bir sürprizimiz var: BDAY26 kodu ile %15 indirim kazandın."
+            html_body = f"""
+            <html>
+            <body style="font-family:'Segoe UI', sans-serif; background-color:#0f0f1a; padding:30px; color:#e2e8f0; text-align:center;">
+              <div style="max-width:550px; margin:0 auto; background:linear-gradient(to bottom, #1e1e2e, #161625); border-radius:20px; padding:40px 30px; box-shadow:0 15px 35px rgba(0,0,0,0.6); border:1px solid #2d2d4e;">
+                <div style="font-size:60px; margin-bottom:10px;">🎉🎂</div>
+                <h1 style="color:#a78bfa; margin:0; font-size:32px; letter-spacing:1px;">İyi ki Doğdun!</h1>
+                <h2 style="color:#ffffff; margin-top:10px; font-weight:400;">Değerli {name},</h2>
+                
+                <p style="font-size:16px; line-height:1.6; color:#94a3b8; margin:25px 0;">
+                  Eventix ailesi olarak yeni yaşının sana sağlık, mutluluk ve çok daha fazla unutulmaz etkinlik dolu anılar getirmesini diliyoruz!
+                </p>
+                
+                <div style="background:rgba(236,72,153,0.1); border:1px dashed #ec4899; padding:20px; border-radius:12px; margin:30px 0;">
+                  <span style="display:block; font-size:12px; color:#ec4899; font-weight:700; text-transform:uppercase; margin-bottom:8px;">🎁 Sana Özel Sürpriz Hediyemiz</span>
+                  <div style="font-family:monospace; font-size:24px; color:#ffffff; font-weight:bold; letter-spacing:3px;">BDAY26</div>
+                  <span style="display:block; font-size:13px; color:#94a3b8; margin-top:8px;">Tüm etkinlik biletlerinde anında geçerli <strong>%15 İndirim</strong> kuponu!</span>
+                </div>
+                
+                <a href="{base_url}/index.html" style="display:inline-block; padding:15px 32px; background:linear-gradient(135deg, #8b5cf6, #ec4899); color:#ffffff; font-weight:bold; text-decoration:none; border-radius:30px; font-size:15px; box-shadow:0 4px 15px rgba(236,72,153,0.4);">
+                  Bugün Kendini Şımart ✨
+                </a>
+                
+                <div style="margin-top:40px; border-top:1px solid #2d2d4e; padding-top:20px;">
+                  <p style="color:#475569; font-size:12px; margin:0;">Gününün çok özel geçmesi dileğiyle...<br>Eventix Biletleme Platformu © 2026</p>
+                </div>
+              </div>
+            </body>
+            </html>
+            """
+            try:
+                send_email(to_email=email, subject=subject, message=plain_body, html_message=html_body)
+                count += 1
+            except Exception as e:
+                pass
+
+    if count > 0:
+        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {count} adet doğum günü maili başarıyla gönderildi!")
 
 def send_ticket_confirmation_email(to_email, fullname, event, generated_tickets, total_price, seat_labels_str):
     """
