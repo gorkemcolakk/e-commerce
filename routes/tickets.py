@@ -27,20 +27,20 @@ def guest_buy_ticket():
 
     # ── Validation ──────────────────────────────────────────────
     if not event_id:
-        return jsonify({'message': 'event_id zorunludur'}), 400
+        return jsonify({'message': 'event_id is required'}), 400
     if not guest_email or '@' not in guest_email:
-        return jsonify({'message': 'Geçerli bir e-posta adresi giriniz'}), 400
+        return jsonify({'message': 'Please enter a valid email address'}), 400
     if not guest_name or not guest_surname:
-        return jsonify({'message': 'Ad ve soyad zorunludur'}), 400
+        return jsonify({'message': 'First name and last name are required'}), 400
     if quantity < 1 or quantity > 10:
-        return jsonify({'message': 'Tek seferde 1 ile 10 arasında bilet alabilirsiniz'}), 400
+        return jsonify({'message': 'You can buy between 1 and 10 tickets at once'}), 400
 
     card_name   = data.get('card_name', '').strip()
     card_number = data.get('card_number', '').replace(' ', '')
     card_exp    = data.get('card_exp', '').strip()
     cvc         = data.get('cvc', '').strip()
     if not card_name or not card_number or not cvc or not card_exp:
-        return jsonify({'message': 'Ödeme bilgileri eksik! Lütfen tüm kart bilgilerinizi giriniz.'}), 400
+        return jsonify({'message': 'Payment information missing! Please enter all card details.'}), 400
 
     conn = get_db_connection()
     c = conn.cursor()
@@ -55,7 +55,7 @@ def guest_buy_ticket():
         real_user = c.execute("SELECT id FROM users WHERE email = ? AND role != 'guest'", (guest_email,)).fetchone()
         if real_user:
             conn.close()
-            return jsonify({'message': 'Bu e-posta ile kayıtlı bir hesap mevcut. Lütfen giriş yaparak satın alın.'}), 409
+            return jsonify({'message': 'An account is already registered with this email. Please log in to purchase.'}), 409
 
         import secrets
         from werkzeug.security import generate_password_hash
@@ -71,20 +71,20 @@ def guest_buy_ticket():
     event = c.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
     if not event:
         conn.close()
-        return jsonify({'message': 'Etkinlik bulunamadı'}), 404
+        return jsonify({'message': 'Event not found'}), 404
     if event['status'] == 'cancelled':
         conn.close()
-        return jsonify({'message': 'Bu etkinlik iptal edildi'}), 400
+        return jsonify({'message': 'This event has been cancelled'}), 400
 
     total_price = 0
-    seat_labels_str = "Standart"
+    seat_labels_str = "Standard"
     seats_dict = {}
 
     if event['has_seating']:
         seat_ids = [t.get('seat_id') for t in tickets_info if t.get('seat_id')]
         if len(seat_ids) != quantity:
             conn.close()
-            return jsonify({'message': 'Oturma planlı etkinlikler için her biletin koltuk seçimi zorunludur.'}), 400
+            return jsonify({'message': 'Seat selection is required for each ticket in events with a seating plan.'}), 400
 
         placeholders = ','.join(['?'] * len(seat_ids))
         params = list(seat_ids) + [event_id]
@@ -95,7 +95,7 @@ def guest_buy_ticket():
 
         if len(seats) != quantity:
             conn.close()
-            return jsonify({'message': 'Seçtiğiniz koltuklardan bazıları satılmış veya geçersiz.'}), 400
+            return jsonify({'message': 'Some of the seats you selected are sold or invalid.'}), 400
 
         for s in seats:
             total_price += s['price']
@@ -113,8 +113,8 @@ def guest_buy_ticket():
             remaining = rechk['capacity'] - rechk['sold_count']
             conn.close()
             if remaining <= 0:
-                return jsonify({'message': 'Kapasite dolu! Bu etkinlik için bilet kalmadı.'}), 400
-            return jsonify({'message': f'Yalnızca {remaining} bilet kaldı'}), 400
+                return jsonify({'message': 'Capacity full! No tickets left for this event.'}), 400
+            return jsonify({'message': f'Only {remaining} tickets left'}), 400
 
         unit_price  = event['price']
         total_price = unit_price * quantity
@@ -124,7 +124,7 @@ def guest_buy_ticket():
     if promo_code:
         if promo_code == 'BDAY26':
             conn.close()
-            return jsonify({'message': 'Doğum günü kampanyanızı kullanmak için lütfen hesabınıza giriş yapın.'}), 400
+            return jsonify({'message': 'Please log in to your account to use your birthday promotion.'}), 400
         else:
             promo_record = c.execute(
                 'SELECT * FROM promotions WHERE event_id = ? AND code = ?', (event_id, promo_code)
@@ -132,10 +132,10 @@ def guest_buy_ticket():
             
         if not promo_record:
             conn.close()
-            return jsonify({'message': 'Geçersiz promosyon kodu.'}), 400
+            return jsonify({'message': 'Invalid promotion code.'}), 400
         if promo_record['usage_limit'] and promo_record['used_count'] >= promo_record['usage_limit']:
             conn.close()
-            return jsonify({'message': 'Promosyon kodunun kullanım hakkı dolmuş.'}), 400
+            return jsonify({'message': "Promotion code's usage limit has been reached."}), 400
 
         if promo_record['discount_type'] == 'percentage':
             total_price -= (total_price * promo_record['discount_value']) // 100
@@ -207,7 +207,7 @@ def guest_buy_ticket():
         print(f"Error sending guest confirmation email: {e}")
 
     return jsonify({
-        'message': 'Bilet satın alındı! Biletleriniz e-posta adresinize gönderildi.',
+        'message': 'Ticket purchased! Your tickets have been sent to your email address.',
         'tickets': generated_tickets,
         'total_price': total_price,
         'quantity': quantity
@@ -226,9 +226,9 @@ def buy_ticket():
     quantity = len(tickets_info)
 
     if not event_id:
-        return jsonify({'message': 'event_id zorunludur'}), 400
+        return jsonify({'message': 'event_id is required'}), 400
     if quantity < 1 or quantity > 10:
-        return jsonify({'message': 'Tek seferde 1 ile 10 arasında bilet alabilirsiniz'}), 400
+        return jsonify({'message': 'You can buy between 1 and 10 tickets at once'}), 400
 
     # Payment info
     card_name = data.get('card_name', '').strip()
@@ -237,7 +237,7 @@ def buy_ticket():
     cvc = data.get('cvc', '').strip()
 
     if not card_name or not card_number or not cvc or not card_exp:
-        return jsonify({'message': 'Ödeme bilgileri eksik! Lütfen tüm kart bilgilerinizi giriniz.'}), 400
+        return jsonify({'message': 'Payment information missing! Please enter all card details.'}), 400
 
     conn = get_db_connection()
     c = conn.cursor()
@@ -245,20 +245,20 @@ def buy_ticket():
     event = c.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
     if not event:
         conn.close()
-        return jsonify({'message': 'Etkinlik bulunamadı'}), 404
+        return jsonify({'message': 'Event not found'}), 404
     if event['status'] == 'cancelled':
         conn.close()
-        return jsonify({'message': 'Bu etkinlik iptal edildi'}), 400
+        return jsonify({'message': 'This event has been cancelled'}), 400
 
     total_price = 0
-    seat_labels_str = "Standart"
+    seat_labels_str = "Standard"
     seats_dict = {}
 
     if event['has_seating']:
         seat_ids = [t.get('seat_id') for t in tickets_info if t.get('seat_id')]
         if len(seat_ids) != quantity:
              conn.close()
-             return jsonify({'message': 'Oturma planlı etkinlikler için her biletin koltuk seçimi zorunludur.'}), 400
+             return jsonify({'message': 'Seat selection is required for each ticket in events with a seating plan.'}), 400
 
         placeholders = ','.join(['?'] * len(seat_ids))
         params = list(seat_ids)
@@ -269,7 +269,7 @@ def buy_ticket():
         
         if len(seats) != quantity:
             conn.close()
-            return jsonify({'message': 'Seçtiğiniz koltuklardan bazıları satılmış veya geçersiz. Lütfen tekrar deneyin.'}), 400
+            return jsonify({'message': 'Some of the seats you selected are sold or invalid. Please try again.'}), 400
             
         for s in seats:
             total_price += s['price']
@@ -296,9 +296,9 @@ def buy_ticket():
             remaining = event_recheck['capacity'] - event_recheck['sold_count']
             conn.close()
             if remaining <= 0:
-                return jsonify({'message': 'Kapasite dolu! Bu etkinlik için bilet kalmadı.'}), 400
+                return jsonify({'message': 'Capacity full! No tickets left for this event.'}), 400
             else:
-                return jsonify({'message': f'Yalnızca {remaining} bilet kaldı'}), 400
+                return jsonify({'message': f'Only {remaining} tickets left'}), 400
                 
         unit_price = event['price']
         total_price = unit_price * quantity
@@ -314,11 +314,11 @@ def buy_ticket():
             
             if not c_bdate or len(c_bdate) < 10 or c_bdate[5:10] != today_md:
                 conn.close()
-                return jsonify({'message': 'Bu özel indirim kodu yalnızca doğum gününüzde geçerlidir!'}), 400
+                return jsonify({'message': 'This special discount code is only valid on your birthday!'}), 400
                 
             if user_bday_check['bday_promo_used_year'] == now_dt.year:
                 conn.close()
-                return jsonify({'message': 'Doğum günü kodunuzu bu yıl zaten kullandınız!'}), 400
+                return jsonify({'message': 'You have already used your birthday code this year!'}), 400
                 
             promo_record = {'id': 0, 'discount_type': 'percentage', 'discount_value': 15, 'usage_limit': None, 'used_count': 0, 'is_bday': True}
         else:
@@ -326,10 +326,10 @@ def buy_ticket():
             
         if not promo_record:
             conn.close()
-            return jsonify({'message': 'Geçersiz promosyon kodu.'}), 400
+            return jsonify({'message': 'Invalid promotion code.'}), 400
         if promo_record['usage_limit'] and promo_record['used_count'] >= promo_record['usage_limit']:
             conn.close()
-            return jsonify({'message': 'Promosyon kodunun kullanım hakkı dolmuş.'}), 400
+            return jsonify({'message': "Promotion code's usage limit has been reached."}), 400
 
         # Apply discount to total_price
         if promo_record['discount_type'] == 'percentage':
@@ -394,7 +394,7 @@ def buy_ticket():
 
     create_notification(
         conn, g.user['id'],
-        f"'{event['title']}' etkinliği için {quantity} adet bilet başarıyla satın alındı."
+        f"{quantity} tickets for the event '{event['title']}' were successfully purchased."
     )
 
     conn.commit()
@@ -414,7 +414,7 @@ def buy_ticket():
         print(f"Error sending ticket confirmation email: {e}")
 
     return jsonify({
-        'message': 'Bilet satın alındı!',
+        'message': 'Ticket purchased!',
         'tickets': generated_tickets,
         'total_price': total_price,
         'quantity': quantity
@@ -442,7 +442,7 @@ def my_tickets():
 @token_required
 def validate_ticket(qr_code):
     if not verify_ticket_signature(qr_code):
-        return jsonify({'valid': False, 'message': 'Bilet imzası geçersiz veya sahte bilet!'}), 400
+        return jsonify({'valid': False, 'message': 'Ticket signature is invalid or fake ticket!'}), 400
 
     conn = get_db_connection()
     ticket = conn.execute('''
@@ -455,14 +455,14 @@ def validate_ticket(qr_code):
 
     if not ticket:
         conn.close()
-        return jsonify({'valid': False, 'message': 'QR kod bulunamadı'}), 404
+        return jsonify({'valid': False, 'message': 'QR code not found'}), 404
 
     if ticket['status'] == 'used':
         conn.close()
         return jsonify({
             'valid': False,
             'status': 'already_used',
-            'message': 'Bu bilet daha önce kullanıldı!',
+            'message': 'This ticket has already been used!',
             'ticket': dict(ticket)
         }), 200
 
@@ -471,7 +471,7 @@ def validate_ticket(qr_code):
         return jsonify({
             'valid': False,
             'status': 'refund_pending',
-            'message': 'Bu bilet iade sürecinde!',
+            'message': 'This ticket is in the refund process!',
             'ticket': dict(ticket)
         }), 200
 
@@ -483,7 +483,7 @@ def validate_ticket(qr_code):
     return jsonify({
         'valid': True,
         'status': 'valid',
-        'message': '✓ Geçerli Bilet',
+        'message': '✓ Valid Ticket',
         'ticket': dict(ticket)
     }), 200
 
@@ -502,11 +502,11 @@ def validate_by_qr():
     event_id_filter = data.get('event_id')  # Opsiyonel: organizatör filtresi
 
     if not qr_code:
-        return jsonify({'valid': False, 'message': 'QR kod girilmedi.'}), 400
+        return jsonify({'valid': False, 'message': 'QR code not entered.'}), 400
 
     # İmza doğrulaması
     if not verify_ticket_signature(qr_code):
-        return jsonify({'valid': False, 'message': 'Bilet imzası geçersiz veya sahte bilet!'}), 400
+        return jsonify({'valid': False, 'message': 'Ticket signature is invalid or fake ticket!'}), 400
 
     conn = get_db_connection()
     ticket = conn.execute('''
@@ -519,18 +519,18 @@ def validate_by_qr():
 
     if not ticket:
         conn.close()
-        return jsonify({'valid': False, 'message': 'QR kod bulunamadı. Bilet sistemde kayıtlı değil.'}), 404
+        return jsonify({'valid': False, 'message': 'QR code not found. Ticket is not registered in the system.'}), 404
 
     # Eğer organizatör kendi etkinliğini filtrelemediyse kontrol et
     if event_id_filter:
         if str(ticket['event_id']) != str(event_id_filter):
             conn.close()
-            return jsonify({'valid': False, 'message': 'Bu QR kodu seçili etkinliğe ait değil!'}), 400
+            return jsonify({'valid': False, 'message': 'This QR code does not belong to the selected event!'}), 400
 
     # Rol kontrolü: sadece organizatör kendi etkinliğini doğrulayabilir (admin hepsini)
     if g.user['role'] == 'organizer' and ticket['organizer_id'] != g.user['id']:
         conn.close()
-        return jsonify({'valid': False, 'message': 'Bu etkinliğin bileti için yetkiniz yok.'}), 403
+        return jsonify({'valid': False, 'message': 'You do not have permission for this event\'s ticket.'}), 403
 
     ticket_dict = dict(ticket)
 
@@ -539,7 +539,7 @@ def validate_by_qr():
         return jsonify({
             'valid': False,
             'status': 'already_used',
-            'message': 'Bu bilet daha önce kullanıldı!',
+            'message': 'This ticket has already been used!',
             'ticket': ticket_dict
         }), 200
 
@@ -548,7 +548,7 @@ def validate_by_qr():
         return jsonify({
             'valid': False,
             'status': 'refund_pending',
-            'message': 'Bu bilet iade sürecinde, geçersiz!',
+            'message': 'This ticket is in the refund process, invalid!',
             'ticket': ticket_dict
         }), 200
 
@@ -561,7 +561,7 @@ def validate_by_qr():
     return jsonify({
         'valid': True,
         'status': 'used' if action == 'use' else 'valid',
-        'message': '✓ Geçerli Bilet' + (' - Kullanıldı olarak işaretlendi.' if action == 'use' else ''),
+        'message': '✓ Valid Ticket' + (' - Marked as used.' if action == 'use' else ''),
         'ticket': ticket_dict
     }), 200
 
@@ -574,7 +574,7 @@ def validate_promo():
     code = data.get('code', '').strip().upper()
 
     if not event_id or not code:
-        return jsonify({'valid': False, 'message': 'Eksik bilgi.'}), 400
+        return jsonify({'valid': False, 'message': 'Missing information.'}), 400
 
     if code == 'BDAY26':
         conn = get_db_connection()
@@ -587,16 +587,16 @@ def validate_promo():
         bdate = user_check['birthdate'] if user_check else ''
         
         if not bdate or len(bdate) < 10 or bdate[5:10] != today_md:
-            return jsonify({'valid': False, 'message': 'Bu özel indirim kodu yalnızca doğum gününüzde geçerlidir!'}), 400
+            return jsonify({'valid': False, 'message': 'This special discount code is only valid on your birthday!'}), 400
             
         if user_check['bday_promo_used_year'] == now.year:
-            return jsonify({'valid': False, 'message': 'Doğum günü kodunuzu bu yıl zaten kullandınız!'}), 400
+            return jsonify({'valid': False, 'message': 'You have already used your birthday code this year!'}), 400
             
         return jsonify({
             'valid': True,
             'discount_type': 'percentage',
             'discount_value': 15,
-            'message': 'Doğum günü indirimi başarıyla uygulandı! 🎉'
+            'message': 'Birthday discount successfully applied! 🎉'
         }), 200
 
     conn = get_db_connection()
@@ -608,14 +608,14 @@ def validate_promo():
     conn.close()
 
     if not promo:
-        return jsonify({'valid': False, 'message': 'Geçersiz indirim kodu.'}), 404
+        return jsonify({'valid': False, 'message': 'Invalid discount code.'}), 404
 
     if promo['usage_limit'] and promo['used_count'] >= promo['usage_limit']:
-        return jsonify({'valid': False, 'message': 'Bu indirim kodunun kullanım limiti dolmuş.'}), 400
+        return jsonify({'valid': False, 'message': "This discount code's usage limit has been reached."}), 400
 
     return jsonify({
         'valid': True,
         'discount_type': promo['discount_type'],
         'discount_value': promo['discount_value'],
-        'message': 'İndirim kodu başarıyla uygulandı!'
+        'message': 'Discount code successfully applied!'
     }), 200

@@ -13,10 +13,10 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 def register():
     data = request.get_json()
     if not data or not data.get('email') or not data.get('password') or not data.get('fullname'):
-        return jsonify({'message': 'Eksik veri'}), 400
+        return jsonify({'message': 'Missing data'}), 400
 
     if len(data['password']) < 6:
-        return jsonify({'message': 'Şifre en az 6 karakter olmalıdır'}), 400
+        return jsonify({'message': 'Password must be at least 6 characters'}), 400
 
     role = data.get('role', 'customer')
     if role not in ('customer', 'organizer'):
@@ -30,7 +30,7 @@ def register():
     existing = c.execute('SELECT id FROM users WHERE email = ?', (data['email'],)).fetchone()
     if existing:
         conn.close()
-        return jsonify({'message': 'Bu e-posta zaten kayıtlı'}), 409
+        return jsonify({'message': 'This email is already registered'}), 409
 
     hashed_pw = generate_password_hash(data['password'])
     c.execute(
@@ -39,21 +39,21 @@ def register():
     )
     conn.commit()
     conn.close()
-    return jsonify({'message': 'Kayıt başarılı'}), 201
+    return jsonify({'message': 'Registration successful'}), 201
 
 @auth_bp.route('/login', methods=['POST'])
 @limiter.limit("10 per minute")
 def login():
     data = request.get_json()
     if not data or not data.get('email') or not data.get('password'):
-        return jsonify({'message': 'Eksik veri'}), 400
+        return jsonify({'message': 'Missing data'}), 400
 
     conn = get_db_connection()
     user = conn.execute('SELECT * FROM users WHERE email = ?', (data['email'],)).fetchone()
     conn.close()
 
     if not user or not check_password_hash(user['password'], data['password']):
-        return jsonify({'message': 'Hatalı e-posta veya şifre'}), 401
+        return jsonify({'message': 'Invalid email or password'}), 401
 
     token = jwt.encode({
         'id': user['id'],
@@ -83,7 +83,7 @@ def forgot_password():
     data = request.get_json()
     email = data.get('email')
     if not email:
-        return jsonify({'message': 'E-posta gerekli'}), 400
+        return jsonify({'message': 'Email is required'}), 400
 
     conn = get_db_connection()
     user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
@@ -91,7 +91,7 @@ def forgot_password():
 
     if not user:
         # Prevent user enumeration, just return success
-        return jsonify({'message': 'Şifre sıfırlama linki e-postanıza gönderildi (varsa).'}), 200
+        return jsonify({'message': 'Password reset link sent to your email (if registered).'}), 200
     
     reset_token = jwt.encode({
         'id': user['id'],
@@ -109,22 +109,22 @@ def forgot_password():
     email_body = f"""
     <html><body style="font-family:Arial,sans-serif;background:#0f0f1a;color:#e2e8f0;padding:32px;">
       <div style="max-width:480px;margin:0 auto;background:#1a1a2e;border-radius:12px;padding:32px;border:1px solid #2d2d4e;">
-        <h2 style="color:#a78bfa;margin-top:0;">🔐 Şifre Sıfırlama</h2>
-        <p>Merhaba <strong>{user['fullname']}</strong>,</p>
-        <p>Şifrenizi sıfırlamak için aşağıdaki butona tıklayın. Link <strong>15 dakika</strong> geçerlidir.</p>
-        <a href="{reset_link}" style="display:inline-block;margin:16px 0;padding:12px 24px;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Şifremi Sıfırla</a>
-        <p style="font-size:12px;color:#94a3b8;">Butona tıklayamıyorsanız bu linki tarayıcınıza kopyalayın:<br>
+        <h2 style="color:#a78bfa;margin-top:0;">🔐 Password Reset</h2>
+        <p>Hello <strong>{user['fullname']}</strong>,</p>
+        <p>Click the button below to reset your password. The link is valid for <strong>15 minutes</strong>.</p>
+        <a href="{reset_link}" style="display:inline-block;margin:16px 0;padding:12px 24px;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Reset My Password</a>
+        <p style="font-size:12px;color:#94a3b8;">If you cannot click the button, copy this link to your browser:<br>
           <a href="{reset_link}" style="color:#a78bfa;word-break:break-all;">{reset_link}</a>
         </p>
         <hr style="border:none;border-top:1px solid #2d2d4e;margin:24px 0;">
-        <p style="font-size:12px;color:#64748b;">Bu isteği siz yapmadıysanız bu e-postayı görmezden gelin.</p>
+        <p style="font-size:12px;color:#64748b;">If you did not make this request, please ignore this email.</p>
       </div>
     </body></html>
     """
-    plain_text = f"Şifrenizi sıfırlamak için bu linke gidin (15 dk geçerlidir):\n{reset_link}"
-    send_email(email, "Şifre Sıfırlama Talebi", plain_text, html_message=email_body)
+    plain_text = f"Visit this link to reset your password (valid for 15 min):\n{reset_link}"
+    send_email(email, "Password Reset Request", plain_text, html_message=email_body)
 
-    return jsonify({'message': 'Şifre sıfırlama linki e-postanıza gönderildi.'}), 200
+    return jsonify({'message': 'Password reset link sent to your email.'}), 200
 
 @auth_bp.route('/reset-password', methods=['POST'])
 @limiter.limit("5 per hour")
@@ -134,17 +134,17 @@ def reset_password():
     new_password = data.get('new_password')
 
     if not token or not new_password:
-        return jsonify({'message': 'Eksik veri'}), 400
+        return jsonify({'message': 'Missing data'}), 400
 
     if len(new_password) < 6:
-        return jsonify({'message': 'Şifre en az 6 karakter olmalıdır'}), 400
+        return jsonify({'message': 'Password must be at least 6 characters'}), 400
 
     try:
         decoded = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         if decoded.get('purpose') != 'password_reset':
-            return jsonify({'message': 'Geçersiz token amacı'}), 400
+            return jsonify({'message': 'Invalid token purpose'}), 400
     except Exception:
-        return jsonify({'message': 'Geçersiz veya süresi dolmuş token'}), 400
+        return jsonify({'message': 'Invalid or expired token'}), 400
     
     hashed_pw = generate_password_hash(new_password)
     
@@ -153,4 +153,4 @@ def reset_password():
     conn.commit()
     conn.close()
 
-    return jsonify({'message': 'Şifreniz başarıyla sıfırlandı. Giriş yapabilirsiniz.'}), 200
+    return jsonify({'message': 'Password reset successfully. You can now login.'}), 200

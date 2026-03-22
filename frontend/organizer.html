@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Organizatör Paneli | EVENTİX</title>
+  <title>Organizer Dashboard | EVENTIX</title>
   <link rel="stylesheet" href="./styles/main.css">
   <link rel="stylesheet" href="./styles/components.css">
   <link rel="stylesheet" href="./styles/dashboard.css">
@@ -87,7 +87,7 @@
 <body>
   <nav class="navbar">
     <div class="container nav-container">
-      <a href="index.html" class="logo"><span>EVENT<span class="logo-highlight">İX</span></span></a>
+      <a href="index.html" class="logo"><span>EVENT<span class="logo-highlight">IX</span></span></a>
       <div class="user-controls"></div>
     </div>
   </nav>
@@ -95,50 +95,50 @@
   <main class="container dashboard-page">
     <aside class="dash-sidebar glass-panel">
       <div class="dash-avatar" id="orgAvatar">O</div>
-      <div class="dash-name" id="orgName">Organizatör</div>
-      <div class="dash-role-badge">Organizatör</div>
+      <div class="dash-name" id="orgName">Organizer</div>
+      <div class="dash-role-badge">Organizer</div>
       <nav class="dash-nav">
-        <button class="dash-nav-btn active" onclick="showTab('myevents',this)">🎪 Etkinliklerim</button>
-        <button class="dash-nav-btn" onclick="showTab('create',this)">➕ Etkinlik Oluştur</button>
-        <button class="dash-nav-btn" onclick="showTab('revenue',this)">💰 Gelir Raporu</button>
-        <button class="dash-nav-btn" onclick="showTab('promotions',this)">🎫 Promosyonlar</button>
-        <button class="dash-nav-btn" onclick="showTab('validate',this)">🔍 QR Doğrulama</button>
+        <button class="dash-nav-btn active" onclick="showTab('myevents',this)">🎪 My Events</button>
+        <button class="dash-nav-btn" onclick="showTab('create',this)">➕ Create Event</button>
+        <button class="dash-nav-btn" onclick="showTab('revenue',this)">💰 Revenue Report</button>
+        <button class="dash-nav-btn" onclick="showTab('promotions',this)">🎫 Promotions</button>
+        <button class="dash-nav-btn" onclick="showTab('validate',this)">🔍 QR Validation</button>
       </nav>
-      <button onclick="logout()" class="btn btn-danger" style="width:100%;justify-content:center;margin-top:auto;padding:10px;">🚪 Çıkış Yap</button>
+      <button onclick="logout()" class="btn btn-danger" style="width:100%;justify-content:center;margin-top:auto;padding:10px;">🚪 Logout</button>
     </aside>
 
     <div class="dash-content">
 
       <!-- MY EVENTS -->
       <section id="tab-myevents" class="dash-tab">
-        <h2 class="dash-section-title">Etkinliklerim</h2>
-        <div id="myEventsList"><p class="loading-text">Yükleniyor...</p></div>
+        <h2 class="dash-section-title">My Events</h2>
+        <div id="myEventsList"><p class="loading-text">Loading...</p></div>
       </section>
 
       <!-- CREATE EVENT -->
       <section id="tab-create" class="dash-tab" style="display:none;">
-        <h2 class="dash-section-title" id="createTabTitle">Yeni Etkinlik Oluştur</h2>
+        <h2 class="dash-section-title" id="createTabTitle">Create New Event</h2>
         <div class="glass-panel" style="max-width:600px;padding:28px;">
 
           <div id="editNotice" style="display:none; margin-bottom: 20px; padding: 12px; border-radius: 8px; background: rgba(139, 92, 246, 0.1); border: 1px solid var(--accent-purple); color: var(--accent-purple); font-size: 0.9rem;">
-            <strong>Şu an düzenleme modundasınız.</strong> Yapacağınız değişiklikler kaydedildikten sonra ilan tekrar admin onayına sunulacaktır.
+            <strong>You are in edit mode.</strong> Changes will be resubmitted for admin approval.
           </div>
 
           <div style="margin-bottom: 24px;">
-            <label class="form-label" style="font-size:1.1rem; margin-bottom: 15px; color: var(--text);">Bilet Tipi Seçimi</label>
+            <label class="form-label" style="font-size:1.1rem; margin-bottom: 15px; color: var(--text);">Ticket Type Selection</label>
             <div style="display: flex; gap: 15px;">
               <label style="flex:1; cursor:pointer;">
                 <input type="radio" name="ticket_type" value="standard" checked onchange="toggleSeating()" style="display:none;">
                 <div class="ticket-type-box glass-panel" style="padding:15px; text-align:center; border: 2px solid var(--accent-purple); border-radius:10px; transition: all 0.3s;" id="typeStandardBox">
-                  <div style="font-weight:bold; color:var(--text); margin-bottom:5px;">Genel Giriş</div>
-                  <div style="font-size:0.8rem; color:var(--text-muted);">Tek tip bilet havuzu oluşturur. (Ayakta / Numarasız)</div>
+                  <div style="font-weight:bold; color:var(--text); margin-bottom:5px;">General Admission</div>
+                  <div style="font-size:0.8rem; color:var(--text-muted);">Creates a standard ticket pool (Standing / Unnumbered).</div>
                 </div>
               </label>
               <label style="flex:1; cursor:pointer;">
                 <input type="radio" name="ticket_type" value="seated" onchange="toggleSeating()" style="display:none;">
                 <div class="ticket-type-box glass-panel" style="padding:15px; text-align:center; border: 2px solid transparent; border-radius:10px; transition: all 0.3s;" id="typeSeatedBox">
-                  <div style="font-weight:bold; color:var(--text); margin-bottom:5px;">Koltuk Seçimli</div>
-                  <div style="font-size:0.8rem; color:var(--text-muted);">Farklı blok ve fiyatlandırmalar ile numaralı koltuk planı.</div>
+                  <div style="font-weight:bold; color:var(--text); margin-bottom:5px;">Seated Selection</div>
+                  <div style="font-size:0.8rem; color:var(--text-muted);">Numbered seating plan with different blocks and pricing.</div>
                 </div>
               </label>
             </div>
@@ -146,95 +146,95 @@
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
             <div>
-              <label class="form-label">Etkinlik Adı *</label>
-              <input type="text" id="evTitle" class="form-control" placeholder="Konser adı...">
+              <label class="form-label">Event Title *</label>
+              <input type="text" id="evTitle" class="form-control" placeholder="Concert name...">
             </div>
             <div>
-              <label class="form-label">Kategori *</label>
+              <label class="form-label">Category *</label>
               <select id="evCategory" class="form-control">
-                <option value="concert">Konser</option>
-                <option value="theater">Tiyatro</option>
-                <option value="workshop">Atölye</option>
+                <option value="concert">Concert</option>
+                <option value="theater">Theater</option>
+                <option value="workshop">Workshop</option>
               </select>
             </div>
           </div>
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
             <div>
-              <label class="form-label">Tarih ve Saat *</label>
+              <label class="form-label">Date and Time *</label>
               <input type="datetime-local" id="evDate" class="form-control">
             </div>
             <div id="standardPriceContainer">
-              <label class="form-label">Fiyat (TL) *</label>
+              <label class="form-label">Price (TL) *</label>
               <input type="number" id="evPrice" class="form-control" placeholder="500" min="0">
             </div>
           </div>
 
           <div style="margin-bottom:14px;">
-            <label class="form-label">Konum *</label>
-            <input type="text" id="evLocation" class="form-control" placeholder="Bir mekan seçin veya yazın..." list="locationList">
+            <label class="form-label">Location *</label>
+            <input type="text" id="evLocation" class="form-control" placeholder="Select or type a venue..." list="locationList">
             <datalist id="locationList">
                 <option value="Arena, Istanbul"></option>
-                <option value="Açıkhava Tiyatrosu, İzmir"></option>
-                <option value="Kongre Merkezi, Ankara"></option>
+                <option value="Open Air Theater, Izmir"></option>
+                <option value="Congress Center, Ankara"></option>
                 <option value="Jolly Joker, Kartal"></option>
-                <option value="Kadıköy Sahne, İstanbul"></option>
-                <option value="Zorlu PSM, İstanbul"></option>
+                <option value="Kadikoy Stage, Istanbul"></option>
+                <option value="Zorlu PSM, Istanbul"></option>
             </datalist>
           </div>
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
             <div id="standardCapContainer">
-              <label class="form-label">Kapasite *</label>
+              <label class="form-label">Capacity *</label>
               <input type="number" id="evCapacity" class="form-control" placeholder="1000" min="1">
             </div>
             <div>
-              <label class="form-label">Görsel / Afiş Yükle</label>
+              <label class="form-label">Upload Image / Poster</label>
               <input type="file" id="evImageFile" class="form-control" accept="image/*" style="padding:10px;">
             </div>
           </div>
 
           <div style="margin-bottom:14px;">
-            <label class="form-label">Açıklama</label>
-            <textarea id="evDesc" class="form-control" rows="4" placeholder="Etkinlik detayları..."></textarea>
+            <label class="form-label">Description</label>
+            <textarea id="evDesc" class="form-control" rows="4" placeholder="Event details..."></textarea>
           </div>
 
           <div style="margin-bottom:18px;display:flex;align-items:center;gap:10px;">
             <input type="checkbox" id="evFeatured" style="width:16px;height:16px;">
-            <label for="evFeatured" class="form-label" style="margin:0;cursor:pointer;">Öne çıkan etkinlik olarak işaretle</label>
+            <label for="evFeatured" class="form-label" style="margin:0;cursor:pointer;">Mark as featured event</label>
           </div>
 
           <div id="seatingPlanBuilder" class="glass-panel" style="display:none; padding:15px; margin-bottom:20px; border:1px solid rgba(45,212,191,0.3);">
             <div style="margin-bottom:15px;">
-              <label class="form-label" style="color:var(--accent-teal);">Oturma Planı Görseli (İsteğe Bağlı)</label>
+              <label class="form-label" style="color:var(--accent-teal);">Seating Plan Image (Optional)</label>
               <input type="file" id="evSeatingImageFile" class="form-control" accept="image/*" style="padding:10px;">
-              <p style="font-size:0.75rem; color:var(--text-muted); margin-top:5px;">Müşterilerin bilet alırken konumu daha iyi anlaması için sahne dizilim şeması ekleyebilirsiniz.</p>
+              <p style="font-size:0.75rem; color:var(--text-muted); margin-top:5px;">You can add a stage layout diagram to help customers understand the seating positions.</p>
             </div>
-            <h4 style="margin:0 0 10px; color:var(--text); font-size: 0.95rem;">Oturma Planı Blokları</h4>
+            <h4 style="margin:0 0 10px; color:var(--text); font-size: 0.95rem;">Seating Plan Blocks</h4>
             <div id="zonesContainer"></div>
             <div id="seatingSummaryText" style="margin:10px 0; font-size:0.85rem; color:var(--accent-teal); text-align:right;"></div>
-            <button type="button" class="btn btn-outline" style="width:100%;font-size:0.85rem;" onclick="addZone()">+ Alan/Blok Ekle (Örn: VIP, Balkon)</button>
+            <button type="button" class="btn btn-outline" style="width:100%;font-size:0.85rem;" onclick="addZone()">+ Add Area/Block (e.g., VIP, Balcony)</button>
           </div>
 
           <!-- RECURRING EVENT SECTION -->
           <div style="margin-bottom:14px;">
             <label style="display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;">
               <input type="checkbox" id="evRecurring" onchange="toggleRecurring()" style="width:16px;height:16px;accent-color:#2dd4bf;">
-              <span class="form-label" style="margin:0;color:var(--accent-teal);">🔁 Tekrarlayan Etkinlik</span>
+              <span class="form-label" style="margin:0;color:var(--accent-teal);">🔁 Recurring Event</span>
             </label>
           </div>
 
           <div id="recurringBox" class="recurring-box" style="display:none;">
-            <p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 12px;">Etkinliğin aynı ayarlarla hangi sıklıkla tekrarlanacağını seçin.</p>
+            <p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 12px;">Choose how often the event will repeat with the same settings.</p>
             <div class="recurring-type-grid">
-              <button type="button" class="rec-type-btn active" id="rec-daily"   onclick="setRecType('daily')">📅 Günlük</button>
-              <button type="button" class="rec-type-btn"        id="rec-weekly"  onclick="setRecType('weekly')">📆 Haftalık</button>
-              <button type="button" class="rec-type-btn"        id="rec-monthly" onclick="setRecType('monthly')">🗓️ Aylık</button>
+              <button type="button" class="rec-type-btn active" id="rec-daily"   onclick="setRecType('daily')">📅 Daily</button>
+              <button type="button" class="rec-type-btn"        id="rec-weekly"  onclick="setRecType('weekly')">📆 Weekly</button>
+              <button type="button" class="rec-type-btn"        id="rec-monthly" onclick="setRecType('monthly')">🗓️ Monthly</button>
             </div>
             <div>
-              <label class="form-label">Bitiş Tarihi (Son Tekrar) *</label>
+              <label class="form-label">End Date (Last Repeat) *</label>
               <input type="datetime-local" id="evRecEndDate" class="form-control">
-              <p style="font-size:0.74rem;color:var(--text-muted);margin-top:5px;">Bu tarihe kadar olan tüm seanslar otomatik oluşturulur.</p>
+              <p style="font-size:0.74rem;color:var(--text-muted);margin-top:5px;">All sessions until this date will be automatically created.</p>
             </div>
           </div>
 
@@ -242,69 +242,69 @@
           <div id="evFeedback" style="margin-bottom:12px;"></div>
 
           <button id="evSubmitBtn" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:1rem;">
-            Etkinlik Oluştur
+            Create Event
           </button>
           <button id="cancelEditBtn" class="btn btn-outline" style="width:100%;justify-content:center;padding:14px;font-size:1rem;margin-top:10px;display:none;" onclick="cancelEditing()">
-            Düzenlemeyi İptal Et
+            Cancel Edit
           </button>
         </div>
       </section>
 
       <!-- REVENUE -->
       <section id="tab-revenue" class="dash-tab" style="display:none;">
-        <h2 class="dash-section-title">Gelir Raporu</h2>
-        <div id="revenueSummary"><p class="loading-text">Yükleniyor...</p></div>
+        <h2 class="dash-section-title">Revenue Report</h2>
+        <div id="revenueSummary"><p class="loading-text">Loading...</p></div>
         
         <div class="glass-panel" style="margin-top: 24px; padding: 20px;">
           <canvas id="revenueChart" style="max-height: 300px;"></canvas>
         </div>
 
-        <h3 style="color:var(--text);margin:28px 0 16px;">Etkinlik Bazlı Döküm</h3>
+        <h3 style="color:var(--text);margin:28px 0 16px;">Event Breakdown</h3>
         <div id="revenueBreakdown"></div>
       </section>
 
       <!-- PROMOTIONS -->
       <section id="tab-promotions" class="dash-tab" style="display:none;">
-        <h2 class="dash-section-title">Promosyon & İndirim Kodları</h2>
+        <h2 class="dash-section-title">Promotions & Discount Codes</h2>
         
         <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
           <!-- Create Form -->
           <div class="glass-panel" style="flex:1;min-width:300px;padding:24px;">
-            <h3 style="margin:0 0 16px;color:var(--text);font-size:1.1rem;">Yeni Kod Oluştur</h3>
+            <h3 style="margin:0 0 16px;color:var(--text);font-size:1.1rem;">Create New Code</h3>
             <div style="margin-bottom:12px;">
-              <label class="form-label">Etkinlik Seçin *</label>
+              <label class="form-label">Select Event *</label>
               <select id="promoEvent" class="form-control"></select>
             </div>
             <div style="margin-bottom:12px;">
-              <label class="form-label">Kupon Kodu *</label>
-              <input type="text" id="promoCode" class="form-control" placeholder="Örn: YAZ20" style="text-transform:uppercase;">
+              <label class="form-label">Coupon Code *</label>
+              <input type="text" id="promoCode" class="form-control" placeholder="e.g.: SUMMER20" style="text-transform:uppercase;">
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
               <div>
-                <label class="form-label">İndirim Türü *</label>
+                <label class="form-label">Discount Type *</label>
                 <select id="promoType" class="form-control">
-                  <option value="percentage">Yüzde (%)</option>
-                  <option value="fixed">Sabit Tutar (₺)</option>
+                  <option value="percentage">Percentage (%)</option>
+                  <option value="fixed">Fixed Amount (₺)</option>
                 </select>
               </div>
               <div>
-                <label class="form-label">Değer *</label>
+                <label class="form-label">Value *</label>
                 <input type="number" id="promoValue" class="form-control" placeholder="20" min="1">
               </div>
             </div>
             <div style="margin-bottom:16px;">
-              <label class="form-label">Kullanım Limiti (Opsiyonel)</label>
-              <input type="number" id="promoLimit" class="form-control" placeholder="Limitsiz" min="1">
+              <label class="form-label">Usage Limit (Optional)</label>
+              <input type="number" id="promoLimit" class="form-control" placeholder="Unlimited" min="1">
             </div>
-            <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="createPromotion()">Kodu Oluştur</button>
+            <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="createPromotion()">Create Code</button>
             <div id="promoFeedback" style="margin-top:10px;"></div>
           </div>
           
           <!-- List -->
           <div class="glass-panel" style="flex:2;min-width:400px;padding:24px;">
-            <h3 style="margin:0 0 16px;color:var(--text);font-size:1.1rem;">Aktif Kodlar</h3>
+            <h3 style="margin:0 0 16px;color:var(--text);font-size:1.1rem;">Active Codes</h3>
             <div id="promoListContainer">
-               <p class="loading-text">Yükleniyor...</p>
+               <p class="loading-text">Loading...</p>
             </div>
           </div>
         </div>
@@ -312,28 +312,28 @@
 
       <!-- QR VALIDATE -->
       <section id="tab-validate" class="dash-tab" style="display:none;">
-        <h2 class="dash-section-title">QR Bilet Doğrulama</h2>
+        <h2 class="dash-section-title">QR Ticket Validation</h2>
         <div class="glass-panel" style="max-width:520px;padding:28px;">
 
-          <!-- Etkinlik Seçimi -->
+          <!-- Event Selection -->
           <div style="margin-bottom:16px;">
-            <label class="form-label">Etkinlik Seçin (opsiyonel — belirli bir etkinlik filtresi)</label>
+            <label class="form-label">Select Event (optional — specific event filter)</label>
             <select id="qrEventFilter" class="form-control">
-              <option value="">Tüm Etkinliklerim (Filtre Yok)</option>
+              <option value="">All My Events (No Filter)</option>
             </select>
           </div>
 
-          <!-- Kamera Tarayici -->
+          <!-- Camera Scanner -->
           <div id="reader" style="width:100%;min-height:250px;background:rgba(0,0,0,0.2);border-radius:12px;margin-bottom:16px;overflow:hidden;border:1px solid var(--border);"></div>
 
-          <!-- Manuel Giriş -->
+          <!-- Manual Entry -->
           <div style="margin-bottom:12px;">
-            <label class="form-label">Manuel QR Kod Girişi</label>
-            <input type="text" id="qrInput" class="form-control" placeholder="EVENTIX-... kodunu yapıştırın">
+            <label class="form-label">Manual QR Code Entry</label>
+            <input type="text" id="qrInput" class="form-control" placeholder="Paste EVENTIX-... code">
           </div>
           <div style="display:flex;gap:10px;margin-bottom:16px;">
-            <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="checkQR()">👁 Kontrol Et</button>
-            <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="useQR()">✅ Kullanıldı Say</button>
+            <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="checkQR()">👁 Check</button>
+            <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="useQR()">✅ Mark as Used</button>
           </div>
           <div id="qrValidResult"></div>
         </div>
@@ -341,48 +341,48 @@
 
       <!-- PROFILE -->
       <section id="tab-profile" class="dash-tab" style="display:none;">
-        <h2 class="dash-section-title">Profilimi Güncelle</h2>
+        <h2 class="dash-section-title">Update Profile</h2>
         <div class="glass-panel" style="max-width:480px;padding:28px;">
           <div id="profileFeedback"></div>
           <div class="form-group">
-            <label class="form-label">Ad Soyad</label>
-            <input type="text" id="profileName" class="form-control" placeholder="Ad Soyad">
+            <label class="form-label">Full Name</label>
+            <input type="text" id="profileName" class="form-control" placeholder="Full Name">
           </div>
           <div class="form-group">
-            <label class="form-label">Telefon Numarası</label>
+            <label class="form-label">Phone Number</label>
             <input type="tel" id="profilePhone" class="form-control" placeholder="05XX XXX XX XX">
           </div>
           <div class="form-group">
-            <label class="form-label">Doğum Tarihi</label>
+            <label class="form-label">Birth Date</label>
             <input type="date" id="profileBirthdate" class="form-control">
           </div>
           <div class="form-group">
-            <label class="form-label">E-posta (değiştirilemez)</label>
+            <label class="form-label">Email (cannot be changed)</label>
             <input type="email" id="profileEmail" class="form-control" disabled style="opacity:0.6;">
           </div>
           <div class="form-group">
-            <label class="form-label">Rol</label>
+            <label class="form-label">Role</label>
             <input type="text" id="profileRole" class="form-control" disabled style="opacity:0.6;">
           </div>
-          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;" onclick="saveProfile()">Kaydet</button>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;" onclick="saveProfile()">Save</button>
         </div>
 
-        <h2 class="dash-section-title" style="margin-top:32px;">Şifremi Değiştir</h2>
+        <h2 class="dash-section-title" style="margin-top:32px;">Change Password</h2>
         <div class="glass-panel" style="max-width:480px;padding:28px;">
           <div id="passwordFeedback"></div>
           <div class="form-group">
-            <label class="form-label">Mevcut Şifre</label>
+            <label class="form-label">Current Password</label>
             <input type="password" id="currentPassword" class="form-control">
           </div>
           <div class="form-group">
-            <label class="form-label">Yeni Şifre</label>
+            <label class="form-label">New Password</label>
             <input type="password" id="newPassword" class="form-control">
           </div>
           <div class="form-group">
-            <label class="form-label">Yeni Şifre (Tekrar)</label>
+            <label class="form-label">New Password (Repeat)</label>
             <input type="password" id="confirmPassword" class="form-control">
           </div>
-          <button class="btn btn-outline" style="width:100%;justify-content:center;padding:12px;border-color:var(--gold);color:var(--gold);margin-top:8px;" onclick="changePassword()">Şifreyi Güncelle</button>
+          <button class="btn btn-outline" style="width:100%;justify-content:center;padding:12px;border-color:var(--gold);color:var(--gold);margin-top:8px;" onclick="changePassword()">Update Password</button>
         </div>
       </section>
 
@@ -395,7 +395,7 @@
 
       <div class="att-modal-header">
         <div>
-          <div class="att-modal-title" id="attModalTitle">Katılımcılar</div>
+          <div class="att-modal-title" id="attModalTitle">Attendees</div>
           <div class="att-modal-sub"  id="attModalSub"></div>
         </div>
         <button class="att-close-btn" onclick="closeAttendees()">&#10005;</button>
@@ -404,12 +404,12 @@
       <div class="att-stats-row" id="attStatsRow"></div>
 
       <div class="att-toolbar">
-        <input class="att-search" id="attSearch" type="text" placeholder="🔍 Ad, e-posta, bilet kodu..." oninput="filterAttendees()">
-        <button class="btn btn-outline" style="font-size:.82rem;padding:8px 14px;" onclick="sortAttendees('full_name')">⇅ Ad</button>
-        <button class="btn btn-outline" style="font-size:.82rem;padding:8px 14px;" onclick="sortAttendees('purchased_at')">⇅ Tarih</button>
+        <input class="att-search" id="attSearch" type="text" placeholder="🔍 Name, email, ticket code..." oninput="filterAttendees()">
+        <button class="btn btn-outline" style="font-size:.82rem;padding:8px 14px;" onclick="sortAttendees('full_name')">⇅ Name</button>
+        <button class="btn btn-outline" style="font-size:.82rem;padding:8px 14px;" onclick="sortAttendees('purchased_at')">⇅ Date</button>
         <button class="btn btn-primary" style="font-size:.82rem;padding:8px 18px;gap:6px;" onclick="downloadAttendeesCSV()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          CSV İndir
+          Download CSV
         </button>
       </div>
 
@@ -417,13 +417,13 @@
         <table class="att-table" id="attTable">
           <thead>
             <tr>
-              <th onclick="sortAttendees('ticket_key')">#Bilet Kodu</th>
-              <th onclick="sortAttendees('full_name')">👤 Ad Soyad</th>
-              <th onclick="sortAttendees('email')">E-posta</th>
-              <th onclick="sortAttendees('seat')">📍 Koltuk</th>
-              <th onclick="sortAttendees('status')">🔵 Durum</th>
-              <th onclick="sortAttendees('price')" style="text-align:right;">Fiyat</th>
-              <th onclick="sortAttendees('purchased_at')">🗓 Tarih</th>
+              <th onclick="sortAttendees('ticket_key')">#Ticket Key</th>
+              <th onclick="sortAttendees('full_name')">👤 Name Surname</th>
+              <th onclick="sortAttendees('email')">Email</th>
+              <th onclick="sortAttendees('seat')">📍 Seat</th>
+              <th onclick="sortAttendees('status')">🔵 Status</th>
+              <th onclick="sortAttendees('price')" style="text-align:right;">Price</th>
+              <th onclick="sortAttendees('purchased_at')">🗓 Date</th>
             </tr>
           </thead>
           <tbody id="attTbody"></tbody>
@@ -438,7 +438,7 @@
     // ── Guard ──────────────────────────────────────────────────
     var currentUser = getUser();
     if (!currentUser || (currentUser.role !== 'organizer' && currentUser.role !== 'admin')) {
-      alert('Bu sayfa sadece organizatorlere ozeldir.');
+      alert('This page is exclusive to organizers.');
       window.location.href = 'index.html';
     }
     document.getElementById('orgName').textContent = currentUser.fullname;
@@ -471,7 +471,7 @@
       document.getElementById('profilePhone').value = u.phone || '';
       document.getElementById('profileBirthdate').value = u.birthdate || '';
       document.getElementById('profileEmail').value = u.email || '';
-      document.getElementById('profileRole').value = u.role === 'organizer' ? 'Organizatör' : u.role === 'admin' ? 'Admin' : 'Müşteri';
+      document.getElementById('profileRole').value = u.role === 'organizer' ? 'Organizer' : u.role === 'admin' ? 'Admin' : 'Customer';
     }
 
     async function saveProfile() {
@@ -491,7 +491,7 @@
           body: JSON.stringify({ fullname, phone, birthdate })
         });
         if (res.ok) {
-          fb.innerHTML = '<p style="color:#6ee7b7;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ Profil güncellendi!</p>';
+          fb.innerHTML = '<p style="color:#6ee7b7;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ Profile updated!</p>';
           const u = getUser();
           u.fullname = fullname;
           u.phone = phone;
@@ -500,10 +500,10 @@
           document.getElementById('orgName').textContent = fullname;
           if (window.renderNav) renderNav();
         } else {
-          fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Hata oluştu.</p>';
+          fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ An error occurred.</p>';
         }
       } catch {
-        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Sunucu hatası.</p>';
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Server error.</p>';
       }
     }
 
@@ -514,15 +514,15 @@
       const fb = document.getElementById('passwordFeedback');
 
       if (!current_password || !new_password || !confirm_password) {
-        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Tüm alanları doldurun.</p>';
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Fill in all fields.</p>';
         return;
       }
       if (new_password.length < 6) {
-        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Şifre en az 6 karakter olmalıdır.</p>';
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Password must be at least 6 characters.</p>';
         return;
       }
       if (new_password !== confirm_password) {
-        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Yeni şifreler eşleşmiyor.</p>';
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ New passwords do not match.</p>';
         return;
       }
 
@@ -537,22 +537,22 @@
         });
         const d = await res.json();
         if (res.ok) {
-          fb.innerHTML = '<p style="color:#6ee7b7;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ Şifre başarıyla güncellendi!</p>';
+          fb.innerHTML = '<p style="color:#6ee7b7;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ Password updated successfully!</p>';
           document.getElementById('currentPassword').value = '';
           document.getElementById('newPassword').value = '';
           document.getElementById('confirmPassword').value = '';
         } else {
-          fb.innerHTML = `<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ ${d.message || 'Hata oluştu'}</p>`;
+          fb.innerHTML = `<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ ${d.message || 'Error occurred'}</p>`;
         }
       } catch {
-        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Sunucu hatası.</p>';
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Server error.</p>';
       }
     }
 
     // ── My Events ─────────────────────────────────────────────
     function loadMyEvents() {
       var el = document.getElementById('myEventsList');
-      el.innerHTML = '<p class="loading-text">Yukleniyor...</p>';
+      el.innerHTML = '<p class="loading-text">Loading...</p>';
       var token = getToken();
       fetch('/api/organizer/events', {
         headers: { 'Authorization': 'Bearer ' + token }
@@ -560,13 +560,13 @@
       .then(function(r){ return r.json(); })
       .then(function(events) {
         if (!events.length) {
-          el.innerHTML = '<p class="loading-text">Henuz etkinlik olusturmadiniz.</p>';
+          el.innerHTML = '<p class="loading-text">You haven\'t created any events yet.</p>';
           return;
         }
         var html = '';
         for (var i = 0; i < events.length; i++) {
           var e = events[i];
-          var statusTxt = e.status === 'active' ? 'Aktif' : e.status === 'pending' ? 'Onay Bekliyor' : e.status === 'cancelled' ? 'Iptal' : e.status;
+          var statusTxt = e.status === 'active' ? 'Active' : e.status === 'pending' ? 'Pending Approval' : e.status === 'cancelled' ? 'Cancelled' : e.status;
           var statusColor = e.status === 'active' ? '#10b981' : e.status === 'pending' ? '#f59e0b' : '#ef4444';
           html += '<div class="glass-panel" style="margin-bottom:14px;padding:18px;display:flex;gap:14px;align-items:flex-start;">';
           html += '<img src="' + e.image + '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;flex-shrink:0;" onerror="this.src=\'https://images.unsplash.com/photo-1540039155733-5bb30b4a574b?w=200\'">';
@@ -579,11 +579,11 @@
           if (e.recurring_config) {
             try {
               var rc = JSON.parse(e.recurring_config);
-              var recLabels = {daily: 'Günlük', weekly: 'Haftalık', monthly: 'Aylık'};
-              recBadge = '<span class="recurring-badge parent">🔁 ' + (recLabels[rc.type] || rc.type) + ' Tekrar</span>';
+              var recLabels = {daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly'};
+              recBadge = '<span class="recurring-badge parent">🔁 ' + (recLabels[rc.type] || rc.type) + ' Repeat</span>';
             } catch(ex) {}
           } else if (e.parent_event_id) {
-            recBadge = '<span class="recurring-badge child">🔗 Tekrar Seansı</span>';
+            recBadge = '<span class="recurring-badge child">🔗 Repeat Session</span>';
           }
           
           html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
@@ -596,26 +596,26 @@
           try {
              let dObj = new Date(e.date);
              if(!isNaN(dObj)) {
-                formattedDate = dObj.toLocaleDateString("tr-TR", {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+                formattedDate = dObj.toLocaleDateString("en-US", {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
              }
           } catch(e) {}
 
           html += '<p style="color:var(--text-muted);font-size:0.82rem;margin:2px 0;">' + formattedDate + ' | ' + e.location + '</p>';
-          html += '<p style="color:var(--text-muted);font-size:0.82rem;margin:2px 0;">' + e.price.toLocaleString('tr-TR') + ' TL | Kapasite: ' + e.sold_count + '/' + e.capacity + '</p>';
+          html += '<p style="color:var(--text-muted);font-size:0.82rem;margin:2px 0;">' + e.price.toLocaleString('en-US') + ' TL | Capacity: ' + e.sold_count + '/' + e.capacity + '</p>';
 
           if (e.status === 'rejected') {
             html += '<div style="margin-top:10px; padding:10px; background:rgba(239,68,68,0.1); border:1px dashed rgba(239,68,68,0.3); border-radius:8px;">';
-            html += '<p style="color:#ef4444; font-size:0.75rem; margin:0; font-weight:bold;">🚨 Admin Notu:</p>';
-            html += '<p style="color:var(--text); font-size:0.8rem; margin:3px 0 0;">' + (e.rejection_reason || 'Düzenleme gerekiyor.') + '</p>';
+            html += '<p style="color:#ef4444; font-size:0.75rem; margin:0; font-weight:bold;">🚨 Admin Note:</p>';
+            html += '<p style="color:var(--text); font-size:0.8rem; margin:3px 0 0;">' + (e.rejection_reason || 'Editing required.') + '</p>';
             html += '</div>';
           }
 
           if (e.status === 'cancelled' && e.cancelled_by) {
             const byAdmin = e.cancelled_by === 'admin';
              html += '<div style="margin-top:10px; padding:10px; background:rgba(239,68,68,0.1); border:1px dashed rgba(239,68,68,0.3); border-radius:8px;">';
-             html += '<p style="color:#ef4444; font-size:0.75rem; margin:0; font-weight:bold;">🚨 ' + (byAdmin ? 'Admin Tarafından İptal Edildi' : 'Sizin Tarafınızdan İptal Edildi') + ':</p>';
+             html += '<p style="color:#ef4444; font-size:0.75rem; margin:0; font-weight:bold;">🚨 ' + (byAdmin ? 'Cancelled by Admin' : 'Cancelled by You') + ':</p>';
              if(byAdmin) {
-                html += '<p style="color:var(--text); font-size:0.8rem; margin:3px 0 0;">' + (e.rejection_reason || 'Sebep belirtilmedi.') + '</p>';
+                html += '<p style="color:var(--text); font-size:0.8rem; margin:3px 0 0;">' + (e.rejection_reason || 'Reason not specified.') + '</p>';
              }
              html += '</div>';
           }
@@ -623,25 +623,25 @@
           html += '</div>';
           html += '<div style="display:flex; flex-direction:column; gap:8px;">';
           if (e.status !== 'cancelled') {
-            html += '<button class="btn btn-primary btn-sm" onclick="editEvent(\'' + e.id + '\')">Düzenle</button>';
-            html += '<button class="btn btn-danger btn-sm" onclick="cancelEvent(\'' + e.id + '\')">İptal Et</button>';
+            html += '<button class="btn btn-primary btn-sm" onclick="editEvent(\'' + e.id + '\')">Edit</button>';
+            html += '<button class="btn btn-danger btn-sm" onclick="cancelEvent(\'' + e.id + '\')">Cancel</button>';
           } else {
-            html += '<button class="btn btn-primary btn-sm" onclick="editEvent(\'' + e.id + '\')" style="background:var(--accent-teal); border-color:var(--accent-teal); color:black;">Düzenle ve Tekrar Aktif Et</button>';
-            html += '<button class="btn btn-danger btn-sm" onclick="cancelEvent(\'' + e.id + '\', true)">Kalıcı Olarak Sil</button>';
+            html += '<button class="btn btn-primary btn-sm" onclick="editEvent(\'' + e.id + '\')" style="background:var(--accent-teal); border-color:var(--accent-teal); color:black;">Edit & Reactivate</button>';
+            html += '<button class="btn btn-danger btn-sm" onclick="cancelEvent(\'' + e.id + '\', true)">Delete Permanently</button>';
           }
-          html += '<button class="btn btn-outline btn-sm" style="font-size:0.78rem;border-color:rgba(139,92,246,0.4);color:#a78bfa;margin-top:2px;" onclick="openAttendees(\'' + e.id + '\')">\ud83d\udccb Kat\u0131l\u0131mc\u0131lar</button>';
+          html += '<button class="btn btn-outline btn-sm" style="font-size:0.78rem;border-color:rgba(139,92,246,0.4);color:#a78bfa;margin-top:2px;" onclick="openAttendees(\'' + e.id + '\')">\ud83d\udccb Attendees</button>';
           html += '</div>';
           html += '</div>';
         }
         el.innerHTML = html;
       })
       .catch(function(err) {
-        el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yuklenemedi: ' + err.message + '</p>';
+        el.innerHTML = '<p class="loading-text" style="color:#f87171;">Could not load: ' + err.message + '</p>';
       });
     }
 
     function cancelEvent(id, permanent = false) {
-      const msg = permanent ? 'Bu etkinliği TÜM verileriyle birlikte KALICI olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.' : 'Bu etkinliği iptal etmek istediğinize emin misiniz?';
+      const msg = permanent ? 'Are you sure you want to PERMANENTLY delete this event and ALL its data? This action cannot be undone.' : 'Are you sure you want to cancel this event?';
       if (!confirm(msg)) return;
       fetch('/api/events/' + id + (permanent ? '?permanent=true' : ''), {
         method: 'DELETE',
@@ -652,7 +652,7 @@
         alert(res.message);
         loadMyEvents();
       })
-      .catch(function(){ showToast('Hata olustu.', 'error'); });
+      .catch(function(){ showToast('Error occurred.', 'error'); });
     }
 
     let editingId = null;
@@ -665,8 +665,8 @@
       .then(r => r.json())
       .then(e => {
         showTab('create', document.querySelector('.dash-nav-btn[onclick*="create"]'));
-        document.getElementById('createTabTitle').textContent = 'Etkinliği Düzenle';
-        document.getElementById('evSubmitBtn').textContent = 'Güncelle ve Onaya Gönder';
+        document.getElementById('createTabTitle').textContent = 'Edit Event';
+        document.getElementById('evSubmitBtn').textContent = 'Update & Submit for Review';
         document.getElementById('cancelEditBtn').style.display = 'flex';
         document.getElementById('editNotice').style.display = 'block';
 
@@ -702,8 +702,8 @@
 
     function cancelEditing() {
         editingId = null;
-        document.getElementById('createTabTitle').textContent = 'Yeni Etkinlik Oluştur';
-        document.getElementById('evSubmitBtn').textContent = 'Etkinlik Oluştur';
+        document.getElementById('createTabTitle').textContent = 'Create New Event';
+        document.getElementById('evSubmitBtn').textContent = 'Create Event';
         document.getElementById('cancelEditBtn').style.display = 'none';
         document.getElementById('editNotice').style.display = 'none';
         
@@ -779,7 +779,7 @@
           });
         });
         if (zones.length === 0) {
-          fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Lütfen en az bir adet oturma bloğu ekleyin.</div>';
+          fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Please add at least one seating block.</div>';
           return;
         }
       }
@@ -803,7 +803,7 @@
         
         // Upload Main Image
         if (fileInput && fileInput.files.length > 0) {
-            btn.textContent = 'Afiş Yükleniyor...';
+            btn.textContent = 'Uploading Poster...';
             var formData = new FormData();
             formData.append('file', fileInput.files[0]);
             let r = await fetch('/api/upload', {
@@ -813,12 +813,12 @@
             });
             let d = await r.json();
             if (d.url) { finalImageUrl = d.url; }
-            else { throw new Error(d.message || "Afiş yüklenemedi"); }
+            else { throw new Error(d.message || "Failed to upload poster"); }
         }
         
         // Upload Seating Image
         if (isSeated && seatFileInput && seatFileInput.files.length > 0) {
-            btn.textContent = 'Oturma Planı Görseli Yükleniyor...';
+            btn.textContent = 'Uploading Seating Plan Image...';
             var formData2 = new FormData();
             formData2.append('file', seatFileInput.files[0]);
             let r2 = await fetch('/api/upload', {
@@ -828,10 +828,10 @@
             });
             let d2 = await r2.json();
             if (d2.url) { finalSeatingImageUrl = d2.url; }
-            else { throw new Error(d2.message || "Seating image yüklenemedi"); }
+            else { throw new Error(d2.message || "Failed to upload seating image"); }
         }
         
-        btn.textContent = editingId ? 'Güncelleniyor...' : 'Etkinlik Kaydediliyor...';
+        btn.textContent = editingId ? 'Updating...' : 'Saving Event...';
         
         let payload = {
             title: title,
@@ -859,9 +859,9 @@
         if (isRecurring && !editingId) {
           var recEndDate = document.getElementById('evRecEndDate').value;
           if (!recEndDate) {
-            fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Tekrarlayan etkinlik için bitiş tarihi zorunludur.</div>';
+            fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">End date is required for recurring events.</div>';
             btn.disabled = false;
-            btn.textContent = 'Etkinlik Oluştur';
+            btn.textContent = 'Create Event';
             return;
           }
           payload.recurring = { type: selectedRecType, end_date: recEndDate };
@@ -878,7 +878,7 @@
         
         let data = await res.json();
         if (res.ok) {
-           showToast(editingId ? 'İlan güncellendi ve tekrar onaya sunuldu.' : 'Etkinlik oluşturuldu ve admin onayına sunuldu.');
+           showToast(editingId ? 'Listing updated and resubmitted for approval.' : 'Event created and submitted for admin approval.');
            cancelEditing();
            showTab('myevents', document.querySelector('.dash-nav-btn[onclick*="myevents"]'));
            document.getElementById('evDate').value  = '';
@@ -892,21 +892,21 @@
            document.getElementById('evDesc').value  = '';
            document.getElementById('evFeatured').checked = false;
         } else if (res.status === 401) {
-           fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Oturumunuz sona erdi. Giriş yapın.</div>';
+           fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Your session has expired. Please login again.</div>';
            setTimeout(function(){ window.location.href = 'login.html'; }, 2000);
         } else {
-           fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Hata: ' + (data.message || res.status) + '</div>';
+           fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Error: ' + (data.message || res.status) + '</div>';
         }
         fb.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
       } catch (err) {
-        fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">İşlem hatası: ' + err.message + '</div>';
+        fb.innerHTML = '<div style="padding:12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;">Process error: ' + err.message + '</div>';
         fb.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } finally {
         if (!editingId) {
-            btn.textContent = 'Etkinlik Oluştur';
+            btn.textContent = 'Create Event';
         } else {
-            btn.textContent = 'Güncelle ve Onaya Gönder';
+            btn.textContent = 'Update & Submit for Review';
         }
         btn.disabled    = false;
       }
@@ -916,7 +916,7 @@
     function loadRevenue() {
       var el = document.getElementById('revenueSummary');
       var el2 = document.getElementById('revenueBreakdown');
-      el.innerHTML = '<p class="loading-text">Yukleniyor...</p>';
+      el.innerHTML = '<p class="loading-text">Loading...</p>';
       fetch('/api/organizer/revenue', {
         headers: { 'Authorization': 'Bearer ' + getToken() }
       })
@@ -924,10 +924,10 @@
       .then(function(d) {
         el.innerHTML =
           '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;">' +
-          '<div class="glass-panel" style="padding:18px;text-align:center;border-top:2px solid var(--gold);"><div style="font-size:1.6rem;font-weight:700;color:var(--gold);">' + d.total_revenue.toLocaleString('tr-TR') + ' TL</div><div style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">Toplam Ciro</div></div>' +
-          '<div class="glass-panel" style="padding:18px;text-align:center;border-top:2px solid #ef4444;"><div style="font-size:1.6rem;font-weight:700;color:#ef4444;">' + d.commission.toLocaleString('tr-TR') + ' TL</div><div style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">Komisyon (%10)</div></div>' +
-          '<div class="glass-panel" style="padding:18px;text-align:center;border-top:2px solid #14b8a6;"><div style="font-size:1.6rem;font-weight:700;color:#14b8a6;">' + d.net_revenue.toLocaleString('tr-TR') + ' TL</div><div style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">Net Gelir</div></div>' +
-          '<div class="glass-panel" style="padding:18px;text-align:center;border-top:2px solid #3b82f6;"><div style="font-size:1.6rem;font-weight:700;color:#3b82f6;">' + d.total_tickets + '</div><div style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">Satilan Bilet</div></div>' +
+          '<div class="glass-panel" style="padding:18px;text-align:center;border-top:2px solid var(--gold);"><div style="font-size:1.6rem;font-weight:700;color:var(--gold);">' + d.total_revenue.toLocaleString('en-US') + ' TL</div><div style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">Total Revenue</div></div>' +
+          '<div class="glass-panel" style="padding:18px;text-align:center;border-top:2px solid #ef4444;"><div style="font-size:1.6rem;font-weight:700;color:#ef4444;">' + d.commission.toLocaleString('en-US') + ' TL</div><div style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">Commission (%10)</div></div>' +
+          '<div class="glass-panel" style="padding:18px;text-align:center;border-top:2px solid #14b8a6;"><div style="font-size:1.6rem;font-weight:700;color:#14b8a6;">' + d.net_revenue.toLocaleString('en-US') + ' TL</div><div style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">Net Income</div></div>' +
+          '<div class="glass-panel" style="padding:18px;text-align:center;border-top:2px solid #3b82f6;"><div style="font-size:1.6rem;font-weight:700;color:#3b82f6;">' + d.total_tickets + '</div><div style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">Tickets Sold</div></div>' +
           '</div>';
         var rows = '';
         var chartLabels = [];
@@ -939,16 +939,16 @@
           rows += '<tr style="border-bottom:1px solid var(--border);">' +
             '<td style="padding:9px 12px;color:var(--text);">' + b.title + '</td>' +
             '<td style="padding:9px 12px;text-align:right;color:var(--text-muted);">' + b.sold_count + '/' + b.capacity + '</td>' +
-            '<td style="padding:9px 12px;text-align:right;color:var(--text);">' + b.gross_revenue.toLocaleString('tr-TR') + ' TL</td>' +
-            '<td style="padding:9px 12px;text-align:right;color:#ef4444;">-' + b.commission.toLocaleString('tr-TR') + ' TL</td>' +
-            '<td style="padding:9px 12px;text-align:right;color:#14b8a6;">' + b.net_revenue.toLocaleString('tr-TR') + ' TL</td>' +
+            '<td style="padding:9px 12px;text-align:right;color:var(--text);">' + b.gross_revenue.toLocaleString('en-US') + ' TL</td>' +
+            '<td style="padding:9px 12px;text-align:right;color:#ef4444;">-' + b.commission.toLocaleString('en-US') + ' TL</td>' +
+            '<td style="padding:9px 12px;text-align:right;color:#14b8a6;">' + b.net_revenue.toLocaleString('en-US') + ' TL</td>' +
             '</tr>';
         }
-        el2.innerHTML = '<div class="glass-panel" style="overflow:auto;margin-top:16px;"><table style="width:100%;border-collapse:collapse;font-size:0.85rem;"><thead><tr style="border-bottom:1px solid var(--border);"><th style="text-align:left;padding:9px 12px;color:var(--text-muted);">Etkinlik</th><th style="text-align:right;padding:9px 12px;color:var(--text-muted);">Satis</th><th style="text-align:right;padding:9px 12px;color:var(--text-muted);">Brut</th><th style="text-align:right;padding:9px 12px;color:var(--text-muted);">Komisyon</th><th style="text-align:right;padding:9px 12px;color:var(--text-muted);">Net</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+        el2.innerHTML = '<div class="glass-panel" style="overflow:auto;margin-top:16px;"><table style="width:100%;border-collapse:collapse;font-size:0.85rem;"><thead><tr style="border-bottom:1px solid var(--border);"><th style="text-align:left;padding:9px 12px;color:var(--text-muted);">Event</th><th style="text-align:right;padding:9px 12px;color:var(--text-muted);">Sales</th><th style="text-align:right;padding:9px 12px;color:var(--text-muted);">Gross</th><th style="text-align:right;padding:9px 12px;color:var(--text-muted);">Commission</th><th style="text-align:right;padding:9px 12px;color:var(--text-muted);">Net</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
         
         renderChart(chartLabels, chartNetData);
       })
-      .catch(function(){ el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yuklenemedi.</p>'; });
+      .catch(function(){ el.innerHTML = '<p class="loading-text" style="color:#f87171;">Could not load.</p>'; });
     }
 
     let revChartInstance = null;
@@ -970,7 +970,7 @@
         data: {
           labels: labels,
           datasets: [{
-            label: 'Net Gelir (TL)',
+            label: 'Net Revenue (TL)',
             data: data,
             backgroundColor: 'rgba(139, 92, 246, 0.6)',
             borderColor: 'rgba(139, 92, 246, 1)',
@@ -1018,16 +1018,16 @@
       });
 
       // Load promos
-      listContainer.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      listContainer.innerHTML = '<p class="loading-text">Loading...</p>';
       fetch('/api/organizer/promotions', { headers: { 'Authorization': 'Bearer ' + getToken() } })
       .then(r => r.json())
       .then(promos => {
           if(!promos.length) {
-              listContainer.innerHTML = '<p class="loading-text" style="color:var(--text-muted);">Henüz indirim kodu oluşturmadınız.</p>';
+              listContainer.innerHTML = '<p class="loading-text" style="color:var(--text-muted);">You haven\'t created any discount codes yet.</p>';
               return;
           }
           var html = '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;color:var(--text);">';
-          html += '<thead><tr style="border-bottom:1px solid var(--border);"><th align="left" style="padding:8px;">Etkinlik</th><th align="left" style="padding:8px;">Kod</th><th align="center" style="padding:8px;">İndirim</th><th align="center" style="padding:8px;">Kullanım</th><th align="right" style="padding:8px;">İşlem</th></tr></thead><tbody>';
+          html += '<thead><tr style="border-bottom:1px solid var(--border);"><th align="left" style="padding:8px;">Event</th><th align="left" style="padding:8px;">Code</th><th align="center" style="padding:8px;">Discount</th><th align="center" style="padding:8px;">Usage</th><th align="right" style="padding:8px;">Action</th></tr></thead><tbody>';
           
           promos.forEach(p => {
               var val = p.discount_type === 'percentage' ? `%${p.discount_value}` : `${p.discount_value}₺`;
@@ -1037,7 +1037,7 @@
                 <td style="padding:8px;font-family:monospace;color:var(--accent-teal);font-weight:bold;">${p.code}</td>
                 <td align="center" style="padding:8px;">${val}</td>
                 <td align="center" style="padding:8px;">${usage}</td>
-                <td align="right" style="padding:8px;"><button class="btn btn-danger btn-sm" onclick="deletePromotion(${p.id})">Sil</button></td>
+                <td align="right" style="padding:8px;"><button class="btn btn-danger btn-sm" onclick="deletePromotion(${p.id})">Delete</button></td>
               </tr>`;
           });
           html += '</tbody></table>';
@@ -1054,7 +1054,7 @@
        var fb = document.getElementById('promoFeedback');
 
        if(!event_id || !code || !val) {
-           fb.innerHTML = '<span style="color:#fca5a5;font-size:0.85rem;">Etkinlik, kod ve indirim değeri zorunludur.</span>';
+           fb.innerHTML = '<span style="color:#fca5a5;font-size:0.85rem;">Event, code and discount value are required.</span>';
            return;
        }
 
@@ -1069,7 +1069,7 @@
        .then(r => r.json().then(j => ({ok: r.ok, data: j})))
        .then(res => {
            if(res.ok) {
-               fb.innerHTML = '<span style="color:#6ee7b7;font-size:0.85rem;">Kod başarıyla oluşturuldu!</span>';
+               fb.innerHTML = '<span style="color:#6ee7b7;font-size:0.85rem;">Code created successfully!</span>';
                document.getElementById('promoCode').value = '';
                document.getElementById('promoValue').value = '';
                document.getElementById('promoLimit').value = '';
@@ -1081,7 +1081,7 @@
     }
 
     function deletePromotion(id) {
-       if(!confirm("Kodu silmek istediğinize emin misiniz?")) return;
+       if(!confirm("Are you sure you want to delete this code?")) return;
        fetch('/api/organizer/promotions/' + id, {
            method: 'DELETE',
            headers: { 'Authorization': 'Bearer ' + getToken() }
@@ -1099,7 +1099,7 @@
       .then(r => r.json())
       .then(events => {
         var sel = document.getElementById('qrEventFilter');
-        sel.innerHTML = '<option value="">Tüm Etkinliklerim (Filtre Yok)</option>';
+        sel.innerHTML = '<option value="">All My Events (No Filter)</option>';
         events.forEach(ev => {
           sel.innerHTML += `<option value="${ev.id}">${ev.title}</option>`;
         });
@@ -1121,11 +1121,11 @@
       var eventFilter = document.getElementById('qrEventFilter').value;
 
       if (!code) {
-        el.innerHTML = '<p style="color:#fca5a5;">Lütfen bir QR kod girin.</p>';
+        el.innerHTML = '<p style="color:#fca5a5;">Please enter a QR code.</p>';
         return;
       }
 
-      el.innerHTML = '<p style="color:var(--text-muted);">Kontrol ediliyor...</p>';
+      el.innerHTML = '<p style="color:var(--text-muted);">Checking...</p>';
 
       fetch('/api/tickets/validate_by_qr', {
         method: 'POST',
@@ -1138,13 +1138,13 @@
           var t = d.ticket || {};
           el.innerHTML = `
             <div style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);border-radius:10px;padding:16px;">
-              <p style="color:#6ee7b7;font-weight:700;margin:0 0 8px;font-size:1rem;">✅ GEÇERLİ BİLET${ action === 'use' ? ' — Kullanıldı İşaretlendi' : '' }</p>
+              <p style="color:#6ee7b7;font-weight:700;margin:0 0 8px;font-size:1rem;">✅ VALID TICKET${ action === 'use' ? ' — Marked as Used' : '' }</p>
               <table style="width:100%;font-size:0.85rem;color:var(--text);border-collapse:collapse;">
-                <tr><td style="padding:3px 6px;color:var(--text-muted);">Etkinlik</td><td style="padding:3px 6px;font-weight:600;">${t.title || '-'}</td></tr>
-                <tr><td style="padding:3px 6px;color:var(--text-muted);">Tarih</td><td style="padding:3px 6px;">${t.date || '-'}</td></tr>
-                <tr><td style="padding:3px 6px;color:var(--text-muted);">Konum</td><td style="padding:3px 6px;">${t.location || '-'}</td></tr>
-                <tr><td style="padding:3px 6px;color:var(--text-muted);">Katılımcı</td><td style="padding:3px 6px;font-weight:600;">${(t.owner_name || '') + ' ' + (t.owner_surname || '') || t.fullname || '-'}</td></tr>
-                <tr><td style="padding:3px 6px;color:var(--text-muted);">Bilet No</td><td style="padding:3px 6px;font-family:monospace;">${t.ticket_key || '-'}</td></tr>
+                <tr><td style="padding:3px 6px;color:var(--text-muted);">Event</td><td style="padding:3px 6px;font-weight:600;">${t.title || '-'}</td></tr>
+                <tr><td style="padding:3px 6px;color:var(--text-muted);">Date</td><td style="padding:3px 6px;">${t.date || '-'}</td></tr>
+                <tr><td style="padding:3px 6px;color:var(--text-muted);">Location</td><td style="padding:3px 6px;">${t.location || '-'}</td></tr>
+                <tr><td style="padding:3px 6px;color:var(--text-muted);">Attendee</td><td style="padding:3px 6px;font-weight:600;">${(t.owner_name || '') + ' ' + (t.owner_surname || '') || t.fullname || '-'}</td></tr>
+                <tr><td style="padding:3px 6px;color:var(--text-muted);">Ticket No</td><td style="padding:3px 6px;font-family:monospace;">${t.ticket_key || '-'}</td></tr>
               </table>
             </div>`;
         } else {
@@ -1156,11 +1156,11 @@
           el.innerHTML = `
             <div style="background:${bgColor};border:1px solid ${borderColor};border-radius:10px;padding:16px;">
               <p style="color:${color};font-weight:700;margin:0 0 8px;">${icon} ${d.message}</p>
-              ${t.title ? `<p style="font-size:0.85rem;color:var(--text-muted);margin:0;">Etkinlik: ${t.title} | Bilet: ${t.ticket_key || ''}</p>` : ''}
+              ${t.title ? `<p style="font-size:0.85rem;color:var(--text-muted);margin:0;">Event: ${t.title} | Ticket: ${t.ticket_key || ''}</p>` : ''}
             </div>`;
         }
       })
-      .catch(() => { el.innerHTML = '<p style="color:#fca5a5;">Bağlantı hatası. Lütfen tekrar deneyin.</p>'; });
+      .catch(() => { el.innerHTML = '<p style="color:#fca5a5;">Connection error. Please try again.</p>'; });
     }
 
     let qrScannerInstance = null;
@@ -1208,16 +1208,16 @@
         totalCap += (r * c);
         if (pr > 0 && pr < minPrice) minPrice = pr;
       });
-      document.getElementById('seatingSummaryText').innerHTML = (totalCap > 0) ? `Toplam Kapasite: <strong>${totalCap}</strong> | Başlangıç Fiyatı: <strong>${minPrice === Infinity ? 0 : minPrice} ₺</strong>` : '';
+      document.getElementById('seatingSummaryText').innerHTML = (totalCap > 0) ? `Total Capacity: <strong>${totalCap}</strong> | Starting Price: <strong>${minPrice === Infinity ? 0 : minPrice} ₺</strong>` : '';
     }
 
     function addZone() {
       var container = document.getElementById('zonesContainer');
       var html = '<div class="zone-item" style="display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr;gap:10px;margin-bottom:10px;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;">' +
-        '<div><label class="form-label" style="font-size:0.75rem;">Blok Adı</label><input type="text" class="form-control z-name" placeholder="Örn: VIP"></div>' +
-        '<div><label class="form-label" style="font-size:0.75rem;">Satır</label><input type="number" class="form-control z-rows" value="5" min="1" oninput="updateSeatingSummary()"></div>' +
-        '<div><label class="form-label" style="font-size:0.75rem;">Sütun</label><input type="number" class="form-control z-cols" value="10" min="1" oninput="updateSeatingSummary()"></div>' +
-        '<div><label class="form-label" style="font-size:0.75rem;">Fiyat (₺)</label><input type="number" class="form-control z-price" value="500" min="0" oninput="updateSeatingSummary()"></div>' +
+        '<div><label class="form-label" style="font-size:0.75rem;">Block Name</label><input type="text" class="form-control z-name" placeholder="e.g.: VIP"></div>' +
+        '<div><label class="form-label" style="font-size:0.75rem;">Rows</label><input type="number" class="form-control z-rows" value="5" min="1" oninput="updateSeatingSummary()"></div>' +
+        '<div><label class="form-label" style="font-size:0.75rem;">Columns</label><input type="number" class="form-control z-cols" value="10" min="1" oninput="updateSeatingSummary()"></div>' +
+        '<div><label class="form-label" style="font-size:0.75rem;">Price (₺)</label><input type="number" class="form-control z-price" value="500" min="0" oninput="updateSeatingSummary()"></div>' +
         '</div>';
       container.insertAdjacentHTML('beforeend', html);
       updateSeatingSummary();
@@ -1231,10 +1231,10 @@
 
     function openAttendees(eventId) {
       _attEventId = eventId;
-      document.getElementById('attModalTitle').textContent = 'Katılımcılar';
-      document.getElementById('attModalSub').textContent   = 'Yükleniyor...';
+      document.getElementById('attModalTitle').textContent = 'Attendees';
+      document.getElementById('attModalSub').textContent   = 'Loading...';
       document.getElementById('attStatsRow').innerHTML     = '';
-      document.getElementById('attTbody').innerHTML        = '<tr><td colspan="7" class="att-empty">🔄 Yükleniyor...</td></tr>';
+      document.getElementById('attTbody').innerHTML        = '<tr><td colspan="7" class="att-empty">🔄 Loading...</td></tr>';
       document.getElementById('attSearch').value           = '';
       document.getElementById('attModalOverlay').classList.add('open');
       document.body.style.overflow = 'hidden';
@@ -1245,8 +1245,8 @@
       .then(function(r){ return r.json(); })
       .then(function(data) {
         _allAttendees = data.attendees || [];
-        document.getElementById('attModalTitle').textContent = data.event_title || 'Katılımcılar';
-        document.getElementById('attModalSub').textContent   = (data.event_date || '').slice(0,16) + ' • ' + data.total + ' bilet';
+        document.getElementById('attModalTitle').textContent = data.event_title || 'Attendees';
+        document.getElementById('attModalSub').textContent   = (data.event_date || '').slice(0,16) + ' • ' + data.total + ' tickets';
         var valid = _allAttendees.filter(function(a){ return a.status === 'valid'; }).length;
         var used  = _allAttendees.filter(function(a){ return a.status === 'used';  }).length;
         var rev   = _allAttendees.reduce(function(s,a){ return s + (a.price||0); }, 0);
@@ -1256,14 +1256,14 @@
         const cGold  = isLight ? '#ca8a04' : '#fde68a';
 
         document.getElementById('attStatsRow').innerHTML =
-          attStat(data.total, 'Toplam Bilet', '') +
-          attStat(valid, 'Geçerli', cGreen) +
-          attStat(used,  'Kullanıldı', cBlue) +
-          attStat(rev.toLocaleString('tr-TR') + ' ₺', 'Toplam Gelir', cGold);
+          attStat(data.total, 'Total Tickets', '') +
+          attStat(valid, 'Valid', cGreen) +
+          attStat(used,  'Used', cBlue) +
+          attStat(rev.toLocaleString('en-US') + ' ₺', 'Total Revenue', cGold);
         renderAttendees(_allAttendees);
       })
       .catch(function() {
-        document.getElementById('attTbody').innerHTML = '<tr><td colspan="7" class="att-empty" style="color:#fca5a5;">Veri yüklenemedi.</td></tr>';
+        document.getElementById('attTbody').innerHTML = '<tr><td colspan="7" class="att-empty" style="color:#fca5a5;">Failed to load data.</td></tr>';
       });
     }
 
@@ -1279,11 +1279,11 @@
 
     function renderAttendees(list) {
       if (!list || !list.length) {
-        document.getElementById('attTbody').innerHTML = '<tr><td colspan="7" class="att-empty">💬 Henüz katılımcı yok.</td></tr>';
+        document.getElementById('attTbody').innerHTML = '<tr><td colspan="7" class="att-empty">💬 No attendees yet.</td></tr>';
         return;
       }
       var sCls = { valid:'valid', used:'used', refund_pending:'refund', cancelled:'cancel' };
-      var sTr  = { valid:'Geçerli', used:'Kullanıldı', refund_pending:'İade Bekliyor', cancelled:'İptal' };
+      var sTr  = { valid:'Valid', used:'Used', refund_pending:'Refund Pending', cancelled:'Cancelled' };
       var rows = list.map(function(a) {
         return '<tr>' +
           '<td><code style="font-size:.78rem;color:var(--accent-teal);">' + (a.ticket_key||'-') + '</code></td>' +
@@ -1291,7 +1291,7 @@
           '<td style="color:var(--text-muted);">' + (a.email||'-') + '</td>' +
           '<td>' + (a.seat||'-') + '</td>' +
           '<td><span class="att-status ' + (sCls[a.status]||'') + '">' + (sTr[a.status]||a.status) + '</span></td>' +
-          '<td style="text-align:right;font-weight:600;">' + ((a.price||0).toLocaleString('tr-TR')) + ' ₺</td>' +
+          '<td style="text-align:right;font-weight:600;">' + ((a.price||0).toLocaleString('en-US')) + ' ₺</td>' +
           '<td style="color:var(--text-muted);white-space:nowrap;">' + (a.purchased_at||'').slice(0,16) + '</td>' +
           '</tr>';
       }).join('');
@@ -1322,8 +1322,8 @@
     }
 
     function downloadAttendeesCSV() {
-      var cols = ['Bilet Kodu','Ad','Soyad','E-posta','Koltuk','Durum','Fiyat (TL)','Adet','Satin Alma Tarihi'];
-      var sTr  = { valid:'Gecerli', used:'Kullanildi', refund_pending:'Iade Bekliyor', cancelled:'Iptal' };
+      var cols = ['Ticket Key','Name','Surname','Email','Seat','Status','Price (TL)','Quantity','Purchase Date'];
+      var sTr  = { valid:'Valid', used:'Used', refund_pending:'Refund Pending', cancelled:'Cancelled' };
       var csv  = '\uFEFF' + cols.join(',') + '\n' +
         _allAttendees.map(function(a) {
           return [a.ticket_key, a.name, a.surname, a.email, a.seat,
@@ -1333,7 +1333,7 @@
       var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       var link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = 'Katilimcilar_' + (_attEventId||'etkinlik') + '.csv';
+      link.download = 'Attendees_' + (_attEventId||'event') + '.csv';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

@@ -41,7 +41,7 @@ def get_event(event_id):
     e = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
     conn.close()
     if not e:
-        return jsonify({'message': 'Etkinlik bulunamadı'}), 404
+        return jsonify({'message': 'Event not found'}), 404
     
     event_dict = event_to_dict(e)
     if event_dict.get('has_seating'):
@@ -71,12 +71,12 @@ def create_event():
         required.extend(['price', 'capacity'])
     for field in required:
         if not data.get(field) and data.get(field) != 0:
-            return jsonify({'message': f'{field} alanl\u0131 zorunludur'}), 400
+            return jsonify({'message': f'{field} field is required'}), 400
 
     recurring = data.get('recurring')  # {type: 'daily'|'weekly'|'monthly', end_date: 'YYYY-MM-DDTHH:MM'}
     if recurring:
         if not recurring.get('end_date'):
-            return jsonify({'message': 'Tekrarlayan etkinlik i\u00e7in biti\u015f tarihi zorunludur'}), 400
+            return jsonify({'message': 'End date is required for recurring events'}), 400
 
     lineup_json = json.dumps(data.get('lineup', []))
     default_images = {
@@ -142,7 +142,7 @@ def create_event():
             if end_dt <= start_dt:
                 conn.rollback()
                 conn.close()
-                return jsonify({'message': 'Biti\u015f tarihi ba\u015flang\u0131\u00e7 tarihinden sonra olmal\u0131d\u0131r'}), 400
+                return jsonify({'message': 'End date must be after the start date'}), 400
 
             rec_type = recurring.get('type', 'weekly')
             current_dt = start_dt
@@ -169,21 +169,21 @@ def create_event():
         except Exception as ex:
             conn.rollback()
             conn.close()
-            return jsonify({'message': f'Tekrar tarihleri olu\u015fturulurken hata: {ex}'}), 500
+            return jsonify({'message': f'Error while creating recurring dates: {ex}'}), 500
 
     if event_status == 'pending':
         notif = (
-            f"'{data['title']}' etkinli\u011finiz ({created_count} seans) admin onayl\u0131na g\u00f6nderildi."
+            f"Your event '{data['title']}' ({created_count} sessions) has been sent for admin approval."
             if created_count > 1
-            else f"'{data['title']}' etkinli\u011finiz admin onayl\u0131na g\u00f6nderildi. Onaylandiktan sonra sitede g\u00f6r\u00fcnecek."
+            else f"Your event '{data['title']}' has been sent for admin approval. It will appear on the site once approved."
         )
         create_notification(conn, g.user['id'], notif)
 
     conn.commit()
     conn.close()
 
-    suffix = f" ({created_count} seans olu\u015fturuldu)" if created_count > 1 else ""
-    msg = ('Etkinlik olu\u015fturuldu ve admin onayl\u0131na g\u00f6nderildi.' if event_status == 'pending' else 'Etkinlik yayinlandi.') + suffix
+    suffix = f" ({created_count} sessions created)" if created_count > 1 else ""
+    msg = ('Event created and sent for admin approval.' if event_status == 'pending' else 'Event published.') + suffix
     return jsonify({'message': msg, 'event_id': parent_id, 'status': event_status, 'occurrences': created_count}), 201
 
 @events_bp.route('/<event_id>', methods=['PATCH'])
@@ -193,11 +193,11 @@ def update_event(event_id):
     event = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
     if not event:
         conn.close()
-        return jsonify({'message': 'Etkinlik bulunamadı'}), 404
+        return jsonify({'message': 'Event not found'}), 404
 
     if g.user['role'] == 'organizer' and event['organizer_id'] != g.user['id']:
         conn.close()
-        return jsonify({'message': 'Bu etkinliği düzenleme yetkiniz yok'}), 403
+        return jsonify({'message': 'You are not authorized to edit this event'}), 403
 
     data = request.get_json()
     fields = []
@@ -221,13 +221,13 @@ def update_event(event_id):
 
     if not fields:
         conn.close()
-        return jsonify({'message': 'Güncellenecek alan yok'}), 400
+        return jsonify({'message': 'No fields to update'}), 400
 
     # If an organizer edits their event and it's not already pending, bump it to pending
     if g.user['role'] == 'organizer' and needs_reapproval and event['status'] != 'pending':
         fields.append("status = 'pending'")
-        fields.append("rejection_reason = NULL") # Önceki red sebebini temizle
-        create_notification(conn, g.user['id'], f"'{event['title']}' etkinliğiniz güncellendi ve tekrar onaya gönderildi.")
+        fields.append("rejection_reason = NULL") # Clear previous rejection reason
+        create_notification(conn, g.user['id'], f"Your event '{event['title']}' has been updated and resubmitted for approval.")
 
     values.append(event_id)
     conn.execute(f"UPDATE events SET {', '.join(fields)} WHERE id = ?", values)
@@ -260,8 +260,8 @@ def update_event(event_id):
     conn.close()
     
     if g.user['role'] == 'organizer' and needs_reapproval and event['status'] != 'pending':
-        return jsonify({'message': 'Etkinlik güncellendi ve tekrar admin onayına gönderildi', 'status': 'pending'}), 200
-    return jsonify({'message': 'Etkinlik güncellendi', 'status': event['status']}), 200
+        return jsonify({'message': 'Event updated and resubmitted for admin approval', 'status': 'pending'}), 200
+    return jsonify({'message': 'Event updated', 'status': event['status']}), 200
 
 @events_bp.route('/<event_id>', methods=['DELETE'])
 @role_required('organizer', 'admin')
@@ -271,11 +271,11 @@ def cancel_event(event_id):
     event = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
     if not event:
         conn.close()
-        return jsonify({'message': 'Etkinlik bulunamadı'}), 404
+        return jsonify({'message': 'Event not found'}), 404
 
     if g.user['role'] == 'organizer' and event['organizer_id'] != g.user['id']:
         conn.close()
-        return jsonify({'message': 'Bu etkinliği yönetme yetkiniz yok'}), 403
+        return jsonify({'message': 'You are not authorized to manage this event'}), 403
 
     if permanent:
         # Önce biletleri kontrol et ve iade sürecini başlat (para yanmasın)
@@ -288,7 +288,7 @@ def cancel_event(event_id):
             )
             create_notification(
                 conn, ticket['user_id'],
-                f"'{event['title']}' etkinliği sistemden kaldırıldı. Biletiniz (#{ticket['ticket_key']}) iade sürecine alındı."
+                f"Event '{event['title']}' has been removed from the system. Your ticket (#{ticket['ticket_key']}) has been put into the refund process."
             )
 
         # Foreign Key kısıtlamalarını geçici olarak kapat (blok3 gibi verili ilanları silebilmek için)
@@ -305,10 +305,10 @@ def cancel_event(event_id):
         
         conn.commit()
         conn.close()
-        return jsonify({'message': 'Bilet sahiplerine iade bildirimi gönderildi ve etkinlik her yerden silindi'}), 200
+        return jsonify({'message': 'Refund notification sent to ticket holders and event deleted from everywhere'}), 200
 
     # Mevcut iptal mantığı
-    reason = request.args.get('reason', 'Organizatör tarafından iptal edildi')
+    reason = request.args.get('reason', 'Cancelled by the organizer')
     cancelled_by = g.user['role'] # 'admin' or 'organizer'
     
     conn.execute("UPDATE events SET status = 'cancelled', rejection_reason = ?, cancelled_by = ? WHERE id = ?", 
@@ -317,7 +317,7 @@ def cancel_event(event_id):
     # Organizatöre bildirim gönder (Eğer admin iptal ettiyse)
     if cancelled_by == 'admin' and event['organizer_id']:
         create_notification(conn, event['organizer_id'], 
-                            f"'{event['title']}' etkinliğiniz admin tarafından iptal edildi. Sebep: {reason}")
+                            f"Your event '{event['title']}' has been cancelled by the admin. Reason: {reason}")
 
     tickets = conn.execute(
         "SELECT * FROM tickets WHERE event_id = ? AND status = 'valid'", (event_id,)
@@ -328,9 +328,9 @@ def cancel_event(event_id):
         )
         create_notification(
             conn, ticket['user_id'],
-            f"'{event['title']}' etkinliği iptal edildi. Biletiniz (#{ticket['ticket_key']}) iade sürecine alındı."
+            f"Event '{event['title']}' has been cancelled. Your ticket (#{ticket['ticket_key']}) has been put into the refund process."
         )
 
     conn.commit()
     conn.close()
-    return jsonify({'message': 'Etkinlik iptal edildi, biletler iade sürecine alındı'}), 200
+    return jsonify({'message': 'Event cancelled, tickets put into the refund process'}), 200

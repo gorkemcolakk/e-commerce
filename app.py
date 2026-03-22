@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-load_dotenv()  # .env dosyasından SMTP ve diğer ayarları yükle
+load_dotenv()  # Load SMTP and other settings from .env file
 
 from flask import Flask
 from flask_cors import CORS
@@ -51,7 +51,7 @@ def serve_static(path):
         return app.send_static_file('index.html')
 
 def birthday_job():
-    """Arka planda sürekli çalışır ve saat tam 00:00 olduğunda mailleri gönderir."""
+    """Runs in background and sends emails at exactly 00:00."""
     while True:
         now = datetime.now()
         if now.hour == 0 and now.minute == 0:
@@ -64,10 +64,10 @@ if __name__ == '__main__':
     from database import init_db
     init_db()
     
-    # Reload dev mekanizmasının çift thead başlatmasını önlemek için check koyuyoruz
+    # Check to prevent duplicate threads during development reload
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
         t = threading.Thread(target=birthday_job, daemon=True)
         t.start()
-        print(">>> Doğum Günü Arkaplan Servisi Başlatıldı (Tam 00:00'ı bekliyor)")
+        print(">>> Birthday Background Service Started (Waiting for 00:00)")
         
     app.run(debug=True, port=5000)

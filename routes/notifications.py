@@ -25,7 +25,7 @@ def mark_notification_read(notif_id):
     )
     conn.commit()
     conn.close()
-    return jsonify({'message': 'Bildirim okundu'}), 200
+    return jsonify({'message': 'Notification marked as read'}), 200
 
 @notifications_bp.route('/read-all', methods=['PATCH'])
 @token_required
@@ -34,4 +34,4 @@ def mark_all_notifications_read():
     conn.execute('UPDATE notifications SET is_read = 1 WHERE user_id = ?', (g.user['id'],))
     conn.commit()
     conn.close()
-    return jsonify({'message': 'Tüm bildirimler okundu'}), 200
+    return jsonify({'message': 'All notifications marked as read'}), 200

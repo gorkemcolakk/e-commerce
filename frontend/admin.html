@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel | EVENTİX</title>
+  <title>Admin Panel | EVENTIX</title>
   <link rel="stylesheet" href="./styles/main.css">
   <link rel="stylesheet" href="./styles/components.css">
   <link rel="stylesheet" href="./styles/dashboard.css">
@@ -11,7 +11,7 @@
 <body>
   <nav class="navbar">
     <div class="container nav-container">
-      <a href="index.html" class="logo"><span>EVENT<span class="logo-highlight">İX</span></span></a>
+      <a href="index.html" class="logo"><span>EVENT<span class="logo-highlight">IX</span></span></a>
       <div class="user-controls"></div>
     </div>
   </nav>
@@ -23,98 +23,98 @@
       <div class="dash-role-badge" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#fca5a5;">⚙ Admin</div>
       <nav class="dash-nav">
         <button class="dash-nav-btn active" onclick="showTab('pending',this)">
-          ⏳ Onay Bekleyenler
+          ⏳ Pending Approval
           <span class="pending-count-badge" id="pendingBadge" style="display:none;"></span>
         </button>
-        <button class="dash-nav-btn" onclick="showTab('users',this)">👥 Kullanıcılar</button>
-        <button class="dash-nav-btn" onclick="showTab('allevents',this)">📋 Tüm Etkinlikler</button>
-        <button class="dash-nav-btn" onclick="showTab('revenue',this)">💰 Platform Geliri</button>
+        <button class="dash-nav-btn" onclick="showTab('users',this)">👥 Users</button>
+        <button class="dash-nav-btn" onclick="showTab('allevents',this)">📋 All Events</button>
+        <button class="dash-nav-btn" onclick="showTab('revenue',this)">💰 Platform Revenue</button>
       </nav>
-      <button onclick="logout()" class="btn btn-danger" style="width:100%;justify-content:center;margin-top:auto;padding:10px;">🚪 Çıkış Yap</button>
+      <button onclick="logout()" class="btn btn-danger" style="width:100%;justify-content:center;margin-top:auto;padding:10px;">🚪 Logout</button>
     </aside>
 
     <div class="dash-content">
 
       <!-- ── PENDING EVENTS ─────────────────────────── -->
       <section id="tab-pending" class="dash-tab">
-        <h2 class="dash-section-title">⏳ Onay Bekleyen Etkinlikler</h2>
-        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Organizatörler tarafından oluşturulan ve yayınlanmayı bekleyen etkinlikler.</p>
-        <div id="pendingList"><p class="loading-text">Yükleniyor...</p></div>
+        <h2 class="dash-section-title">⏳ Events Pending Approval</h2>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Events created by organizers and waiting to be published.</p>
+        <div id="pendingList"><p class="loading-text">Loading...</p></div>
       </section>
 
       <!-- ── USERS ──────────────────────────────────── -->
       <section id="tab-users" class="dash-tab" style="display:none;">
-        <h2 class="dash-section-title">👥 Kullanıcılar</h2>
-        <div id="usersList"><p class="loading-text">Yükleniyor...</p></div>
+        <h2 class="dash-section-title">👥 Users</h2>
+        <div id="usersList"><p class="loading-text">Loading...</p></div>
       </section>
 
       <!-- ── ALL EVENTS ─────────────────────────────── -->
       <section id="tab-allevents" class="dash-tab" style="display:none;">
-        <h2 class="dash-section-title">📋 Tüm Etkinlikler</h2>
-        <div id="allEventsList"><p class="loading-text">Yükleniyor...</p></div>
+        <h2 class="dash-section-title">📋 All Events</h2>
+        <div id="allEventsList"><p class="loading-text">Loading...</p></div>
       </section>
 
       <!-- ── REVENUE ────────────────────────────────── -->
       <section id="tab-revenue" class="dash-tab" style="display:none;">
-        <h2 class="dash-section-title">💰 Platform Geliri</h2>
-        <div id="adminRevenue"><p class="loading-text">Yükleniyor...</p></div>
+        <h2 class="dash-section-title">💰 Platform Revenue</h2>
+        <div id="adminRevenue"><p class="loading-text">Loading...</p></div>
       </section>
 
       <!-- PROFILE -->
       <section id="tab-profile" class="dash-tab" style="display:none;">
-        <h2 class="dash-section-title">Profilimi Güncelle</h2>
+        <h2 class="dash-section-title">Update My Profile</h2>
         <div class="glass-panel" style="max-width:480px;padding:28px;">
           <div id="profileFeedback"></div>
           <div class="form-group">
-            <label class="form-label">Ad Soyad</label>
-            <input type="text" id="profileName" class="form-control" placeholder="Ad Soyad">
+            <label class="form-label">Full Name</label>
+            <input type="text" id="profileName" class="form-control" placeholder="Full Name">
           </div>
           <div class="form-group">
-            <label class="form-label">Telefon Numarası</label>
+            <label class="form-label">Phone Number</label>
             <input type="tel" id="profilePhone" class="form-control" placeholder="05XX XXX XX XX">
           </div>
           <div class="form-group">
-            <label class="form-label">Doğum Tarihi</label>
+            <label class="form-label">Birth Date</label>
             <input type="date" id="profileBirthdate" class="form-control">
           </div>
           <div class="form-group">
-            <label class="form-label">E-posta (değiştirilemez)</label>
+            <label class="form-label">Email (cannot be changed)</label>
             <input type="email" id="profileEmail" class="form-control" disabled style="opacity:0.6;">
           </div>
           <div class="form-group">
-            <label class="form-label">Rol</label>
+            <label class="form-label">Role</label>
             <input type="text" id="profileRole" class="form-control" disabled style="opacity:0.6;">
           </div>
-          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;" onclick="saveProfile()">Kaydet</button>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;" onclick="saveProfile()">Save</button>
         </div>
 
-        <h2 class="dash-section-title" style="margin-top:32px;">Şifremi Değiştir</h2>
+        <h2 class="dash-section-title" style="margin-top:32px;">Change My Password</h2>
         <div class="glass-panel" style="max-width:480px;padding:28px;">
           <div id="passwordFeedback"></div>
           <div class="form-group">
-            <label class="form-label">Mevcut Şifre</label>
+            <label class="form-label">Current Password</label>
             <input type="password" id="currentPassword" class="form-control">
           </div>
           <div class="form-group">
-            <label class="form-label">Yeni Şifre</label>
+            <label class="form-label">New Password</label>
             <input type="password" id="newPassword" class="form-control">
           </div>
           <div class="form-group">
-            <label class="form-label">Yeni Şifre (Tekrar)</label>
+            <label class="form-label">New Password (Repeat)</label>
             <input type="password" id="confirmPassword" class="form-control">
           </div>
-          <button class="btn btn-outline" style="width:100%;justify-content:center;padding:12px;border-color:var(--gold);color:var(--gold);margin-top:8px;" onclick="changePassword()">Şifreyi Güncelle</button>
+          <button class="btn btn-outline" style="width:100%;justify-content:center;padding:12px;border-color:var(--gold);color:var(--gold);margin-top:8px;" onclick="changePassword()">Update Password</button>
         </div>
       </section>
 
     </div>
   </main>
 
-  <!-- ── PREVIEW MODAL (SENİN TASARIMINA EK) ── -->
+  <!-- ── PREVIEW MODAL ── -->
   <div id="previewModal" class="glass-panel" style="display:none; position:fixed; top:5%; left:5%; width:90%; height:90%; z-index:99999; flex-direction:column; padding:0; overflow:hidden; border:1px solid var(--border);">
     <div style="background:var(--bg-card); padding:15px 25px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border);">
-      <h3 style="margin:0; font-size:1.1rem; color:white;">İlan Önizlemesi</h3>
-      <button onclick="closePreview()" class="btn btn-outline btn-sm" style="border-color:#ef4444; color:#ef4444;">&times; Kapat</button>
+      <h3 style="margin:0; font-size:1.1rem; color:white;">Listing Preview</h3>
+      <button onclick="closePreview()" class="btn btn-outline btn-sm" style="border-color:#ef4444; color:#ef4444;">&times; Close</button>
     </div>
     <iframe id="previewIframe" style="flex:1; border:none; background:white;"></iframe>
   </div>
@@ -123,7 +123,7 @@
   <script>
     const user = getUser();
     if (!user || user.role !== 'admin') { 
-      alert('Bu sayfa sadece adminlere özeldir.'); 
+      alert('This page is only for administrators.'); 
       window.location.href = 'index.html'; 
     }
     document.getElementById('adminName').textContent = user.fullname;
@@ -162,7 +162,7 @@
     // ── PENDING APPROVAL ──────────────────────────────────────
     async function loadPending() {
       const el = document.getElementById('pendingList');
-      el.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      el.innerHTML = '<p class="loading-text">Loading...</p>';
       try {
         const r = await fetch('/api/admin/pending-events', { headers: authHeaders() });
         const events = await r.json();
@@ -171,7 +171,7 @@
         badge.textContent = events.length;
 
         if (!events.length) {
-          el.innerHTML = '<div style="text-align:center;padding:48px 20px;"><div style="font-size:2.5rem;">✅</div><p style="color:var(--text-muted);margin-top:12px;font-size:0.9rem;">Şu anda onay bekleyen etkinlik yok.</p></div>';
+          el.innerHTML = '<div style="text-align:center;padding:48px 20px;"><div style="font-size:2.5rem;">✅</div><p style="color:var(--text-muted);margin-top:12px;font-size:0.9rem;">There are currently no events pending approval.</p></div>';
           return;
         }
         el.innerHTML = events.map(e => `
@@ -181,36 +181,36 @@
               <div style="flex:1;min-width:0;">
                 <h3 style="color:var(--text);font-size:1rem;margin:0 0 4px;">${e.title}</h3>
                 <p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 2px;">📅 ${e.date} &nbsp;|&nbsp; 📍 ${e.location}</p>
-                <p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 8px;">💰 ${e.price.toLocaleString('tr-TR')} ₺ &nbsp;|&nbsp; 🎟 Kapasite: ${e.capacity}</p>
+                <p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 8px;">💰 ${e.price.toLocaleString('en-US')} ₺ &nbsp;|&nbsp; 🎟 Capacity: ${e.capacity}</p>
                 <p style="font-size:0.75rem;color:var(--text-sub);background:var(--bg-surface);padding:6px 10px;border-radius:6px;margin:0;">
-                  👤 Organizatör: <strong>${e.organizer_name || 'Bilinmiyor'}</strong>
+                  👤 Organizer: <strong>${e.organizer_name || 'Unknown'}</strong>
                 </p>
               </div>
-              <button class="btn btn-outline btn-sm" onclick="openPreview('${e.id}')">👁 Önizle</button>
+              <button class="btn btn-outline btn-sm" onclick="openPreview('${e.id}')">👁 Preview</button>
             </div>
             <div style="display:flex;gap:8px;margin-top:14px;">
-              <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="approveEvent('${e.id}', this)">✓ Onayla</button>
-              <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="toggleReasonBox('${e.id}', 'reject')">✗ Reddet</button>
+              <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="approveEvent('${e.id}', this)">✓ Approve</button>
+              <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="toggleReasonBox('${e.id}', 'reject')">✗ Reject</button>
             </div>
             <div id="reason-box-${e.id}" style="display:none;margin-top:10px;">
               <div class="glass-panel" style="padding:15px; border-color:rgba(239,68,68,0.3);">
-                <label class="form-label" style="margin-bottom:8px; display:block; color:var(--text); font-weight:600;">Red Gerekçesi</label>
-                <textarea class="form-control" placeholder="Organizatöre not ilet..." id="reason-input-${e.id}" style="margin-bottom:8px; min-height:60px;"></textarea>
-                <button class="btn btn-danger btn-sm" style="width:100%;justify-content:center;" onclick="confirmReasonAction('${e.id}', 'reject', 'pending')">Reddet</button>
+                <label class="form-label" style="margin-bottom:8px; display:block; color:var(--text); font-weight:600;">Reason for Rejection</label>
+                <textarea class="form-control" placeholder="Provide a note for the organizer..." id="reason-input-${e.id}" style="margin-bottom:8px; min-height:60px;"></textarea>
+                <button class="btn btn-danger btn-sm" style="width:100%;justify-content:center;" onclick="confirmReasonAction('${e.id}', 'reject', 'pending')">Reject</button>
               </div>
             </div>
           </div>`).join('');
-      } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yüklenemedi.</p>'; }
+      } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Failed to load.</p>'; }
     }
 
     async function approveEvent(id, btn) {
-      btn.textContent = 'Onaylanıyor...'; btn.disabled = true;
+      btn.textContent = 'Approving...'; btn.disabled = true;
       try {
         const r = await fetch(`/api/admin/events/${id}/approve`, { method: 'POST', headers: authHeaders() });
         const d = await r.json();
         showToast(d.message, 'success');
         loadPending();
-      } catch { btn.textContent = 'Onayla'; btn.disabled = false; }
+      } catch { btn.textContent = 'Approve'; btn.disabled = false; }
     }
 
     function toggleReasonBox(id, action = 'reject') {
@@ -229,12 +229,12 @@
       const btn = document.getElementById(`reason-confirm-btn-${id}`);
 
       if (action === 'cancel') {
-        if (label) label.textContent = 'İptal Gerekçesi *';
-        if (input) input.placeholder = 'Neden iptal edildiğini açıklayın (Kullanıcılara bildirilecek)...';
+        if (label) label.textContent = 'Cancellation Reason *';
+        if (input) input.placeholder = 'Explain why it was cancelled (users will be notified)...';
         if (btn) btn.onclick = () => confirmReasonAction(id, 'cancel', 'allevents');
       } else {
-        if (label) label.textContent = 'Red/Düzenleme Gerekçesi *';
-        if (input) input.placeholder = 'Organizatöre düzenleme notu iletin...';
+        if (label) label.textContent = 'Reject/Edit Reason *';
+        if (input) input.placeholder = 'Send an edit note to the organizer...';
         if (btn) btn.onclick = () => confirmReasonAction(id, 'reject', 'allevents');
       }
     }
@@ -242,7 +242,7 @@
     async function confirmReasonAction(id, action, refreshTab = 'pending') {
       const reason = document.getElementById(`reason-input-${id}`).value.trim();
       if (!reason) {
-        alert('Lütfen bir gerekçe giriniz.');
+        alert('Please enter a reason.');
         return;
       }
 
@@ -261,62 +261,62 @@
         if (refreshTab === 'pending') loadPending();
         else loadAllEvents();
       } catch (err) {
-        showToast('İşlem başarısız.', 'error');
+        showToast('Operation failed.', 'error');
       }
     }
 
     // ── USERS ─────────────────────────────────────────────────
     async function loadUsers() {
       const el = document.getElementById('usersList');
-      el.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      el.innerHTML = '<p class="loading-text">Loading...</p>';
       try {
         const r = await fetch('/api/admin/users', { headers: authHeaders() });
         const users = await r.json();
-        const roleLabel = r => ({ admin: '⚙ Admin', organizer: '🎪 Org.', customer: '🎟 Müşteri' }[r] || r);
+        const roleLabel = r => ({ admin: '⚙ Admin', organizer: '🎪 Org.', customer: '🎟 Customer' }[r] || r);
         const roleColor = r => ({ admin: '#ef4444', organizer: '#f59e0b', customer: '#14b8a6' }[r] || '#6b7280');
-        el.innerHTML = `<p style="color:var(--text-muted);margin-bottom:14px;font-size:0.85rem;">${users.length} kullanıcı</p>
+        el.innerHTML = `<p style="color:var(--text-muted);margin-bottom:14px;font-size:0.85rem;">${users.length} users</p>
           <div class="glass-panel" style="overflow:auto;">
             <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
               <thead><tr style="border-bottom:1px solid var(--border);">
                 <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">#</th>
-                <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">Ad Soyad</th>
-                <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">E-posta</th>
-                <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">Rol</th>
-                <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">Kayıt</th>
+                <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">Full Name</th>
+                <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">Email</th>
+                <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">Role</th>
+                <th style="text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:500;">Registered</th>
               </tr></thead>
               <tbody>${users.map(u => `
               <tr style="border-bottom:1px solid var(--border);">
                 <td style="padding:10px 14px;color:var(--text-muted);">${u.id}</td>
                 <td style="padding:10px 14px;color:var(--text);font-weight:600;">${u.fullname}</td>
-                <td style="padding:10px 14px;color:var(--text-sub);">${u.email}</td>
+                <td style="padding:14px 14px;color:var(--text-sub);">${u.email}</td>
                 <td style="padding:10px 14px;">
                   <span style="background:${roleColor(u.role)}18;color:${roleColor(u.role)};border:1px solid ${roleColor(u.role)}44;border-radius:100px;padding:2px 10px;font-size:0.72rem;font-weight:600;">${roleLabel(u.role)}</span>
                 </td>
-                <td style="padding:10px 14px;color:var(--text-muted);font-size:0.78rem;">${new Date(u.created_at).toLocaleDateString('tr-TR')}</td>
+                <td style="padding:10px 14px;color:var(--text-muted);font-size:0.78rem;">${new Date(u.created_at).toLocaleDateString('en-US')}</td>
               </tr>`).join('')}</tbody>
             </table>
           </div>`;
-      } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yüklenemedi.</p>'; }
+      } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Failed to load.</p>'; }
     }
 
     // ── ALL EVENTS ────────────────────────────────────────────
     async function loadAllEvents() {
       const el = document.getElementById('allEventsList');
-      el.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      el.innerHTML = '<p class="loading-text">Loading...</p>';
       try {
         const r = await fetch('/api/admin/all-events', { headers: authHeaders() });
         const events = await r.json();
         const sColor = s => ({ active:'#14b8a6', pending:'#f59e0b', cancelled:'#ef4444', rejected:'#6b7280' }[s] || '#6b7280');
-        const sLabel = s => ({ active:'Aktif', pending:'Bekliyor', cancelled:'İptal', rejected:'Reddedildi' }[s] || s);
+        const sLabel = s => ({ active:'Active', pending:'Pending', cancelled:'Cancelled', rejected:'Rejected' }[s] || s);
         const fDate = ds => {
           try {
             const d = new Date(ds);
             if(isNaN(d)) return ds;
-            return d.toLocaleDateString("tr-TR", {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+            return d.toLocaleDateString("en-US", {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
           } catch { return ds; }
         };
 
-        el.innerHTML = `<p style="color:var(--text-muted);margin-bottom:14px;font-size:0.85rem;">${events.length} etkinlik</p>` +
+        el.innerHTML = `<p style="color:var(--text-muted);margin-bottom:14px;font-size:0.85rem;">${events.length} events</p>` +
           events.map(e => `
           <div class="glass-panel" style="margin-bottom:10px;padding:14px 18px;display:flex;gap:14px;align-items:center;">
             <img src="${e.image}" style="width:60px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.src='https://images.unsplash.com/photo-1540039155733-5bb30b4a574b?w=200'">
@@ -325,33 +325,33 @@
                 <span style="color:var(--text);font-weight:600;font-size:0.9rem;">${e.title}</span>
                 <span style="background:${sColor(e.status)}18;color:${sColor(e.status)};border:1px solid ${sColor(e.status)}44;border-radius:100px;padding:1px 8px;font-size:0.7rem;font-weight:600;">${sLabel(e.status)}</span>
               </div>
-              <p style="color:var(--text-muted);font-size:0.78rem;margin:0;">📅 ${fDate(e.date)} | 📍 ${e.location} | 💰 ${e.price.toLocaleString('tr-TR')} ₺ | 🎟 ${e.sold_count}/${e.capacity}</p>
+              <p style="color:var(--text-muted);font-size:0.78rem;margin:0;">📅 ${fDate(e.date)} | 📍 ${e.location} | 💰 ${e.price.toLocaleString('en-US')} ₺ | 🎟 ${e.sold_count}/${e.capacity}</p>
             </div>
             <div style="display:flex; gap:8px;">
               ${(e.status === 'active' || e.status === 'pending') ? `
-                <button class="btn btn-primary btn-sm" onclick="toggleReasonBox('${e.id}', 'reject')">Düzenleme Talep Et</button>
-                <button class="btn btn-danger btn-sm" onclick="toggleReasonBox('${e.id}', 'cancel')">İptal</button>
+                <button class="btn btn-primary btn-sm" onclick="toggleReasonBox('${e.id}', 'reject')">Request Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="toggleReasonBox('${e.id}', 'cancel')">Cancel</button>
               ` : ''}
-              ${e.status === 'rejected' ? `<button class="btn btn-outline btn-sm" onclick="approveEvent('${e.id}', this)">Tekrar Aktive Et</button>` : ''}
+              ${e.status === 'rejected' ? `<button class="btn btn-outline btn-sm" onclick="approveEvent('${e.id}', this)">Re-activate</button>` : ''}
             </div>
           </div>
           <div id="reason-box-${e.id}" style="display:none;margin-top:10px; padding:0 18px 14px;">
             <div class="glass-panel" style="padding:15px; border-color:rgba(239,68,68,0.3);">
-                <label id="reason-label-${e.id}" class="form-label" style="margin-bottom:8px; display:block; color:var(--text); font-weight:600;">İşlem Gerekçesi</label>
-                <textarea class="form-control" placeholder="Açıklama giriniz..." id="reason-input-${e.id}" style="margin-bottom:8px; min-height:60px;"></textarea>
+                <label id="reason-label-${e.id}" class="form-label" style="margin-bottom:8px; display:block; color:var(--text); font-weight:600;">Action Reason</label>
+                <textarea class="form-control" placeholder="Enter explanation..." id="reason-input-${e.id}" style="margin-bottom:8px; min-height:60px;"></textarea>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn btn-danger btn-sm" style="flex:1;justify-content:center;" id="reason-confirm-btn-${e.id}">Onayla ve Gönder</button>
-                    <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center;" onclick="toggleReasonBox('${e.id}')">Vazgeç</button>
+                    <button class="btn btn-danger btn-sm" style="flex:1;justify-content:center;" id="reason-confirm-btn-${e.id}">Confirm and Send</button>
+                    <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center;" onclick="toggleReasonBox('${e.id}')">Cancel</button>
                 </div>
             </div>
           </div>`).join('');
-      } catch(err) { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yüklenemedi.</p>'; }
+      } catch(err) { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Failed to load.</p>'; }
     }
 
     // ── REVENUE ───────────────────────────────────────────────
     async function loadAdminRevenue() {
       const el = document.getElementById('adminRevenue');
-      el.innerHTML = '<p class="loading-text">Yükleniyor...</p>';
+      el.innerHTML = '<p class="loading-text">Loading...</p>';
       try {
         const r = await fetch('/api/organizer/revenue', { headers: authHeaders() });
         const d = await r.json();
@@ -359,20 +359,20 @@
         let html = `
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:30px;">
           <div class="glass-panel" style="padding:22px;text-align:center;border-top:3px solid var(--gold);box-shadow:0 10px 30px rgba(245,158,11,0.1);">
-            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--gold);">${d.total_revenue.toLocaleString('tr-TR')} ₺</div>
-            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Toplam Ciro</div>
+            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--gold);">${d.total_revenue.toLocaleString('en-US')} ₺</div>
+            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Total Revenue</div>
           </div>
           <div class="glass-panel" style="padding:22px;text-align:center;border-top:3px solid var(--coral);box-shadow:0 10px 30px rgba(239,68,68,0.1);">
-            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--coral);">${d.commission.toLocaleString('tr-TR')} ₺</div>
-            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Platform Komisyonu (%${(d.commission_rate*100).toFixed(0)})</div>
+            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--coral);">${d.commission.toLocaleString('en-US')} ₺</div>
+            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Platform Commission (%${(d.commission_rate*100).toFixed(0)})</div>
           </div>
           <div class="glass-panel" style="padding:22px;text-align:center;border-top:3px solid var(--teal);box-shadow:0 10px 30px rgba(20,184,166,0.1);">
-            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--teal);">${d.net_revenue.toLocaleString('tr-TR')} ₺</div>
-            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Hakediş Ödemeleri</div>
+            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--teal);">${d.net_revenue.toLocaleString('en-US')} ₺</div>
+            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Earnings Payouts</div>
           </div>
           <div class="glass-panel" style="padding:22px;text-align:center;border-top:3px solid var(--blue);box-shadow:0 10px 30px rgba(59,130,246,0.1);">
             <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--blue);">${d.total_tickets}</div>
-            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Toplam Bilet</div>
+            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Total Tickets</div>
           </div>
         </div>
 
@@ -381,16 +381,16 @@
           <div class="glass-panel" style="padding:24px;">
             <h3 style="color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:10px;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-              Organizatör Bazlı Dağılım
+              Distribution by Organizer
             </h3>
             <div style="overflow-x:auto;">
               <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
                 <thead><tr style="border-bottom:1px solid var(--border);text-align:left;">
-                  <th style="padding:12px;color:var(--text-muted);font-weight:500;">Organizatör</th>
-                  <th style="padding:12px;color:var(--text-muted);font-weight:500;">Bilet</th>
-                  <th style="padding:12px;color:var(--text-muted);font-weight:500;text-align:right;">Toplam Ciro</th>
-                  <th style="padding:12px;color:var(--text-muted);font-weight:500;text-align:right;">Komisyon</th>
-                  <th style="padding:12px;color:var(--text-muted);font-weight:500;text-align:right;">Net Ödeme</th>
+                  <th style="padding:12px;color:var(--text-muted);font-weight:500;">Organizer</th>
+                  <th style="padding:12px;color:var(--text-muted);font-weight:500;">Tickets</th>
+                  <th style="padding:12px;color:var(--text-muted);font-weight:500;text-align:right;">Total Revenue</th>
+                  <th style="padding:12px;color:var(--text-muted);font-weight:500;text-align:right;">Commission</th>
+                  <th style="padding:12px;color:var(--text-muted);font-weight:500;text-align:right;">Net Payment</th>
                 </tr></thead>
                 <tbody>
                   ${d.organizer_breakdown.map(o => `
@@ -400,9 +400,9 @@
                         <div style="font-size:0.75rem;color:var(--text-muted);">${o.email}</div>
                       </td>
                       <td style="padding:14px 12px;color:var(--text-sub);">${o.total_tickets}</td>
-                      <td style="padding:14px 12px;color:var(--text);font-weight:600;text-align:right;">${o.gross_revenue.toLocaleString('tr-TR')} ₺</td>
-                      <td style="padding:14px 12px;color:var(--coral);text-align:right;font-weight:500;">-${o.commission.toLocaleString('tr-TR')} ₺</td>
-                      <td style="padding:14px 12px;color:var(--teal);text-align:right;font-weight:700;font-family:'Space Mono';">${o.net_revenue.toLocaleString('tr-TR')} ₺</td>
+                      <td style="padding:14px 12px;color:var(--text);font-weight:600;text-align:right;">${o.gross_revenue.toLocaleString('en-US')} ₺</td>
+                      <td style="padding:14px 12px;color:var(--coral);text-align:right;font-weight:500;">-${o.commission.toLocaleString('en-US')} ₺</td>
+                      <td style="padding:14px 12px;color:var(--teal);text-align:right;font-weight:700;font-family:'Space Mono';">${o.net_revenue.toLocaleString('en-US')} ₺</td>
                     </tr>
                   `).join('')}
                 </tbody>
@@ -414,34 +414,34 @@
           <div class="glass-panel" style="padding:24px;">
             <h3 style="color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:10px;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              Etkinlik Bazlı Detaylar
+              Details by Event
             </h3>
             <div style="overflow-x:auto;">
               <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
                 <thead><tr style="border-bottom:1px solid var(--border);text-align:left;">
-                  <th style="padding:12px;color:var(--text-muted);font-weight:500;">Etkinlik</th>
-                  <th style="padding:12px;color:var(--text-muted);font-weight:500;">Organizatör</th>
-                  <th style="padding:12px;color:var(--text-muted);font-weight:500;">Durum</th>
-                  <th style="padding:12px;color:var(--text-muted);font-weight:500;">Satılan/Kapasite</th>
-                  <th style="padding:12px;color:var(--text-muted);font-weight:500;text-align:right;">Brüt Gelir</th>
-                  <th style="padding:12px;color:var(--text-muted);font-weight:500;text-align:right;">Komisyon</th>
-                  <th style="padding:12px;color:var(--text-muted);font-weight:500;text-align:right;">Organizatör Net</th>
+                  <th style="padding:12px;color:var(--text-muted);font-weight:500;">Event</th>
+                  <th style="padding:12px;color:var(--text-muted);font-weight:500;">Organizer</th>
+                  <th style="padding:12px;color:var(--text-muted);font-weight:500;">Status</th>
+                  <th style="padding:12px;color:var(--text-muted);font-weight:500;">Sold/Capacity</th>
+                  <th style="padding:12px;color:var(--text-muted);font-weight:500;text-align:right;">Gross Revenue</th>
+                  <th style="padding:12px;color:var(--text-muted);font-weight:500;text-align:right;">Commission</th>
+                  <th style="padding:12px;color:var(--text-muted);font-weight:500;text-align:right;">Organizer Net</th>
                 </tr></thead>
                 <tbody>
                   ${d.breakdown.map(ev => {
-                    const statusLabel = { active:'Aktif', pending:'Bekliyor', cancelled:'İptal', rejected:'Reddedildi' }[ev.status] || ev.status;
+                    const statusLabel = { active:'Active', pending:'Pending', cancelled:'Cancelled', rejected:'Rejected' }[ev.status] || ev.status;
                     const statusColor = { active:'#14b8a6', pending:'#f59e0b', cancelled:'#ef4444' }[ev.status] || '#6b7280';
                     return `
                     <tr style="border-bottom:1px solid var(--border);">
                       <td style="padding:14px 12px;color:var(--text);font-weight:600;">${ev.title}</td>
-                      <td style="padding:14px 12px;color:var(--text-sub);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ${ev.organizer_name || 'Bilinmiyor'}</td>
+                      <td style="padding:14px 12px;color:var(--text-sub);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ${ev.organizer_name || 'Unknown'}</td>
                       <td style="padding:14px 12px;">
                         <span style="color:${statusColor};font-size:0.75rem;font-weight:600;">● ${statusLabel}</span>
                       </td>
                       <td style="padding:14px 12px;color:var(--text-sub);">${ev.sold_count} / ${ev.capacity}</td>
-                      <td style="padding:14px 12px;color:var(--text);text-align:right;">${ev.gross_revenue.toLocaleString('tr-TR')} ₺</td>
-                      <td style="padding:14px 12px;color:var(--coral);text-align:right;">${ev.commission.toLocaleString('tr-TR')} ₺</td>
-                      <td style="padding:14px 12px;color:var(--teal);text-align:right;font-weight:600;">${ev.net_revenue.toLocaleString('tr-TR')} ₺</td>
+                      <td style="padding:14px 12px;color:var(--text);text-align:right;">${ev.gross_revenue.toLocaleString('en-US')} ₺</td>
+                      <td style="padding:14px 12px;color:var(--coral);text-align:right;">${ev.commission.toLocaleString('en-US')} ₺</td>
+                      <td style="padding:14px 12px;color:var(--teal);text-align:right;font-weight:600;">${ev.net_revenue.toLocaleString('en-US')} ₺</td>
                     </tr>`;
                   }).join('')}
                 </tbody>
@@ -453,7 +453,7 @@
         el.innerHTML = html;
       } catch(err) { 
         console.error(err);
-        el.innerHTML = '<p class="loading-text" style="color:#f87171;">Yüklenemedi.</p>'; 
+        el.innerHTML = '<p class="loading-text" style="color:#f87171;">Failed to load.</p>'; 
       }
     }
 
@@ -464,7 +464,7 @@
       document.getElementById('profilePhone').value = u.phone || '';
       document.getElementById('profileBirthdate').value = u.birthdate || '';
       document.getElementById('profileEmail').value = u.email || '';
-      document.getElementById('profileRole').value = u.role === 'admin' ? 'Admin' : u.role === 'organizer' ? 'Organizatör' : 'Müşteri';
+      document.getElementById('profileRole').value = u.role === 'admin' ? 'Admin' : u.role === 'organizer' ? 'Organizer' : 'Customer';
     }
 
     async function saveProfile() {
@@ -481,7 +481,7 @@
           body: JSON.stringify({ fullname, phone, birthdate })
         });
         if (res.ok) {
-          fb.innerHTML = '<p style="color:#6ee7b7;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ Profil güncellendi!</p>';
+          fb.innerHTML = '<p style="color:#6ee7b7;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ Profile updated!</p>';
           const u = getUser();
           u.fullname = fullname;
           u.phone = phone;
@@ -490,10 +490,10 @@
           document.getElementById('adminName').textContent = fullname;
           if (window.renderNav) renderNav();
         } else {
-          fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Hata oluştu.</p>';
+          fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ An error occurred.</p>';
         }
       } catch {
-        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Sunucu hatası.</p>';
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Server error.</p>';
       }
     }
 
@@ -504,15 +504,15 @@
       const fb = document.getElementById('passwordFeedback');
 
       if (!current_password || !new_password || !confirm_password) {
-        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Tüm alanları doldurun.</p>';
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Fill in all fields.</p>';
         return;
       }
       if (new_password.length < 6) {
-        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Şifre en az 6 karakter olmalıdır.</p>';
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Password must be at least 6 characters.</p>';
         return;
       }
       if (new_password !== confirm_password) {
-        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Yeni şifreler eşleşmiyor.</p>';
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ New passwords do not match.</p>';
         return;
       }
 
@@ -524,15 +524,15 @@
         });
         const d = await res.json();
         if (res.ok) {
-          fb.innerHTML = '<p style="color:#6ee7b7;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ Şifre başarıyla güncellendi!</p>';
+          fb.innerHTML = '<p style="color:#6ee7b7;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">✓ Password updated successfully!</p>';
           document.getElementById('currentPassword').value = '';
           document.getElementById('newPassword').value = '';
           document.getElementById('confirmPassword').value = '';
         } else {
-          fb.innerHTML = `<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ ${d.message || 'Hata oluştu'}</p>`;
+          fb.innerHTML = `<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ ${d.message || 'Error occurred'}</p>`;
         }
       } catch {
-        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Sunucu hatası.</p>';
+        fb.innerHTML = '<p style="color:#fca5a5;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;margin-bottom:12px;">⚠ Server error.</p>';
       }
     }
 

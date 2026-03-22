@@ -30,7 +30,7 @@ def add_to_wishlist(event_id):
     event = conn.execute('SELECT id FROM events WHERE id = ?', (event_id,)).fetchone()
     if not event:
         conn.close()
-        return jsonify({'message': 'Etkinlik bulunamadı'}), 404
+        return jsonify({'message': 'Event not found'}), 404
     try:
         conn.execute(
             'INSERT INTO wishlist (user_id, event_id) VALUES (?, ?)',
@@ -38,10 +38,10 @@ def add_to_wishlist(event_id):
         )
         conn.commit()
         conn.close()
-        return jsonify({'message': 'Favorilere eklendi'}), 201
+        return jsonify({'message': 'Added to wishlist'}), 201
     except Exception:
         conn.close()
-        return jsonify({'message': 'Zaten favorilerde'}), 409
+        return jsonify({'message': 'Already in wishlist'}), 409
 
 @wishlist_bp.route('/<event_id>', methods=['DELETE'])
 @token_required
@@ -53,4 +53,4 @@ def remove_from_wishlist(event_id):
     )
     conn.commit()
     conn.close()
-    return jsonify({'message': 'Favorilerden çıkarıldı'}), 200
+    return jsonify({'message': 'Removed from wishlist'}), 200

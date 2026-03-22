@@ -49,29 +49,29 @@ def approve_event(event_id):
     event = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
     if not event:
         conn.close()
-        return jsonify({'message': 'Etkinlik bulunamadı'}), 404
+        return jsonify({'message': 'Event not found'}), 404
     conn.execute("UPDATE events SET status = 'active' WHERE id = ?", (event_id,))
     if event['organizer_id']:
         create_notification(conn, event['organizer_id'],
-            f"'{event['title']}' etkinliğiniz onaylandı ve sitede yayınlandı!")
+            f"Your event '{event['title']}' has been approved and published on the site!")
     conn.commit()
     conn.close()
-    return jsonify({'message': 'Etkinlik onaylandı ve yayınlandı'}), 200
+    return jsonify({'message': 'Event approved and published'}), 200
 
 @admin_bp.route('/events/<event_id>/reject', methods=['POST'])
 @role_required('admin')
 def reject_event(event_id):
     data = request.get_json() or {}
-    reason = data.get('reason', 'Belirtilmedi')
+    reason = data.get('reason', 'Not specified')
     conn = get_db_connection()
     event = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
     if not event:
         conn.close()
-        return jsonify({'message': 'Etkinlik bulunamadı'}), 404
+        return jsonify({'message': 'Event not found'}), 404
     conn.execute("UPDATE events SET status = 'rejected', rejection_reason = ? WHERE id = ?", (reason, event_id))
     if event['organizer_id']:
         create_notification(conn, event['organizer_id'],
-            f"'{event['title']}' etkinliğiniz için düzenleme talep edildi. Sebep: {reason}")
+            f"An edit has been requested for your event '{event['title']}'. Reason: {reason}")
     conn.commit()
     conn.close()
-    return jsonify({'message': 'Etkinlik reddedildi'}), 200
+    return jsonify({'message': 'Event rejected'}), 200

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kayıt Ol | EVENTİX - Modern Etkinlik Platformu</title>
+  <title>Register | EVENTIX - Modern Event Platform</title>
   
   <!-- CSS Styles -->
   <link rel="stylesheet" href="./styles/main.css">
@@ -28,44 +28,44 @@
             <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
             <line x1="12" y1="22.08" x2="12" y2="12"></line>
           </svg>
-          <span style="font-size: 1.5rem; text-decoration: none; color: var(--text);">EVENT<span class="logo-highlight">İX</span></span>
+          <span style="font-size: 1.5rem; text-decoration: none; color: var(--text);">EVENT<span class="logo-highlight">IX</span></span>
         </a>
-        <h1 class="auth-title">Aramıza Katıl</h1>
-        <p class="auth-subtitle">Saniyeler içinde hesabını oluştur ve biletlerini almaya başla.</p>
+        <h1 class="auth-title">Join Us</h1>
+        <p class="auth-subtitle">Create your account in seconds and start buying tickets.</p>
       </div>
 
       <form class="auth-form" id="registerForm">
         <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
           <div>
-            <label class="form-label" for="firstName">Ad</label>
-            <input type="text" id="firstName" class="form-control" placeholder="Görkem" required>
+            <label class="form-label" for="firstName">First Name</label>
+            <input type="text" id="firstName" class="form-control" placeholder="Gorkem" required>
           </div>
           <div>
-            <label class="form-label" for="lastName">Soyad</label>
-            <input type="text" id="lastName" class="form-control" placeholder="Yılmaz" required>
+            <label class="form-label" for="lastName">Last Name</label>
+            <input type="text" id="lastName" class="form-control" placeholder="Yilmaz" required>
           </div>
         </div>
 
         <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
           <div>
-            <label class="form-label" for="phone">Telefon</label>
+            <label class="form-label" for="phone">Phone</label>
             <input type="tel" id="phone" class="form-control" placeholder="05XX XXX XX XX" required>
           </div>
           <div>
-            <label class="form-label" for="birthdate">Doğum Tarihi</label>
+            <label class="form-label" for="birthdate">Birth Date</label>
             <input type="date" id="birthdate" class="form-control" required>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="email">E-posta Adresi</label>
-          <input type="email" id="email" class="form-control" placeholder="ornek@mail.com" required>
+          <label class="form-label" for="email">Email Address</label>
+          <input type="email" id="email" class="form-control" placeholder="example@mail.com" required>
         </div>
 
         <div class="form-group" style="margin-bottom: 20px;">
-          <label class="form-label" for="password">Şifre Belirle</label>
+          <label class="form-label" for="password">Create Password</label>
           <div class="password-input-wrapper">
-            <input type="password" id="password" class="form-control" placeholder="En az 8 karakter" required minlength="8">
+            <input type="password" id="password" class="form-control" placeholder="Min. 8 characters" required minlength="8">
             <button type="button" class="password-toggle" onclick="togglePassword('password')">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
@@ -73,19 +73,19 @@
         </div>
 
         <div class="form-group" style="margin-bottom:20px;">
-          <label class="form-label" for="role">Hesap Türü</label>
+          <label class="form-label" for="role">Account Type</label>
           <select id="role" class="form-control" style="appearance:none;background:var(--bg-card);color:var(--text);cursor:pointer;">
-            <option value="customer">🎟 Müşteri — Bilet satın almak istiyorum</option>
-            <option value="organizer">🎪 Organizatör — Etkinlik düzenlemek istiyorum</option>
+            <option value="customer">🎟 Customer — I want to buy tickets</option>
+            <option value="organizer">🎪 Organizer — I want to organize events</option>
           </select>
         </div>
 
-        <button type="submit" class="btn btn-primary auth-submit">Ücretsiz Hesap Oluştur</button>
+        <button type="submit" class="btn btn-primary auth-submit">Create Free Account</button>
       </form>
       <!-- Social login completely removed -->
 
       <div class="auth-footer">
-        Zaten hesabın var mı? <a href="login.html" class="auth-link">Giriş Yap</a>
+        Already have an account? <a href="login.html" class="auth-link">Login</a>
       </div>
 
     </div>

@@ -122,8 +122,8 @@ def send_email(to_email: str, subject: str, message: str, html_message: str = No
             print(f"[REAL] EMAIL SENT TO: {to_email}")
             return
         except Exception as e:
-            print(f"[ERROR] SMTP E-Posta Gonderme Hatasi: {e}")
-            print("Uyarı: Simülasyon (Mock) e-posta üzerinden devam ediliyor...")
+            print(f"[ERROR] SMTP Email Sending Error: {e}")
+            print("Warning: Continuing with Simulation (Mock) email...")
 
     # Fallback to mock
     send_mock_email(to_email, subject, message)
@@ -165,32 +165,32 @@ def send_birthday_emails():
             name = u['fullname']
             email = u['email']
 
-            subject = "🎂 İyi ki Doğdun! - EVENTİX Özel Sürpriz"
-            plain_body = f"İyi ki doğdun {name}! Eventix olarak sana harika bir yıl diliyoruz. Gününü özel kılmak için sana bir sürprizimiz var: BDAY26 kodu ile %15 indirim kazandın."
+            subject = "🎂 Happy Birthday! - EVENTIX Special Surprise"
+            plain_body = f"Happy birthday {name}! At Eventix, we wish you a wonderful year. To make your day special, we have a surprise for you: you've earned a 15% discount with the code BDAY26."
             html_body = f"""
             <html>
             <body style="font-family:'Segoe UI', sans-serif; background-color:#0f0f1a; padding:30px; color:#e2e8f0; text-align:center;">
               <div style="max-width:550px; margin:0 auto; background:linear-gradient(to bottom, #1e1e2e, #161625); border-radius:20px; padding:40px 30px; box-shadow:0 15px 35px rgba(0,0,0,0.6); border:1px solid #2d2d4e;">
                 <div style="font-size:60px; margin-bottom:10px;">🎉🎂</div>
-                <h1 style="color:#a78bfa; margin:0; font-size:32px; letter-spacing:1px;">İyi ki Doğdun!</h1>
-                <h2 style="color:#ffffff; margin-top:10px; font-weight:400;">Değerli {name},</h2>
+                <h1 style="color:#a78bfa; margin:0; font-size:32px; letter-spacing:1px;">Happy Birthday!</h1>
+                <h2 style="color:#ffffff; margin-top:10px; font-weight:400;">Dear {name},</h2>
                 
                 <p style="font-size:16px; line-height:1.6; color:#94a3b8; margin:25px 0;">
-                  Eventix ailesi olarak yeni yaşının sana sağlık, mutluluk ve çok daha fazla unutulmaz etkinlik dolu anılar getirmesini diliyoruz!
+                  As the Eventix family, we wish your new age brings you health, happiness, and many more unforgettable event-filled memories!
                 </p>
                 
                 <div style="background:rgba(236,72,153,0.1); border:1px dashed #ec4899; padding:20px; border-radius:12px; margin:30px 0;">
-                  <span style="display:block; font-size:12px; color:#ec4899; font-weight:700; text-transform:uppercase; margin-bottom:8px;">🎁 Sana Özel Sürpriz Hediyemiz</span>
+                  <span style="display:block; font-size:12px; color:#ec4899; font-weight:700; text-transform:uppercase; margin-bottom:8px;">🎁 Our Special Surprise Gift for You</span>
                   <div style="font-family:monospace; font-size:24px; color:#ffffff; font-weight:bold; letter-spacing:3px;">BDAY26</div>
-                  <span style="display:block; font-size:13px; color:#94a3b8; margin-top:8px;">Tüm etkinlik biletlerinde anında geçerli <strong>%15 İndirim</strong> kuponu!</span>
+                  <span style="display:block; font-size:13px; color:#94a3b8; margin-top:8px;">A <strong>15% Discount</strong> coupon valid instantly on all event tickets!</span>
                 </div>
                 
                 <a href="{base_url}/index.html" style="display:inline-block; padding:15px 32px; background:linear-gradient(135deg, #8b5cf6, #ec4899); color:#ffffff; font-weight:bold; text-decoration:none; border-radius:30px; font-size:15px; box-shadow:0 4px 15px rgba(236,72,153,0.4);">
-                  Bugün Kendini Şımart ✨
+                  Treat Yourself Today ✨
                 </a>
                 
                 <div style="margin-top:40px; border-top:1px solid #2d2d4e; padding-top:20px;">
-                  <p style="color:#475569; font-size:12px; margin:0;">Gününün çok özel geçmesi dileğiyle...<br>Eventix Biletleme Platformu © 2026</p>
+                  <p style="color:#475569; font-size:12px; margin:0;">Wishing you a very special day...<br>Eventix Ticketing Platform © 2026</p>
                 </div>
               </div>
             </body>
@@ -203,7 +203,7 @@ def send_birthday_emails():
                 pass
 
     if count > 0:
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {count} adet doğum günü maili başarıyla gönderildi!")
+        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {count} birthday emails successfully sent!")
 
 def send_ticket_confirmation_email(to_email, fullname, event, generated_tickets, total_price, seat_labels_str):
     """
@@ -214,16 +214,16 @@ def send_ticket_confirmation_email(to_email, fullname, event, generated_tickets,
         """Convert ISO date (2026-03-16T19:00:00) to Turkish readable format."""
         try:
             from datetime import datetime
-            months_tr = {
-                1: 'Ocak', 2: 'Şubat', 3: 'Mart', 4: 'Nisan',
-                5: 'Mayıs', 6: 'Haziran', 7: 'Temmuz', 8: 'Ağustos',
-                9: 'Eylül', 10: 'Ekim', 11: 'Kasım', 12: 'Aralık'
+            months_en = {
+                1: 'January', 2: 'February', 3: 'March', 4: 'April',
+                5: 'May', 6: 'June', 7: 'July', 8: 'August',
+                9: 'September', 10: 'October', 11: 'November', 12: 'December'
             }
             # Try parsing with time
             for fmt in ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d'):
                 try:
                     dt = datetime.strptime(str(raw_date), fmt)
-                    month_name = months_tr.get(dt.month, '')
+                    month_name = months_en.get(dt.month, '')
                     if dt.hour or dt.minute:
                         return f"{dt.day} {month_name} {dt.year} - {dt.strftime('%H:%M')}"
                     else:
@@ -236,7 +236,7 @@ def send_ticket_confirmation_email(to_email, fullname, event, generated_tickets,
 
     event_date_formatted = format_event_date(event['date'])
 
-    plain_body = f"Merhaba {fullname},\n\n'{event['title']}' için biletleriniz oluşturuldu.\n\n"
+    plain_body = f"Hello {fullname},\n\nYour tickets for '{event['title']}' have been created.\n\n"
     email_images = []
     tickets_html_parts = ""
 
@@ -264,26 +264,26 @@ def send_ticket_confirmation_email(to_email, fullname, event, generated_tickets,
     <body style="font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color:#0f0f1a; padding:20px; color:#e2e8f0;">
       <div style="max-width:600px; margin:0 auto; background:#161625; border-radius:16px; padding:30px; box-shadow:0 10px 30px rgba(0,0,0,0.5); border:1px solid #2d2d4e;">
         <div style="text-align:center; margin-bottom:25px;">
-           <h1 style="color:#a78bfa; margin:0; font-size:28px;">🎟️ Biletleriniz Hazır!</h1>
-           <p style="color:#94a3b8; font-size:14px; margin-top:5px;">EVENTİX - Unutulmaz Anlara Tanıklık Edin</p>
+           <h1 style="color:#a78bfa; margin:0; font-size:28px;">🎟️ Your Tickets are Ready!</h1>
+           <p style="color:#94a3b8; font-size:14px; margin-top:5px;">EVENTIX - Witness Unforgettable Moments</p>
         </div>
         
-        <p style="font-size:16px;">Merhaba <strong>{fullname}</strong>,</p>
-        <p style="font-size:16px; line-height:1.6;"><strong>{event['title']}</strong> etkinliği için biletleriniz başarıyla oluşturuldu. QR kodunuzu etkinlik girişindeki görevliye okutarak giriş yapabilirsiniz.</p>
+        <p style="font-size:16px;">Hello <strong>{fullname}</strong>,</p>
+        <p style="font-size:16px; line-height:1.6;">Your tickets for the event <strong>{event['title']}</strong> have been successfully created. You can enter by showing your QR code to the staff at the event entrance.</p>
         
         <div style="background:rgba(167,139,250,0.05); border-radius:12px; padding:20px; margin:25px 0; border:1px solid rgba(167,139,250,0.2);">
-          <p style="margin:0 0 10px; font-size:14px;"><strong style="color:#a78bfa;">📅 Tarih:</strong> {event_date_formatted}</p>
-          <p style="margin:0 0 10px; font-size:14px;"><strong style="color:#a78bfa;">📍 Konum:</strong> {event['location']}</p>
-          <p style="margin:0 0 10px; font-size:14px;"><strong style="color:#a78bfa;">🪑 Koltuk(lar):</strong> {seat_labels_str}</p>
-          <p style="margin:0; font-size:18px; font-weight:bold;"><strong style="color:#2dd4bf;">💳 Toplam:</strong> {total_price} ₺</p>
+          <p style="margin:0 0 10px; font-size:14px;"><strong style="color:#a78bfa;">📅 Date:</strong> {event_date_formatted}</p>
+          <p style="margin:0 0 10px; font-size:14px;"><strong style="color:#a78bfa;">📍 Location:</strong> {event['location']}</p>
+          <p style="margin:0 0 10px; font-size:14px;"><strong style="color:#a78bfa;">🪑 Seat(s):</strong> {seat_labels_str}</p>
+          <p style="margin:0; font-size:18px; font-weight:bold;"><strong style="color:#2dd4bf;">💳 Total:</strong> {total_price} ₺</p>
         </div>
 
-        <h3 style="color:#ffffff; border-bottom:1px solid #2d2d4e; padding-bottom:10px; margin-bottom:20px;">Etkinlik Biletleri</h3>
+        <h3 style="color:#ffffff; border-bottom:1px solid #2d2d4e; padding-bottom:10px; margin-bottom:20px;">Event Tickets</h3>
         {tickets_html_parts}
         
         <div style="text-align:center; margin-top:30px; padding-top:20px; border-top:1px solid #2d2d4e;">
-          <p style="color:#94a3b8; font-size:13px;">Biletlerinize dilediğiniz zaman platformumuzdaki "Biletlerim" sayfasından ulaşabilirsiniz.</p>
-          <p style="color:#64748b; font-size:11px; margin-top:20px;">© 2026 Eventix Biletleme Platformu. Tüm hakları saklıdır.</p>
+          <p style="color:#94a3b8; font-size:13px;">You can access your tickets anytime from the "My Tickets" page on our platform.</p>
+          <p style="color:#64748b; font-size:11px; margin-top:20px;">© 2026 Eventix Ticketing Platform. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -291,7 +291,7 @@ def send_ticket_confirmation_email(to_email, fullname, event, generated_tickets,
 
     send_email(
         to_email,
-        f"Biletleriniz Hazır - {event['title']}",
+        f"Your Tickets are Ready - {event['title']}",
         plain_body,
         final_html,
         images=email_images
@@ -306,17 +306,17 @@ def token_required(f):
             if len(parts) == 2 and parts[0] == 'Bearer':
                 token = parts[1]
         if not token:
-            return jsonify({'message': 'Token eksik!'}), 401
+            return jsonify({'message': 'Token missing!'}), 401
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             conn = get_db_connection()
             user = conn.execute('SELECT * FROM users WHERE id = ?', (data['id'],)).fetchone()
             conn.close()
             if not user:
-                return jsonify({'message': 'Geçersiz token!'}), 401
+                return jsonify({'message': 'Invalid token!'}), 401
             g.user = dict(user)
         except Exception:
-            return jsonify({'message': 'Token geçersiz veya süresi dolmuş!'}), 401
+            return jsonify({'message': 'Token is invalid or expired!'}), 401
         return f(*args, **kwargs)
     return decorated
 
@@ -326,7 +326,7 @@ def role_required(*roles):
         @token_required
         def decorated(*args, **kwargs):
             if g.user.get('role') not in roles:
-                return jsonify({'message': 'Yetersiz yetki!'}), 403
+                return jsonify({'message': 'Insufficient permission!'}), 403
             return f(*args, **kwargs)
         return decorated
     return decorator

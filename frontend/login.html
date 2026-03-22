@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Giriş Yap | EVENTİX - Modern Etkinlik Platformu</title>
+  <title>Login | EVENTIX - Modern Event Platform</title>
   
   <!-- CSS Styles -->
   <link rel="stylesheet" href="./styles/main.css">
@@ -28,36 +28,36 @@
             <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
             <line x1="12" y1="22.08" x2="12" y2="12"></line>
           </svg>
-          <span style="font-size: 1.5rem; text-decoration: none; color: var(--text);">EVENT<span class="logo-highlight">İX</span></span>
+          <span style="font-size: 1.5rem; text-decoration: none; color: var(--text);">EVENT<span class="logo-highlight">IX</span></span>
         </a>
-        <h1 class="auth-title">Hoş Geldin!</h1>
-        <p class="auth-subtitle">Etkinlik anahtarlarına ulaşmak için giriş yap.</p>
+        <h1 class="auth-title">Welcome Back!</h1>
+        <p class="auth-subtitle">Login to access your event keys.</p>
       </div>
 
       <form class="auth-form" id="loginForm">
         <div class="form-group">
-          <label class="form-label" for="email">E-posta Adresi</label>
-          <input type="email" id="email" class="form-control" placeholder="ornek@mail.com" required>
+          <label class="form-label" for="email">Email Address</label>
+          <input type="email" id="email" class="form-control" placeholder="example@mail.com" required>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="password">Şifre</label>
+          <label class="form-label" for="password">Password</label>
           <div class="password-input-wrapper">
             <input type="password" id="password" class="form-control" placeholder="••••••••" required>
             <button type="button" class="password-toggle" onclick="togglePassword('password')">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
           </div>
-          <a href="#" class="forgot-password">Şifremi Unuttum</a>
+          <a href="#" class="forgot-password">Forgot Password</a>
         </div>
 
-        <button type="submit" class="btn btn-primary auth-submit">Giriş Yap</button>
+        <button type="submit" class="btn btn-primary auth-submit">Login</button>
       </form>
 
       <!-- Social Login Removed as per request -->
 
       <div class="auth-footer">
-        Hesabın yok mu? <a href="register.html" class="auth-link">Kayıt Ol</a>
+        Don't have an account? <a href="register.html" class="auth-link">Register</a>
       </div>
 
     </div>

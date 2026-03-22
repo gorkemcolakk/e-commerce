@@ -33,10 +33,10 @@ def simulate_s3_upload(file_obj, filename):
 @role_required('organizer', 'admin')
 def upload_file():
     if 'file' not in request.files:
-        return jsonify({'message': 'Dosya bulunamadı'}), 400
+        return jsonify({'message': 'No file found'}), 400
     file = request.files['file']
     if file.filename == '':
-        return jsonify({'message': 'Seçili dosya yok'}), 400
+        return jsonify({'message': 'No file selected'}), 400
         
     if file and allowed_file(file.filename):
         ext = file.filename.rsplit('.', 1)[1].lower()
@@ -45,6 +45,6 @@ def upload_file():
         # simulated S3 upload
         file_url = simulate_s3_upload(file, filename)
         
-        return jsonify({'url': file_url, 'message': 'Dosya buluta başarıyla yüklendi (Simüle edildi)'}), 201
+        return jsonify({'url': file_url, 'message': 'File successfully uploaded to the cloud (Simulated)'}), 201
     else:
-        return jsonify({'message': 'Geçersiz dosya uzantısı (Desteklenenler: png, jpg, jpeg, gif, mp4, webm)'}), 400
+        return jsonify({'message': 'Invalid file extension (Supported: png, jpg, jpeg, gif, mp4, webm)'}), 400

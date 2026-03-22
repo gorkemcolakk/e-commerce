@@ -33,8 +33,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('scroll', () => navbar && navbar.classList.toggle('scrolled', window.scrollY > 50));
 
   // ── RENDER EVENTS ──────────────────────────────────────────
-  function getCategoryName(cat) {
-    return { concert: 'Konser', workshop: 'Atölye', theater: 'Tiyatro' }[cat] || cat;
+   function getCategoryName(cat) {
+    return { concert: 'Concert', workshop: 'Workshop', theater: 'Theater' }[cat] || cat;
   }
   function getCategoryClass(cat) {
     return { concert: 'category-concert', workshop: 'category-workshop', theater: 'category-theater' }[cat] || '';
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!eventsGrid) return;
     eventsGrid.innerHTML = '';
     if (events.length === 0) {
-      eventsGrid.innerHTML = `<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:60px;">Bu kriterlere uygun etkinlik bulunamadı.</p>`;
+      eventsGrid.innerHTML = `<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:60px;">No events found matching these criteria.</p>`;
       return;
     }
     events.forEach((event, index) => {
@@ -64,9 +64,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       card.innerHTML = `
         <div class="event-img-wrapper">
           <div class="event-category-badge ${getCategoryClass(event.category)}">${getCategoryName(event.category)}</div>
-          ${event.featured ? '<div class="featured-badge">⭐ Öne Çıkan</div>' : ''}
+          ${event.featured ? '<div class="featured-badge">⭐ Featured</div>' : ''}
           <img src="${event.image}" alt="${event.title}" class="event-img" loading="lazy">
-          <button class="wish-btn ${isWished ? 'wished' : ''}" title="${isWished ? 'Favorilerden çıkar' : 'Favorilere ekle'}"
+          <button class="wish-btn ${isWished ? 'wished' : ''}" title="${isWished ? 'Remove from wishlist' : 'Add to wishlist'}"
             onclick="event.stopPropagation(); toggleWishlist('${event.id}', this)">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="${isWished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
           </button>
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ${(() => {
                 try {
                     const d = new Date(event.date);
-                    if (!isNaN(d)) return d.toLocaleDateString("tr-TR", {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+                    if (!isNaN(d)) return d.toLocaleDateString("en-US", {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
                 } catch(e) {}
                 return event.date;
             })()}
@@ -92,12 +92,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="capacity-bar-track">
               <div class="capacity-bar-fill" style="width:${Math.min(100, Math.round(event.sold_count / event.capacity * 100))}%"></div>
             </div>
-            <span class="capacity-label">${isFull ? '<span style="color:#ef4444">Tükendi</span>' : remaining + ' bilet kaldı'}</span>
+            <span class="capacity-label">${isFull ? '<span style="color:#ef4444">Sold Out</span>' : remaining + ' tickets left'}</span>
           </div>` : ''}
           <div class="event-footer">
             <div class="event-price">${event.price.toLocaleString('tr-TR')} ₺</div>
             <button class="btn btn-primary buy-btn" data-id="${event.id}" ${isFull ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
-              ${isFull ? 'Tükendi' : 'Bilet Al'}
+              ${isFull ? 'Sold Out' : 'Buy Tickets'}
             </button>
           </div>
         </div>
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadMoreBtn.className = 'btn btn-outline';
   loadMoreBtn.style.margin = '30px auto';
   loadMoreBtn.style.display = 'none';
-  loadMoreBtn.textContent = 'Daha Fazla Yükle';
+  loadMoreBtn.textContent = 'Load More';
   eventsGrid.parentNode.insertBefore(loadMoreBtn, eventsGrid.nextSibling);
 
   async function fetchEvents(page = 1, append = false) {
@@ -168,14 +168,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     } catch (err) {
-      console.error('Etkinlikler yüklenemedi:', err);
+      console.error('Could not load events:', err);
     }
   }
 
   loadMoreBtn.addEventListener('click', () => {
     currentPage++;
     const prevText = loadMoreBtn.textContent;
-    loadMoreBtn.textContent = 'Yükleniyor...';
+    loadMoreBtn.textContent = 'Loading...';
     loadMoreBtn.disabled = true;
     fetchEvents(currentPage, true).finally(() => {
         loadMoreBtn.textContent = prevText;

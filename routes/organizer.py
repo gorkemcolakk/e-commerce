@@ -149,10 +149,10 @@ def create_promotion():
     usage_limit = data.get('usage_limit')
 
     if not event_id or not code or not discount_type or not discount_value:
-        return jsonify({'message': 'Eksik bilgi: event_id, code, discount_type ve discount_value zorunludur.'}), 400
+        return jsonify({'message': 'Missing data: event_id, code, discount_type, and discount_value are required.'}), 400
 
     if discount_type not in ('percentage', 'fixed'):
-        return jsonify({'message': 'Geçersiz indirim türü.'}), 400
+        return jsonify({'message': 'Invalid discount type.'}), 400
 
     conn = get_db_connection()
     
@@ -161,7 +161,7 @@ def create_promotion():
         event = conn.execute('SELECT organizer_id FROM events WHERE id = ?', (event_id,)).fetchone()
         if not event or event['organizer_id'] != g.user['id']:
             conn.close()
-            return jsonify({'message': 'Bu etkinliğe promosyon ekleme yetkiniz yok.'}), 403
+            return jsonify({'message': 'You do not have permission to add a promotion to this event.'}), 403
 
     try:
         conn.execute('''
@@ -171,10 +171,10 @@ def create_promotion():
         conn.commit()
     except Exception as e:
         conn.close()
-        return jsonify({'message': 'Bu kod zaten bu etkinlik için mevcut olabilir.'}), 400
+        return jsonify({'message': 'This code might already exist for this event.'}), 400
 
     conn.close()
-    return jsonify({'message': 'Promosyon başarıyla oluşturuldu.'}), 201
+    return jsonify({'message': 'Promotion created successfully.'}), 201
 
 @organizer_bp.route('/promotions/<int:promo_id>', methods=['DELETE'])
 @role_required('organizer', 'admin')
@@ -189,16 +189,16 @@ def delete_promotion(promo_id):
 
     if not promo:
         conn.close()
-        return jsonify({'message': 'Promosyon bulunamadı.'}), 404
+        return jsonify({'message': 'Promotion not found.'}), 404
 
     if g.user['role'] != 'admin' and promo['organizer_id'] != g.user['id']:
         conn.close()
-        return jsonify({'message': 'Bu promosyonu silme yetkiniz yok.'}), 403
+        return jsonify({'message': 'You do not have permission to delete this promotion.'}), 403
 
     conn.execute('DELETE FROM promotions WHERE id = ?', (promo_id,))
     conn.commit()
     conn.close()
-    return jsonify({'message': 'Promosyon basariyla silindi.'}), 200
+    return jsonify({'message': 'Promotion deleted successfully.'}), 200
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -240,12 +240,12 @@ def _check_event_access(event_id):
 def event_attendees(event_id):
     event, err = _check_event_access(event_id)
     if not event:
-        return jsonify({'message': 'Etkinlik bulunamadi veya yetki yok'}), (404 if err == 'not_found' else 403)
+        return jsonify({'message': 'Event not found or unauthorized.'}), (404 if err == 'not_found' else 403)
 
     rows = _query_attendees(event_id)
     attendees = []
     for r in rows:
-        seat  = f"{r['zone']} {r['row_label']}-{r['col_label']}" if r['zone'] else 'Genel Giris'
+        seat  = f"{r['zone']} {r['row_label']}-{r['col_label']}" if r['zone'] else 'General Admission'
         name  = r['owner_name']   or (r['fullname'] or '').split()[0] or '-'
         surna = r['owner_surname'] or ' '.join((r['fullname'] or '').split()[1:]) or ''
         attendees.append({
@@ -276,19 +276,19 @@ def export_attendees(event_id):
 
     event, err = _check_event_access(event_id)
     if not event:
-        return jsonify({'message': 'Etkinlik bulunamadi veya yetki yok'}), (404 if err == 'not_found' else 403)
+        return jsonify({'message': 'Event not found or unauthorized.'}), (404 if err == 'not_found' else 403)
 
     rows = _query_attendees(event_id)
     buf  = io.StringIO()
     w    = csv.writer(buf)
-    w.writerow(['Bilet Kodu', 'Ad', 'Soyad', 'E-posta',
-                'Koltuk / Tip', 'Durum', 'Fiyat (TL)', 'Adet', 'Satin Alma Tarihi'])
+    w.writerow(['Ticket Code', 'First Name', 'Last Name', 'Email',
+                'Seat / Type', 'Status', 'Price (TL)', 'Quantity', 'Purchase Date'])
 
-    status_map = {'valid': 'Gecerli', 'used': 'Kullanildi',
-                  'refund_pending': 'Iade Bekliyor', 'cancelled': 'Iptal'}
+    status_map = {'valid': 'Valid', 'used': 'Used',
+                  'refund_pending': 'Refund Pending', 'cancelled': 'Cancelled'}
 
     for r in rows:
-        seat = f"{r['zone']} {r['row_label']}-{r['col_label']}" if r['zone'] else 'Genel Giris'
+        seat = f"{r['zone']} {r['row_label']}-{r['col_label']}" if r['zone'] else 'General Admission'
         w.writerow([
             r['ticket_key'],
             r['owner_name']    or (r['fullname'] or '-').split()[0],
@@ -303,8 +303,8 @@ def export_attendees(event_id):
 
     # UTF-8 BOM — Excel opens without encoding prompt
     csv_bytes = b'\xef\xbb\xbf' + buf.getvalue().encode('utf-8')
-    safe  = ''.join(c if c.isalnum() or c in ' _-' else '_' for c in (event['title'] or 'Etkinlik'))
-    fname = f"Katilimcilar_{safe}.csv"
+    safe  = ''.join(c if c.isalnum() or c in ' _-' else '_' for c in (event['title'] or 'Event'))
+    fname = f"Attendees_{safe}.csv"
 
     return Response(
         csv_bytes,

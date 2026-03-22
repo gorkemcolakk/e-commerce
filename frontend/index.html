@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EVENTİX - Modern Etkinlik & Bilet Platformu</title>
-  <meta name="description" content="Eventix — Konser, tiyatro ve atölye biletlerini anında satın al. Dijital QR biletine hemen ulaş.">
+  <title>EVENTIX - Modern Event & Ticket Platform</title>
+  <meta name="description" content="Eventix — Buy tickets for concerts, theater and workshops instantly. Get your digital QR ticket now.">
   <link rel="stylesheet" href="./styles/main.css">
   <link rel="stylesheet" href="./styles/components.css">
   <link rel="stylesheet" href="./styles/home.css">
@@ -21,19 +21,19 @@
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
           <line x1="12" y1="22.08" x2="12" y2="12"></line>
         </svg>
-        <span>EVENT<span class="logo-highlight">İX</span></span>
+        <span>EVENT<span class="logo-highlight">IX</span></span>
       </a>
 
       <ul class="nav-links">
-        <li><a href="#events-section" class="nav-link" onclick="document.getElementById('events-section').scrollIntoView({behavior:'smooth'}); return false;">Keşfet</a></li>
-        <li><a href="#" class="nav-link" onclick="setFilter('concert'); return false;">Konser</a></li>
-        <li><a href="#" class="nav-link" onclick="setFilter('theater'); return false;">Tiyatro</a></li>
-        <li><a href="#" class="nav-link" onclick="setFilter('workshop'); return false;">Atölye</a></li>
+        <li><a href="#events-section" class="nav-link" onclick="document.getElementById('events-section').scrollIntoView({behavior:'smooth'}); return false;">Explore</a></li>
+        <li><a href="#" class="nav-link" onclick="setFilter('concert'); return false;">Concerts</a></li>
+        <li><a href="#" class="nav-link" onclick="setFilter('theater'); return false;">Theater</a></li>
+        <li><a href="#" class="nav-link" onclick="setFilter('workshop'); return false;">Workshops</a></li>
       </ul>
 
       <div class="user-controls">
-        <a href="login.html" class="btn btn-outline">Giriş Yap</a>
-        <a href="register.html" class="btn btn-primary">Kayıt Ol</a>
+        <a href="login.html" class="btn btn-outline">Login</a>
+        <a href="register.html" class="btn btn-primary">Register</a>
       </div>
 
       <button class="mobile-menu-btn" id="mobileMenuBtn">
@@ -48,14 +48,14 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
     <ul class="nav-links" style="display:flex;">
-      <li><a href="#" class="nav-link mobile-link">Keşfet</a></li>
-      <li><a href="#" class="nav-link mobile-link">Konser</a></li>
-      <li><a href="#" class="nav-link mobile-link">Tiyatro</a></li>
-      <li><a href="#" class="nav-link mobile-link">Atölye</a></li>
+      <li><a href="#" class="nav-link mobile-link">Explore</a></li>
+      <li><a href="#" class="nav-link mobile-link">Concerts</a></li>
+      <li><a href="#" class="nav-link mobile-link">Theater</a></li>
+      <li><a href="#" class="nav-link mobile-link">Workshops</a></li>
     </ul>
     <div class="user-controls" style="display:flex;">
-      <a href="login.html" class="btn btn-outline mobile-link">Giriş Yap</a>
-      <a href="register.html" class="btn btn-primary mobile-link">Kayıt Ol</a>
+      <a href="login.html" class="btn btn-outline mobile-link">Login</a>
+      <a href="register.html" class="btn btn-primary mobile-link">Register</a>
     </div>
   </div>
 
@@ -63,37 +63,37 @@
   <header class="hero">
     <div class="hero-bg-collage"></div>
     <div class="container hero-content">
-      <h1 class="hero-title animate-up">Şimdi Eğlence Zamanı!</h1>
+      <h1 class="hero-title animate-up">It's Entertainment Time!</h1>
       <p class="hero-desc animate-up delay-1">
-        Konser, tiyatro, atölye ve daha fazlası... Tüm popüler etkinlikler ve biletleri tek bir platformda seni bekliyor.
+        Concerts, theater, workshops and more... All popular events and tickets are waiting for you on a single platform.
       </p>
       
       <!-- Biletix style large search bar -->
       <div class="hero-search-box animate-up delay-2">
         <div class="search-input-group">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" id="searchInput" placeholder="Etkinlik, sanatçı veya mekan ara...">
+          <input type="text" id="searchInput" placeholder="Search events, artists or venues...">
         </div>
-        <button class="btn btn-primary search-submit-btn" onclick="document.getElementById('events-section').scrollIntoView({behavior:'smooth'})">Bilet Bul</button>
+        <button class="btn btn-primary search-submit-btn" onclick="document.getElementById('events-section').scrollIntoView({behavior:'smooth'})">Find Tickets</button>
       </div>
 
       <!-- Categories shortcut -->
       <div class="hero-categories animate-up delay-3">
         <div class="hero-cat-item cat-active" data-filter="all" onclick="setFilter('all')">
            <div class="cat-icon">✨</div>
-           <span class="cat-name">Tümü</span>
+           <span class="cat-name">All</span>
         </div>
         <div class="hero-cat-item" data-filter="concert" onclick="setFilter('concert')">
            <div class="cat-icon">🎸</div>
-           <span class="cat-name">Konser</span>
+           <span class="cat-name">Concerts</span>
         </div>
         <div class="hero-cat-item" data-filter="theater" onclick="setFilter('theater')">
            <div class="cat-icon">🎭</div>
-           <span class="cat-name">Tiyatro</span>
+           <span class="cat-name">Theater</span>
         </div>
         <div class="hero-cat-item" data-filter="workshop" onclick="setFilter('workshop')">
            <div class="cat-icon">🎨</div>
-           <span class="cat-name">Atölye</span>
+           <span class="cat-name">Workshops</span>
         </div>
       </div>
     </div>
@@ -103,15 +103,15 @@
   <main class="container" id="events-section">
     <div class="section-header">
       <div>
-        <h2 class="section-title">En Popüler Etkinlikler</h2>
-        <p style="color:var(--text-muted);margin-top:8px;">Hemen yerini ayırt, sınırlı sayıdaki biletleri kaçırma!</p>
+        <h2 class="section-title">Popular Events</h2>
+        <p style="color:var(--text-muted);margin-top:8px;">Book your place now, don't miss out on limited tickets!</p>
       </div>
       <div style="display: none;">
         <!-- Hidden old filters to prevent JS errors if they are queried anywhere -->
-        <button class="btn btn-outline filter-btn active" data-filter="all">Tümü</button>
-        <button class="btn btn-outline filter-btn" data-filter="concert">Konser</button>
-        <button class="btn btn-outline filter-btn" data-filter="theater">Tiyatro</button>
-        <button class="btn btn-outline filter-btn" data-filter="workshop">Atölye</button>
+        <button class="btn btn-outline filter-btn active" data-filter="all">All</button>
+        <button class="btn btn-outline filter-btn" data-filter="concert">Concerts</button>
+        <button class="btn btn-outline filter-btn" data-filter="theater">Theater</button>
+        <button class="btn btn-outline filter-btn" data-filter="workshop">Workshops</button>
       </div>
     </div>
 
@@ -126,14 +126,14 @@
   <!-- Footer -->
   <footer>
     <div class="container footer-content">
-      <div class="logo" style="font-size:1.25rem;"><span>EVENT<span class="logo-highlight">İX</span></span></div>
+      <div class="logo" style="font-size:1.25rem;"><span>EVENT<span class="logo-highlight">IX</span></span></div>
       <div class="footer-links" style="display:flex;gap:20px;">
-        <a href="#" style="color:var(--text-muted);">SSS</a>
-        <a href="#" style="color:var(--text-muted);">İletişim</a>
-        <a href="#" style="color:var(--text-muted);">Gizlilik</a>
+        <a href="#" style="color:var(--text-muted);">FAQ</a>
+        <a href="#" style="color:var(--text-muted);">Contact</a>
+        <a href="#" style="color:var(--text-muted);">Privacy</a>
       </div>
     </div>
-    <div class="container footer-text">&copy; 2026 EVENTİX Platformu. Tüm hakları saklıdır.</div>
+    <div class="container footer-text">&copy; 2026 EVENTIX Platform. All rights reserved.</div>
   </footer>
 
 

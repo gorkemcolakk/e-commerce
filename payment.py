@@ -2,71 +2,71 @@ import time
 
 class PaymentGateway:
     """
-    Sanal POS entegrasyonu için genel sarmalayıcı (wrapper) sınıf.
-    İleride Iyzico, Stripe veya Param gibi gerçek POS API servislerine buradan entegre olabilirsiniz.
-    Şu anki halinde kredi kartı kurallarına göre bir ödeme simülasyonu çalıştırır.
+    Generic wrapper class for Virtual POS integration.
+    You can integrate real POS API services like Iyzico, Stripe, or Param here in the future.
+    In its current state, it runs a payment simulation based on credit card rules.
     """
     
     @staticmethod
     def process_payment(amount: float, card_name: str, card_number: str, exp_date: str, cvc: str) -> dict:
         """
-        amount: Siparişin son tutarı (İndirimler hesaplandıktan sonra)
+        amount: Final order amount (After discounts calculated)
         
-        DÖNÜŞ (Return):
-        {"success": True/False, "transaction_id": "...", "message": "Hata açıklaması"}
+        RETURN:
+        {"success": True/False, "transaction_id": "...", "message": "Error description"}
         """
         
-        # Gerçek bir API isteğini simüle etmek için gecikme (network latency)
+        # Delay to simulate a real API request (network latency)
         time.sleep(1.2)
         
-        # Sadece sayıları al
+        # Extract digits only
         clean_number = "".join(filter(str.isdigit, str(card_number)))
         
-        # Eğer tutar 0 ise (Tamamı hediye/indirim koduyla ödenmişse) pos'a bile gitmeden direkt onayla
+        # If amount is 0 (Fully paid with gift/discount code), approve directly without going to POS
         if amount == 0:
             return {
                 "success": True, 
                 "transaction_id": "FREE_" + str(int(time.time() * 1000)),
-                "message": "Ücretsiz işlem başarılı."
+                "message": "Free transaction successful."
             }
 
-        # TEST KARTLARI (Simülasyon Senaryoları)
+        # TEST CARDS (Simulation Scenarios)
         
-        # 1. Her zaman reddedilen test kartı:
+        # 1. Always rejected test card:
         if clean_number.startswith('0000'):
-            return {"success": False, "message": "Ödeme reddedildi: Sahte/Test kartı kuralı."}
+            return {"success": False, "message": "Payment rejected: Fake/Test card rule."}
             
-        # 2. Bakiye yetersiz limiti dönen test kartı (5111 ile başlayanlar)
+        # 2. Insufficient balance/limit test card (Starts with 5111)
         if clean_number.startswith('5111'):
-             return {"success": False, "message": "Ödeme başarısız: Kart bakiyesi veya limiti yetersiz."}
+             return {"success": False, "message": "Payment failed: Insufficient card balance or limit."}
              
-        # 3. İletişim Hatası
+        # 3. Communication Error
         if clean_number.startswith('9999'):
-             return {"success": False, "message": "Ödeme sistemi ile iletişim kurulamadı (Timeout)."}
+             return {"success": False, "message": "Could not communicate with the payment system (Timeout)."}
 
-        # GENEL KONTROLLER
+        # GENERAL CONTROLS
         if len(clean_number) < 15 or len(clean_number) > 19:
-            return {"success": False, "message": "Geçersiz kart numarası. (Minimum 15, Makimum 19 Hane)"}
+            return {"success": False, "message": "Invalid card number. (Minimum 15, Maximum 19 Digits)"}
             
         if not exp_date or '/' not in exp_date:
-            return {"success": False, "message": "Son kullanma tarihi geçerli değil. (Beklenen: AA/YY)"}
+            return {"success": False, "message": "Expiry date is not valid. (Expected: MM/YY)"}
             
         try:
             month, year = exp_date.split('/')
             if int(month) < 1 or int(month) > 12:
-                return {"success": False, "message": "Geçersiz ay formatı. Lütfen 01 ile 12 arasında girin."}
+                return {"success": False, "message": "Invalid month format. Please enter between 01 and 12."}
         except ValueError:
-            return {"success": False, "message": "Geçersiz son kullanma tarihi formatı."}
+            return {"success": False, "message": "Invalid expiry date format."}
             
         clean_cvc = "".join(filter(str.isdigit, str(cvc)))
         if len(clean_cvc) < 3 or len(clean_cvc) > 4:
-            return {"success": False, "message": "Geçersiz CVC numarası."}
+            return {"success": False, "message": "Invalid CVC number."}
             
-        # Eğer yukarıdaki koşullara takılmadıysa BAŞARILI KABUL ET
+        # If it didn't hit the conditions above, ACCEPT AS SUCCESSFUL
         transaction_id = "TRX_" + str(int(time.time() * 1000))
         
         return {
             "success": True,
             "transaction_id": transaction_id,
-            "message": "Ödeme Başarılı"
+            "message": "Payment Successful"
         }

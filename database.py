@@ -49,7 +49,7 @@ class TursoCursor:
             if hasattr(self._result, 'rows_affected') and self._result.rows_affected > 0:
                 self.lastrowid = self._result.last_insert_rowid
         except Exception as e:
-            # SQLite taklidi yapıp hatayı sqlite3 bekleyen try-catch lere gönderiyoruz
+            # Emulate SQLite by passing the error to try-catch blocks expecting sqlite3
             raise sqlite3.OperationalError(str(e))
         return self
         

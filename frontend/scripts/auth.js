@@ -39,7 +39,7 @@ applyTheme(localStorage.getItem('eventix-theme') || 'dark');
 
 // ── NAV RENDER ───────────────────────────────────────────────
 const THEME_BTN = `
-  <button class="theme-toggle" onclick="toggleTheme()" title="Tema" aria-label="Toggle theme">
+  <button class="theme-toggle" onclick="toggleTheme()" title="Theme" aria-label="Toggle theme">
     <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
     <svg class="icon-sun"  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
   </button>`;
@@ -53,36 +53,36 @@ function renderNav() {
             const firstName = user.fullname.split(' ')[0];
             const dashBase = user.role === 'admin' ? 'admin.html' : user.role === 'organizer' ? 'organizer.html' : 'dashboard.html';
             
-            let dropLinks = '';
+             let dropLinks = '';
             const commonLinks = `
               <hr style="border:0; border-top:1px solid var(--border); margin:4px 0;">
-              <a href="dashboard.html?tab=tickets" class="dropdown-item">🎟 Biletlerim</a>
-              <a href="dashboard.html?tab=wishlist" class="dropdown-item">❤ Favorilerim</a>
-              <a href="dashboard.html?tab=notifications" class="dropdown-item">🔔 Bildirimler</a>
+              <a href="dashboard.html?tab=tickets" class="dropdown-item">🎟 My Tickets</a>
+              <a href="dashboard.html?tab=wishlist" class="dropdown-item">❤ My Wishlist</a>
+              <a href="dashboard.html?tab=notifications" class="dropdown-item">🔔 Notifications</a>
             `;
 
             if (user.role === 'admin') {
               dropLinks = `
-                <a href="admin.html?tab=pending" class="dropdown-item">⏳ Onay Bekleyenler</a>
-                <a href="admin.html?tab=users" class="dropdown-item">👥 Kullanıcılar</a>
-                <a href="admin.html?tab=allevents" class="dropdown-item">📋 Tüm Etkinlikler</a>
-                <a href="admin.html?tab=revenue" class="dropdown-item">💰 Platform Geliri</a>
+                <a href="admin.html?tab=pending" class="dropdown-item">⏳ Pending Approval</a>
+                <a href="admin.html?tab=users" class="dropdown-item">👥 Users</a>
+                <a href="admin.html?tab=allevents" class="dropdown-item">📋 All Events</a>
+                <a href="admin.html?tab=revenue" class="dropdown-item">💰 Platform Revenue</a>
                 ${commonLinks}
               `;
             } else if (user.role === 'organizer') {
               dropLinks = `
-                <a href="organizer.html?tab=myevents" class="dropdown-item">🎪 Etkinliklerim</a>
-                <a href="organizer.html?tab=create" class="dropdown-item">➕ Etkinlik Oluştur</a>
-                <a href="organizer.html?tab=revenue" class="dropdown-item">💰 Gelir Raporu</a>
-                <a href="organizer.html?tab=promotions" class="dropdown-item">🎫 Promosyonlar</a>
-                <a href="organizer.html?tab=validate" class="dropdown-item">🔍 QR Doğrulama</a>
+                <a href="organizer.html?tab=myevents" class="dropdown-item">🎪 My Events</a>
+                <a href="organizer.html?tab=create" class="dropdown-item">➕ Create Event</a>
+                <a href="organizer.html?tab=revenue" class="dropdown-item">💰 Revenue Report</a>
+                <a href="organizer.html?tab=promotions" class="dropdown-item">🎫 Promotions</a>
+                <a href="organizer.html?tab=validate" class="dropdown-item">🔍 QR Validation</a>
                 ${commonLinks}
               `;
             } else {
               dropLinks = `
-                <a href="dashboard.html?tab=tickets" class="dropdown-item">🎟 Biletlerim</a>
-                <a href="dashboard.html?tab=wishlist" class="dropdown-item">❤ Favorilerim</a>
-                <a href="dashboard.html?tab=notifications" class="dropdown-item">🔔 Bildirimler</a>
+                <a href="dashboard.html?tab=tickets" class="dropdown-item">🎟 My Tickets</a>
+                <a href="dashboard.html?tab=wishlist" class="dropdown-item">❤ My Wishlist</a>
+                <a href="dashboard.html?tab=notifications" class="dropdown-item">🔔 Notifications</a>
               `;
             }
 
@@ -101,13 +101,13 @@ function renderNav() {
                 <div id="userDropdown" class="user-dropdown-menu">
                   ${dropLinks}
                   <hr style="border:0; border-top:1px solid var(--border); margin:4px 0;">
-                  <button onclick="logout()" class="dropdown-item" style="width:100%; border:0; background:none; cursor:pointer; color:var(--coral); text-align:left;">🚪 Çıkış Yap</button>
+                  <button onclick="logout()" class="dropdown-item" style="width:100%; border:0; background:none; cursor:pointer; color:var(--coral); text-align:left;">🚪 Logout</button>
                 </div>
               </div>`;
         } else {
             ctrl.innerHTML = `${THEME_BTN}
-              <a href="login.html" class="btn btn-outline" style="font-size:.85rem;">Giriş Yap</a>
-              <a href="register.html" class="btn btn-primary" style="font-size:.85rem;">Kayıt Ol</a>`;
+              <a href="login.html" class="btn btn-outline" style="font-size:.85rem;">Login</a>
+              <a href="register.html" class="btn btn-primary" style="font-size:.85rem;">Register</a>`;
         }
     });
 
@@ -164,7 +164,7 @@ async function loadWishlistIds() {
 }
 
 window.toggleWishlist = async (eventId, btn) => {
-    if (!getToken()) { alert('Favorilere eklemek için giriş yapmalısınız.'); return goToLogin(); }
+    if (!getToken()) { alert('Please login to add to favorites.'); return goToLogin(); }
     const inList = wishlistIds.has(eventId);
     try {
         const r = await fetch(`/api/wishlist/${eventId}`, { method: inList ? 'DELETE' : 'POST', headers: authHeaders() });
@@ -206,7 +206,7 @@ function initLoginForm() {
     form.addEventListener('submit', async e => {
         e.preventDefault();
         const btn = form.querySelector('[type=submit]'), orig = btn.textContent;
-        btn.textContent = 'Giriş yapılıyor...'; btn.disabled = true;
+        btn.textContent = 'Logging in...'; btn.disabled = true;
         try {
             const r = await fetch('/api/auth/login', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -217,8 +217,8 @@ function initLoginForm() {
                 localStorage.setItem('token', d.token);
                 localStorage.setItem('user', JSON.stringify(d.user));
                 window.location.href = d.user.role === 'admin' ? 'admin.html' : d.user.role === 'organizer' ? 'organizer.html' : 'index.html';
-            } else { setFeedback(form, d.message || 'Giriş başarısız', 'error'); btn.textContent = orig; btn.disabled = false; }
-        } catch { setFeedback(form, 'Sunucuya bağlanılamadı', 'error'); btn.textContent = orig; btn.disabled = false; }
+            } else { setFeedback(form, d.message || 'Login failed', 'error'); btn.textContent = orig; btn.disabled = false; }
+        } catch { setFeedback(form, 'Could not connect to server', 'error'); btn.textContent = orig; btn.disabled = false; }
     });
 }
 
@@ -230,7 +230,7 @@ function initRegisterForm() {
         const btn = form.querySelector('[type=submit]'), orig = btn.textContent;
         const password = document.getElementById('password').value;
         if (password.length < 6) {
-          setFeedback(form, 'Şifre en az 6 karakter olmalıdır', 'error');
+          setFeedback(form, 'Password must be at least 6 characters', 'error');
           btn.textContent = orig; btn.disabled = false;
           return;
         }
@@ -247,9 +247,9 @@ function initRegisterForm() {
                 })
             });
             const d = await r.json();
-            if (r.ok) { setFeedback(form, 'Kayıt başarılı! Yönlendiriliyorsunuz...', 'success'); setTimeout(() => { window.location.href = 'login.html'; }, 1500); }
-            else { setFeedback(form, d.message || 'Kayıt başarısız', 'error'); btn.textContent = orig; btn.disabled = false; }
-        } catch { setFeedback(form, 'Sunucuya bağlanılamadı', 'error'); btn.textContent = orig; btn.disabled = false; }
+            if (r.ok) { setFeedback(form, 'Registration successful! Redirecting...', 'success'); setTimeout(() => { window.location.href = 'login.html'; }, 1500); }
+            else { setFeedback(form, d.message || 'Registration failed', 'error'); btn.textContent = orig; btn.disabled = false; }
+        } catch { setFeedback(form, 'Could not connect to server', 'error'); btn.textContent = orig; btn.disabled = false; }
     });
 }
 
@@ -289,12 +289,12 @@ function initPasswordReset() {
         // Başlıkları güncelle
         const title = document.querySelector('.auth-title');
         const subtitle = document.querySelector('.auth-subtitle');
-        if (title) title.textContent = 'Şifre Sıfırlama';
-        if (subtitle) subtitle.textContent = 'Yeni şifrenizi belirleyin.';
+        if (title) title.textContent = 'Password Reset';
+        if (subtitle) subtitle.textContent = 'Set your new password.';
 
         form.innerHTML = `
             <div class="form-group">
-                <label class="form-label">Yeni Şifre</label>
+                <label class="form-label">New Password</label>
                 <div class="password-input-wrapper">
                     <input type="password" id="new_password" class="form-control" placeholder="••••••••" required minlength="6">
                     <button type="button" class="password-toggle" onclick="togglePassword('new_password')">
@@ -303,12 +303,12 @@ function initPasswordReset() {
                 </div>
             </div>
             <div class="form-group">
-                <label class="form-label">Yeni Şifre (Tekrar)</label>
+                <label class="form-label">New Password (Repeat)</label>
                 <div class="password-input-wrapper">
                     <input type="password" id="new_password_confirm" class="form-control" placeholder="••••••••" required minlength="6">
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary auth-submit">Şifreyi Güncelle</button>
+            <button type="submit" class="btn btn-primary auth-submit">Update Password</button>
         `;
 
         // Social login ve divider'ı gizle
@@ -326,16 +326,16 @@ function initPasswordReset() {
             const confirmPass = newForm.querySelector('#new_password_confirm').value;
 
             if (newPass.length < 6) {
-                setFeedback(newForm, 'Şifre en az 6 karakter olmalıdır!', 'error');
+                setFeedback(newForm, 'Password must be at least 6 characters!', 'error');
                 return;
             }
 
             if (newPass !== confirmPass) {
-                setFeedback(newForm, 'Şifreler eşleşmiyor!', 'error');
+                setFeedback(newForm, 'Passwords do not match!', 'error');
                 return;
             }
 
-            btn.textContent = 'Güncelleniyor...';
+            btn.textContent = 'Updating...';
             btn.disabled = true;
             try {
                 const res = await fetch('/api/auth/reset-password', {
@@ -345,15 +345,15 @@ function initPasswordReset() {
                 });
                 const d = await res.json();
                 if (res.ok) {
-                    setFeedback(newForm, 'Şifreniz güncellendi! Giriş sayfasına yönlendiriliyorsunuz...', 'success');
+                    setFeedback(newForm, 'Your password has been updated! Redirecting to login...', 'success');
                     setTimeout(() => { window.location.href = 'login.html'; }, 2000);
                 } else {
-                    setFeedback(newForm, d.message || 'Hata oluştu. Token süresi dolmuş olabilir.', 'error');
+                    setFeedback(newForm, d.message || 'An error occurred. Token may have expired.', 'error');
                     btn.textContent = orig;
                     btn.disabled = false;
                 }
             } catch (err) {
-                setFeedback(newForm, 'Sunucu bağlantı hatası', 'error');
+                setFeedback(newForm, 'Server connection error', 'error');
                 btn.textContent = orig;
                 btn.disabled = false;
             }
@@ -366,15 +366,15 @@ function initPasswordReset() {
     if (forgotLink) {
         forgotLink.onclick = (e) => {
             e.preventDefault();
-            const email = prompt('Şifre sıfırlama linki almak için kayıtlı e-posta adresinizi girin:');
+            const email = prompt('Enter your registered email address to receive a password reset link:');
             if (email) {
                 fetch('/api/auth/forgot-password', {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({email})
                 })
                 .then(r => r.json())
-                .then(d => alert(d.message || 'Başarılı'))
-                .catch(() => alert('Bir hata oluştu. Lütfen tekrar deneyin.'));
+                .then(d => alert(d.message || 'Success'))
+                .catch(() => alert('An error occurred. Please try again.'));
             }
         };
     }
