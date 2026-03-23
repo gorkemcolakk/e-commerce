@@ -114,6 +114,7 @@ def create_event():
             parent_id, json.dumps(rec_cfg) if rec_cfg else None
         ))
         if has_seating and zones:
+            all_seats = []
             for z in zones:
                 zn   = z.get('name', 'Blok')
                 rows = int(z.get('rows', 1))
@@ -122,11 +123,14 @@ def create_event():
                 for r in range(1, rows + 1):
                     rl = chr(64 + r) if rows <= 26 else str(r)
                     for c in range(1, cols + 1):
-                        conn.execute(
-                            "INSERT INTO seats (event_id, zone, row_label, col_label, price, status) "
-                            "VALUES (?, ?, ?, ?, ?, 'available')",
-                            (ev_id, zn, rl, str(c), zp)
-                        )
+                        all_seats.append((ev_id, zn, rl, str(c), zp))
+            
+            if all_seats:
+                conn.executemany(
+                    "INSERT INTO seats (event_id, zone, row_label, col_label, price, status) "
+                    "VALUES (?, ?, ?, ?, ?, 'available')",
+                    all_seats
+                )
 
     # ── insert first (parent) event ──────────────────────────────
     parent_id = 'evt-' + uuid.uuid4().hex.upper()[:8]
@@ -239,6 +243,7 @@ def update_event(event_id):
         # Eski koltukları temizle
         conn.execute("DELETE FROM seats WHERE event_id = ?", (event_id,))
         # Yeni koltukları oluştur
+        all_new_seats = []
         for z in zones:
             zone_name = z.get('name', 'Blok')
             rows = int(z.get('rows', 1))
@@ -247,8 +252,13 @@ def update_event(event_id):
             for r in range(1, rows + 1):
                 row_label = chr(64 + r) if rows <= 26 else str(r)
                 for c in range(1, cols + 1):
-                    conn.execute('INSERT INTO seats (event_id, zone, row_label, col_label, price, status) VALUES (?,?,?,?,?,?)',
-                                 (event_id, zone_name, row_label, str(c), z_price, 'available'))
+                    all_new_seats.append((event_id, zone_name, row_label, str(c), z_price, 'available'))
+        
+        if all_new_seats:
+            conn.executemany(
+                'INSERT INTO seats (event_id, zone, row_label, col_label, price, status) VALUES (?,?,?,?,?,?)',
+                all_new_seats
+            )
     
     # Kapasite ve Fiyat senkronizasyonu (Koltuklu etkinlikse koltukları say)
     if event['has_seating'] or data.get('has_seating'):

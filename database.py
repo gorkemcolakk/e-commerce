@@ -49,7 +49,20 @@ class TursoCursor:
             if hasattr(self._result, 'rows_affected') and self._result.rows_affected > 0:
                 self.lastrowid = self._result.last_insert_rowid
         except Exception as e:
-            # Emulate SQLite by passing the error to try-catch blocks expecting sqlite3
+            raise sqlite3.OperationalError(str(e))
+        return self
+        
+    def executemany(self, sql, seq_of_parameters):
+        # Turso lacks a native executemany, so we use batch
+        from libsql_client import Statement
+        stmts = [Statement(sql, list(p)) for p in seq_of_parameters]
+        try:
+            # Execute in batches if it's too large (Turso might have limits)
+            batch_size = 500
+            for i in range(0, len(stmts), batch_size):
+                chunk = stmts[i:i + batch_size]
+                _client.batch(chunk)
+        except Exception as e:
             raise sqlite3.OperationalError(str(e))
         return self
         
@@ -76,6 +89,11 @@ class TursoConnection:
     def execute(self, sql, parameters=()):
         cur = self.cursor()
         cur.execute(sql, parameters)
+        return cur
+        
+    def executemany(self, sql, seq_of_parameters):
+        cur = self.cursor()
+        cur.executemany(sql, seq_of_parameters)
         return cur
         
     def commit(self):
