@@ -9,10 +9,10 @@ organizer_bp = Blueprint('organizer', __name__, url_prefix='/api/organizer')
 def organizer_events():
     conn = get_db_connection()
     if g.user['role'] == 'admin':
-        events = conn.execute('SELECT * FROM events ORDER BY id').fetchall()
+        events = conn.execute('SELECT * FROM events WHERE parent_event_id IS NULL ORDER BY id').fetchall()
     else:
         events = conn.execute(
-            'SELECT * FROM events WHERE organizer_id = ? ORDER BY id',
+            'SELECT * FROM events WHERE organizer_id = ? AND parent_event_id IS NULL ORDER BY id',
             (g.user['id'],)
         ).fetchall()
     conn.close()

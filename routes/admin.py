@@ -18,7 +18,7 @@ def admin_list_users():
 @role_required('admin')
 def admin_all_events():
     conn = get_db_connection()
-    events = conn.execute('SELECT * FROM events ORDER BY id').fetchall()
+    events = conn.execute('SELECT * FROM events WHERE parent_event_id IS NULL ORDER BY id').fetchall()
     conn.close()
     return jsonify([event_to_dict(e) for e in events]), 200
 
@@ -30,7 +30,7 @@ def admin_pending_events():
         SELECT e.*, u.fullname as organizer_name, u.email as organizer_email
         FROM events e
         LEFT JOIN users u ON e.organizer_id = u.id
-        WHERE e.status = 'pending'
+        WHERE e.status = 'pending' AND e.parent_event_id IS NULL
         ORDER BY e.id DESC
     ''').fetchall()
     conn.close()
@@ -50,7 +50,7 @@ def approve_event(event_id):
     if not event:
         conn.close()
         return jsonify({'message': 'Event not found'}), 404
-    conn.execute("UPDATE events SET status = 'active' WHERE id = ?", (event_id,))
+    conn.execute("UPDATE events SET status = 'active' WHERE id = ? OR parent_event_id = ?", (event_id, event_id))
     if event['organizer_id']:
         create_notification(conn, event['organizer_id'],
             f"Your event '{event['title']}' has been approved and published on the site!")
@@ -68,7 +68,7 @@ def reject_event(event_id):
     if not event:
         conn.close()
         return jsonify({'message': 'Event not found'}), 404
-    conn.execute("UPDATE events SET status = 'rejected', rejection_reason = ? WHERE id = ?", (reason, event_id))
+    conn.execute("UPDATE events SET status = 'rejected', rejection_reason = ? WHERE id = ? OR parent_event_id = ?", (reason, event_id, event_id))
     if event['organizer_id']:
         create_notification(conn, event['organizer_id'],
             f"An edit has been requested for your event '{event['title']}'. Reason: {reason}")
