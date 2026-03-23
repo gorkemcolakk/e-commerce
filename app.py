@@ -1,6 +1,10 @@
 from dotenv import load_dotenv
 load_dotenv()  # Load SMTP and other settings from .env file
 
+import os
+import certifi
+os.environ['SSL_CERT_FILE'] = certifi.where()
+
 from flask import Flask
 from flask_cors import CORS
 from utils import SECRET_KEY, limiter, send_birthday_emails
@@ -69,5 +73,4 @@ if __name__ == '__main__':
         t = threading.Thread(target=birthday_job, daemon=True)
         t.start()
         print(">>> Birthday Background Service Started (Waiting for 00:00)")
-        
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)
