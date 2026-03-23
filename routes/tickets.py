@@ -173,6 +173,12 @@ def guest_buy_ticket():
 
         t_price    = event['price'] if not event['has_seating'] else seats_dict[str(t_info['seat_id'])]['price']
         seat_id_val = t_info.get('seat_id') if event['has_seating'] else None
+        
+        seat_info = ""
+        if event['has_seating'] and seat_id_val:
+            s_obj = seats_dict.get(str(seat_id_val))
+            if s_obj:
+                seat_info = f"{s_obj['zone']} {s_obj['row_label']}-{s_obj['col_label']}"
 
         c.execute(
             "INSERT INTO tickets (user_id, event_id, ticket_key, qr_code, quantity, total_price, status, owner_name, owner_surname, seat_id) "
@@ -187,7 +193,8 @@ def guest_buy_ticket():
             'qr_data':    qr_data,
             'name':       t_info.get('name'),
             'surname':    t_info.get('surname'),
-            'price':      t_price
+            'price':      t_price,
+            'seat_info':  seat_info
         })
 
     conn.commit()
@@ -378,6 +385,12 @@ def buy_ticket():
         t_price = unit_price if not event['has_seating'] else seats_dict[str(t_info['seat_id'])]['price']
         seat_id_val = t_info.get('seat_id') if event['has_seating'] else None
         
+        seat_info = ""
+        if event['has_seating'] and seat_id_val:
+            s_obj = seats_dict.get(str(seat_id_val))
+            if s_obj:
+                seat_info = f"{s_obj['zone']} {s_obj['row_label']}-{s_obj['col_label']}"
+
         c.execute('''
             INSERT INTO tickets (user_id, event_id, ticket_key, qr_code, quantity, total_price, status, owner_name, owner_surname, seat_id)
             VALUES (?, ?, ?, ?, ?, ?, 'valid', ?, ?, ?)
@@ -389,7 +402,8 @@ def buy_ticket():
             'qr_code': qr_base64,
             'name': t_info.get('name'),
             'surname': t_info.get('surname'),
-            'price': t_price
+            'price': t_price,
+            'seat_info': seat_info
         })
 
     create_notification(

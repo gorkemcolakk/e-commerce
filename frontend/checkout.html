@@ -1425,6 +1425,7 @@
       let oSeatVal = '-';
       if (ticket.seat_info) { oSeatDisp = 'block'; oSeatVal = ticket.seat_info; }
       else if (ticket.zone) { oSeatDisp = 'block'; oSeatVal = `${ticket.zone} ${ticket.row_label}-${ticket.col_label}`; }
+      else if (ticket.seat_id) { oSeatDisp = 'block'; oSeatVal = `Seat ID: ${ticket.seat_id}`; }
 
       let qrSrc = ticket.qr_code || '';
       if (qrSrc && !qrSrc.startsWith('data:')) {

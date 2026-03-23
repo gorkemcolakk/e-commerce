@@ -285,7 +285,10 @@
 
       let oSeatDisp = 'none';
       let oSeatVal = '-';
-      if (t.zone) { 
+      if (t.seat_info) {
+        oSeatDisp = 'block';
+        oSeatVal = t.seat_info;
+      } else if (t.zone) { 
         oSeatDisp = 'block'; 
         oSeatVal = `${t.zone} ${t.row_label}-${t.col_label}`; 
       }
