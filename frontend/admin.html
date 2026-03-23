@@ -159,6 +159,8 @@
         document.body.style.overflow = 'auto';
     }
 
+    let sessionSelectedData = {}; // Stores selected session IDs per event
+
     // ── HELPERS ──────────────────────────────────────
     function getRecurrenceBadge(configJSON, count) {
         if (!configJSON) return '';
@@ -172,20 +174,93 @@
         } catch(err) { return ''; }
     }
 
-    function getSessionNotes(dates) {
-        if (!dates || dates.length <= 1) return '';
+    function toggleSession(eventId, sessionId, el) {
+        if (!sessionSelectedData[eventId]) sessionSelectedData[eventId] = [];
+        const idx = sessionSelectedData[eventId].indexOf(sessionId);
+        if (idx > -1) {
+            sessionSelectedData[eventId].splice(idx, 1);
+            el.style.background = 'var(--bg-surface)';
+            el.style.borderColor = 'var(--border-color)';
+            el.style.color = 'var(--text)';
+        } else {
+            sessionSelectedData[eventId].push(sessionId);
+            el.style.background = 'rgba(34,197,94,0.15)'; // Greenish background
+            el.style.borderColor = 'rgba(34,197,94,0.4)';
+            el.style.color = '#4ade80';
+        }
+        // DYNAMIC: Update card info if a session is picked
+        updateCardInfo(eventId);
+    }
+
+    async function updateCardInfo(eventId) {
+        const selected = sessionSelectedData[eventId] || [];
+        if (selected.length === 1) {
+            const sid = selected[0];
+            try {
+                const res = await fetch(`/api/events/${sid}`, { headers: authHeaders() });
+                if (res.ok) {
+                    const data = await res.json();
+                    const pEl = document.getElementById(`price-val-${eventId}`);
+                    const cEl = document.getElementById(`cap-val-${eventId}`);
+                    const preBtn = document.getElementById(`preview-btn-${eventId}`);
+                    if (pEl) pEl.textContent = `${data.price.toLocaleString('en-US')} ₺`;
+                    if (cEl) cEl.textContent = data.capacity;
+                    if (preBtn) preBtn.setAttribute('onclick', `window.open('event-detail.html?id=${sid}', '_blank')`);
+                }
+            } catch(e) {}
+        }
+    }
+
+    function selectAllSessions(eventId, sessionList) {
+        sessionSelectedData[eventId] = sessionList.map(s => s.id);
+        loadPending(); // Refresh UI to show all selected
+    }
+
+    function getSessionNotes(eventId, sessions, isRecurring = false) {
+        if (!sessions || sessions.length === 0) return '';
+        
+        // Show sessions if there are multiple OR if it's a recurring event (to show which specific session)
+        if (sessions.length <= 1 && !isRecurring) {
+            if (!sessionSelectedData[eventId] && sessions.length > 0) sessionSelectedData[eventId] = [sessions[0].id];
+            return '';
+        }
+
+        // Auto-select the first session if none are selected yet
+        if (!sessionSelectedData[eventId] || sessionSelectedData[eventId].length === 0) {
+            sessionSelectedData[eventId] = sessions.length > 0 ? [sessions[0].id] : [];
+        }
+
         const f = (ds) => {
             const d = new Date(ds);
             return d.toLocaleDateString('tr-TR', { day:'numeric', month:'short' });
         };
-        const dateList = dates.map(d => `<span style="background:var(--bg-surface);padding:2px 6px;border-radius:4px;border:1px solid var(--border-color);">${f(d)}</span>`).join(' ');
+
+        const dateList = sessions.map(s => {
+            const isSelected = (sessionSelectedData[eventId] || []).includes(s.id);
+            const style = isSelected 
+                ? 'background:rgba(34,197,94,0.15); border-color:rgba(34,197,94,0.4); color:#4ade80;' 
+                : 'background:var(--bg-surface); border-color:var(--border-color); color:var(--text);';
+            return `<div class="session-pill" 
+                         onclick="toggleSession('${eventId}', '${s.id}', this)"
+                         style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:6px; border:1px solid; transition:all 0.2s; font-weight:500; ${style}">
+                       <span onclick="event.stopPropagation(); window.open('event-detail.html?id=${s.id}', '_blank')" 
+                             title="Önizlemek için tıkla" 
+                             style="text-decoration:underline dotted; cursor:zoom-in;">
+                           ${f(s.date)}
+                       </span>
+                    </div>`;
+        }).join('');
+
         return `
-          <div style="margin-top:10px; padding:10px 14px; background:rgba(139,92,246,0.05); border:1px dashed rgba(139,92,246,0.2); border-radius:8px;">
-            <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:flex; align-items:center; gap:4px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"></path></svg>
-              <strong>Etkinlik Takvimi:</strong> Bu seri aşağıdaki tarihlerde tekrarlanacaktır:
-            </p>
-            <div style="display:flex; flex-wrap:wrap; gap:6px; font-size:0.75rem; color:var(--text);">${dateList}</div>
+          <div style="margin-top:12px; padding:12px; background:rgba(255,255,255,0.02); border:1px dashed var(--border-color); border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <p style="font-size:0.75rem; color:var(--text-muted); margin:0; display:flex; align-items:center; gap:5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"></path></svg>
+                <strong>Etkinlik Takvimi:</strong> Bu seri tekrarlanacaktır. Onaylanacak tarihleri seçin:
+              </p>
+              <button class="btn btn-sm" style="font-size:0.65rem; padding:2px 8px; height:auto;" onclick="selectAllSessions('${eventId}', ${JSON.stringify(sessions).replace(/"/g, '&quot;')})">Select All</button>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; font-size:0.75rem;">${dateList}</div>
           </div>
         `;
     }
@@ -216,13 +291,19 @@
                   ${e.parent_event_id ? '<span style="background:rgba(139,92,246,.1);color:#a78bfa;border:1px solid rgba(139,92,246,.3);padding:1px 8px;border-radius:100px;font-size:0.65rem;display:inline-flex;align-items:center;gap:4px;">🔗 Tekrar Oturumu</span>' : ''}
                 </div>
                 <p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 2px;">📅 ${e.date} &nbsp;|&nbsp; 📍 ${e.location}</p>
-                <p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 8px;">💰 ${e.price.toLocaleString('en-US')} ₺ &nbsp;|&nbsp; 🎟 Capacity: ${e.capacity}</p>
+                <p style="font-weight:700;font-size:0.95rem;margin:0 0 8px;display:flex;gap:12px;align-items:center;">
+                  <span style="color:var(--accent-orange);" id="price-val-${e.id}">💰 ${e.price.toLocaleString('en-US')} ₺</span>
+                  <span style="color:var(--text-muted);font-weight:400;font-size:0.8rem;">📂 Kapasite: <span id="cap-val-${e.id}">${e.capacity}</span></span>
+                </p>
                 <p style="font-size:0.75rem;color:var(--text-sub);background:var(--bg-surface);padding:6px 10px;border-radius:6px;margin:0;">
                   👤 Organizer: <strong>${e.organizer_name || 'Unknown'}</strong>
                 </p>
-                ${getSessionNotes(e.session_dates)}
+                ${getSessionNotes(e.id, e.sessions, !!e.recurring_config)}
               </div>
-              <button class="btn btn-outline btn-sm" onclick="openPreview('${e.id}')">👁 Preview</button>
+              <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+                <button id="preview-btn-${e.id}" class="btn btn-outline btn-sm" onclick="window.open('event-detail.html?id=${e.sessions.length > 0 ? e.sessions[0].id : e.id}', '_blank')">👁 Preview</button>
+                <span class="badge" style="background:rgba(212,163,115,0.1);color:var(--gold);border:1px solid rgba(212,163,115,0.2);">Pending</span>
+              </div>
             </div>
             <div style="display:flex;gap:8px;margin-top:14px;">
               <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="approveEvent('${e.id}', this)">✓ Approve</button>
@@ -236,15 +317,29 @@
               </div>
             </div>
           </div>`).join('');
+
+        // DYNAMIC: After rendering, refresh each card to show latest info from the auto-selected session
+        events.forEach(e => updateCardInfo(e.id));
       } catch { el.innerHTML = '<p class="loading-text" style="color:#f87171;">Failed to load.</p>'; }
     }
 
     async function approveEvent(id, btn) {
-      btn.textContent = 'Approving...'; btn.disabled = true;
+      const selectedIds = sessionSelectedData[id] || [];
+      if (selectedIds.length === 0) {
+          showToast('Please select at least one session to approve.', 'error');
+          return;
+      }
+
+      btn.textContent = 'Processing...'; btn.disabled = true;
       try {
-        const r = await fetch(`/api/admin/events/${id}/approve`, { method: 'POST', headers: authHeaders() });
+        const r = await fetch(`/api/admin/events/${id}/approve`, { 
+            method: 'POST', 
+            headers: authHeaders(),
+            body: JSON.stringify({ selected_ids: selectedIds })
+        });
         const d = await r.json();
         showToast(d.message, 'success');
+        delete sessionSelectedData[id];
         loadPending();
       } catch { btn.textContent = 'Approve'; btn.disabled = false; }
     }
@@ -282,13 +377,19 @@
         return;
       }
 
+      const selectedIds = sessionSelectedData[id] || [];
+      if (selectedIds.length === 0) {
+        alert('Lütfen işlem yapılacak seansları seçin.');
+        return;
+      }
+
       const endpoint = action === 'cancel' ? `/api/events/${id}?permanent=false&reason=${encodeURIComponent(reason)}` : `/api/admin/events/${id}/reject`;
-      const method = action === 'cancel' ? 'DELETE' : 'POST';
-      const body = action === 'cancel' ? null : JSON.stringify({ reason });
+      const method = action === 'cancel' ? 'POST' : 'POST'; // We'll use POST for both to handle body smoothly
+      const body = JSON.stringify({ reason, selected_ids: selectedIds });
 
       try {
         const r = await fetch(endpoint, {
-          method: method,
+          method: 'POST',
           headers: authHeaders(),
           body: body
         });
@@ -358,28 +459,28 @@
             <img src="${e.image}" style="width:60px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.src='https://images.unsplash.com/photo-1540039155733-5bb30b4a574b?w=200'">
             <div style="flex:1;min-width:0;">
               <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">
-                <span style="color:var(--text);font-weight:600;font-size:0.95rem;">${e.title}</span>
+                <span style="color:var(--text);font-weight:600;font-size:0.95rem;">${e.title} ${e.parent_event_id ? '<small style="font-weight:400;color:var(--text-muted);">(Session)</small>' : ''}</span>
                 <span style="background:${sColor(e.status)}18;color:${sColor(e.status)};border:1px solid ${sColor(e.status)}44;border-radius:100px;padding:1px 8px;font-size:0.75rem;font-weight:600;">${sLabel(e.status)}</span>
               </div>
               ${e.recurring_config ? `<div style="margin-bottom:6px;">${getRecurrenceBadge(e.recurring_config, e.session_count)}</div>` : ''}
               <p style="color:var(--text-muted);font-size:0.78rem;margin:0;">📅 ${fDate(e.date)} | 📍 ${e.location} | 💰 ${e.price.toLocaleString('en-US')} ₺ | 🎟 ${e.sold_count}/${e.capacity}</p>
-              ${getSessionNotes(e.session_dates)}
+              ${getSessionNotes(e.id, e.sessions, !!e.recurring_config)}
             </div>
             <div style="display:flex; gap:8px;">
               ${(e.status === 'active' || e.status === 'pending') ? `
-                <button class="btn btn-primary btn-sm" onclick="toggleReasonBox('${e.id}', 'reject')">Request Edit</button>
-                <button class="btn btn-danger btn-sm" onclick="toggleReasonBox('${e.id}', 'cancel')">Cancel</button>
+                <button class="btn btn-primary btn-sm" onclick="toggleReasonBox('${e.id}', 'reject')">Düzenleme İsteği</button>
+                <button class="btn btn-danger btn-sm" onclick="toggleReasonBox('${e.id}', 'cancel')">İptal Et</button>
               ` : ''}
               ${e.status === 'rejected' ? `<button class="btn btn-outline btn-sm" onclick="approveEvent('${e.id}', this)">Re-activate</button>` : ''}
             </div>
           </div>
           <div id="reason-box-${e.id}" style="display:none;margin-top:10px; padding:0 18px 14px;">
             <div class="glass-panel" style="padding:15px; border-color:rgba(239,68,68,0.3);">
-                <label id="reason-label-${e.id}" class="form-label" style="margin-bottom:8px; display:block; color:var(--text); font-weight:600;">Action Reason</label>
-                <textarea class="form-control" placeholder="Enter explanation..." id="reason-input-${e.id}" style="margin-bottom:8px; min-height:60px;"></textarea>
+                <label id="reason-label-${e.id}" class="form-label" style="margin-bottom:8px; display:block; color:var(--text); font-weight:600;">İşlem Nedeni</label>
+                <textarea class="form-control" placeholder="Açıklama girin..." id="reason-input-${e.id}" style="margin-bottom:8px; min-height:60px;"></textarea>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn btn-danger btn-sm" style="flex:1;justify-content:center;" id="reason-confirm-btn-${e.id}">Confirm and Send</button>
-                    <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center;" onclick="toggleReasonBox('${e.id}')">Cancel</button>
+                    <button class="btn btn-danger btn-sm" style="flex:1;justify-content:center;" id="reason-confirm-btn-${e.id}">Onayla ve Gönder</button>
+                    <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center;" onclick="toggleReasonBox('${e.id}')">Vazgeç</button>
                 </div>
             </div>
           </div>`).join('');

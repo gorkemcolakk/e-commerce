@@ -9,13 +9,17 @@ organizer_bp = Blueprint('organizer', __name__, url_prefix='/api/organizer')
 def organizer_events():
     conn = get_db_connection()
     if g.user['role'] == 'admin':
-        events = conn.execute('SELECT * FROM events WHERE parent_event_id IS NULL ORDER BY id').fetchall()
+        events = conn.execute('SELECT * FROM events ORDER BY date ASC').fetchall()
     else:
         events = conn.execute(
-            'SELECT * FROM events WHERE organizer_id = ? AND parent_event_id IS NULL ORDER BY id',
+            'SELECT * FROM events WHERE organizer_id = ? ORDER BY date ASC',
             (g.user['id'],)
         ).fetchall()
     conn.close()
+    
+    # Debug log for you to see in terminal
+    print(f"--- LOG: Organizator {g.user['id']} icin {len(events)} etkinlik/seans donduruldu. ---")
+    
     return jsonify([event_to_dict(e) for e in events]), 200
 
 @organizer_bp.route('/revenue', methods=['GET'])
@@ -46,6 +50,7 @@ def organizer_revenue():
         SELECT 
             e.id, 
             e.title, 
+            e.date,
             e.capacity, 
             e.price, 
             e.status,
@@ -55,17 +60,34 @@ def organizer_revenue():
         FROM events e
         LEFT JOIN users u ON e.organizer_id = u.id
         LEFT JOIN tickets t ON e.id = t.event_id
-        WHERE 1=1 {event_filter.replace('e.organizer_id', 'e.organizer_id')}
+        WHERE e.status = 'active' {event_filter}
         GROUP BY e.id
-        ORDER BY e.id
+        ORDER BY e.date ASC
     ''', params).fetchall()
 
     breakdown = []
     for ev in events_stats:
         gross = ev['real_gross']
+        # Format date and truncate long titles even more for the chart
+        try:
+            from datetime import datetime
+            dt_obj = datetime.fromisoformat(ev['date'].replace('T', ' '))
+            day_str = dt_obj.strftime('%d %b')
+            
+            # Shorter truncation for chart readability: 15 chars
+            raw_title = ev['title']
+            if len(raw_title) > 15:
+                short_title = raw_title[:12] + "..."
+            else:
+                short_title = raw_title
+            
+            display_title = f"{short_title} ({day_str})"
+        except:
+            display_title = ev['title']
+
         breakdown.append({
             'event_id': ev['id'],
-            'title': ev['title'],
+            'title': display_title,
             'organizer_name': ev['organizer_name'],
             'sold_count': ev['real_sold_count'],
             'capacity': ev['capacity'],

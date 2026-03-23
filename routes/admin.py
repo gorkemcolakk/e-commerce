@@ -32,10 +32,10 @@ def admin_all_events():
         d = event_to_dict(e)
         d['session_count'] = e['s_count']
         
-        # Fetch actual session dates
+        # Fetch only ACTIVE session info
         conn_sessions = get_db_connection()
-        s_dates = conn_sessions.execute('SELECT date FROM events WHERE parent_event_id = ? OR id = ? ORDER BY date', (e['id'], e['id'])).fetchall()
-        d['session_dates'] = [sd['date'] for sd in s_dates]
+        s_data = conn_sessions.execute("SELECT id, date FROM events WHERE (parent_event_id = ? OR id = ?) AND status = 'active' ORDER BY date", (e['id'], e['id'])).fetchall()
+        d['sessions'] = [{'id': sd['id'], 'date': sd['date']} for sd in s_data]
         conn_sessions.close()
         
         result.append(d)
@@ -45,15 +45,25 @@ def admin_all_events():
 @role_required('admin')
 def admin_pending_events():
     conn = get_db_connection()
+    # Ana etkinlik bekliyor olabilir VEYA içindeki seanslardan en az biri bekliyor olabilir
     events = conn.execute('''
         SELECT e.*, u.fullname as organizer_name, u.email as organizer_email,
         (SELECT COUNT(*) FROM events WHERE parent_event_id = e.id) + 1 as s_count
         FROM events e
         LEFT JOIN users u ON e.organizer_id = u.id
-        WHERE e.status = 'pending' AND e.parent_event_id IS NULL
+        WHERE e.parent_event_id IS NULL 
+        AND (
+            e.status IN ('pending', 'rejected') 
+            OR EXISTS (
+                SELECT 1 FROM events s 
+                WHERE s.parent_event_id = e.id 
+                AND s.status IN ('pending', 'rejected')
+            )
+        )
         ORDER BY e.id DESC
     ''').fetchall()
     conn.close()
+    
     result = []
     for e in events:
         d = event_to_dict(e)
@@ -61,10 +71,23 @@ def admin_pending_events():
         d['organizer_email'] = e['organizer_email']
         d['session_count'] = e['s_count']
         
-        # Fetch actual session dates
+        # Sadece onay bekleyen veya reddedilmiş seansları getir
         conn_sessions = get_db_connection()
-        s_dates = conn_sessions.execute('SELECT date FROM events WHERE parent_event_id = ? OR id = ? ORDER BY date', (e['id'], e['id'])).fetchall()
-        d['session_dates'] = [sd['date'] for sd in s_dates]
+        s_data = conn_sessions.execute('''
+            SELECT id, date, price, capacity FROM events 
+            WHERE (parent_event_id = ? OR id = ?) 
+            AND status IN ('pending', 'rejected')
+            ORDER BY date
+        ''', (e['id'], e['id'])).fetchall()
+        
+        d['sessions'] = [{'id': sd['id'], 'date': sd['date'], 'price': sd['price'], 'capacity': sd['capacity']} for sd in s_data]
+        
+        # Eğer bekleyen seans varsa, kart bilgilerini o seanstaki en güncel verilerle (örn: 5000 TL) doldur
+        if s_data:
+            d['price'] = s_data[0]['price']
+            d['capacity'] = s_data[0]['capacity']
+            d['date'] = s_data[0]['date']
+            
         conn_sessions.close()
         
         result.append(d)
@@ -73,33 +96,55 @@ def admin_pending_events():
 @admin_bp.route('/events/<event_id>/approve', methods=['POST'])
 @role_required('admin')
 def approve_event(event_id):
+    data = request.get_json() or {}
+    selected_ids = data.get('selected_ids', []) # List of session IDs to approve
+
     conn = get_db_connection()
     event = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
     if not event:
         conn.close()
         return jsonify({'message': 'Event not found'}), 404
-    conn.execute("UPDATE events SET status = 'active' WHERE id = ? OR parent_event_id = ?", (event_id, event_id))
+    
+    if not selected_ids:
+        # Default behavior: approve as single or approve all sessions if parent
+        conn.execute("UPDATE events SET status = 'active' WHERE id = ? OR parent_event_id = ?", (event_id, event_id))
+    else:
+        # Granular approval: only approve the selected IDs
+        # We use placeholders for the IN clause
+        placeholders = ','.join(['?'] * len(selected_ids))
+        conn.execute(f"UPDATE events SET status = 'active' WHERE id IN ({placeholders})", selected_ids)
+
     if event['organizer_id']:
         create_notification(conn, event['organizer_id'],
-            f"Your event '{event['title']}' has been approved and published on the site!")
+            f"Your event '{event['title']}' has been partially or fully approved!")
     conn.commit()
     conn.close()
-    return jsonify({'message': 'Event approved and published'}), 200
+    return jsonify({'message': 'Approval processed successfully'}), 200
 
 @admin_bp.route('/events/<event_id>/reject', methods=['POST'])
 @role_required('admin')
 def reject_event(event_id):
     data = request.get_json() or {}
     reason = data.get('reason', 'Not specified')
+    selected_ids = data.get('selected_ids', [])
+
     conn = get_db_connection()
     event = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
     if not event:
         conn.close()
         return jsonify({'message': 'Event not found'}), 404
-    conn.execute("UPDATE events SET status = 'rejected', rejection_reason = ? WHERE id = ? OR parent_event_id = ?", (reason, event_id, event_id))
+
+    if selected_ids:
+        # Rejection for ONLY selected sessions
+        placeholders = ','.join(['?'] * len(selected_ids))
+        params = [reason] + list(selected_ids)
+        conn.execute(f"UPDATE events SET status = 'rejected', rejection_reason = ? WHERE id IN ({placeholders})", params)
+    else:
+        # Fallback to whole series if nothing selected
+        conn.execute("UPDATE events SET status = 'rejected', rejection_reason = ? WHERE id = ? OR parent_event_id = ?", (reason, event_id, event_id))
+
     if event['organizer_id']:
-        create_notification(conn, event['organizer_id'],
-            f"An edit has been requested for your event '{event['title']}'. Reason: {reason}")
+        create_notification(conn, event['organizer_id'], f"An edit has been requested for your session(s) in '{event['title']}'. Reason: {reason}")
     conn.commit()
     conn.close()
-    return jsonify({'message': 'Event rejected'}), 200
+    return jsonify({'message': 'Selected sessions rejected'}), 200

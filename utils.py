@@ -297,6 +297,16 @@ def send_ticket_confirmation_email(to_email, fullname, event, generated_tickets,
         images=email_images
     )
 
+def decode_token(token):
+    try:
+        data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        conn = get_db_connection()
+        user = conn.execute('SELECT * FROM users WHERE id = ?', (data['id'],)).fetchone()
+        conn.close()
+        return dict(user) if user else None
+    except:
+        return None
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -307,16 +317,12 @@ def token_required(f):
                 token = parts[1]
         if not token:
             return jsonify({'message': 'Token missing!'}), 401
-        try:
-            data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            conn = get_db_connection()
-            user = conn.execute('SELECT * FROM users WHERE id = ?', (data['id'],)).fetchone()
-            conn.close()
-            if not user:
-                return jsonify({'message': 'Invalid token!'}), 401
-            g.user = dict(user)
-        except Exception:
+        
+        user_data = decode_token(token)
+        if not user_data:
             return jsonify({'message': 'Token is invalid or expired!'}), 401
+        
+        g.user = user_data
         return f(*args, **kwargs)
     return decorated
 

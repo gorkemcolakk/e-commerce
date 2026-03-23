@@ -768,7 +768,7 @@
 
     async function loadEventData() {
       try {
-        const res = await fetch('/api/events/' + evId);
+        const res = await fetch('/api/events/' + evId, { headers: authHeaders() });
         if (!res.ok) throw new Error('Event not found');
         evData = await res.json();
 

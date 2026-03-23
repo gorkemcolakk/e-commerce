@@ -255,8 +255,8 @@
         <h2 class="dash-section-title">Revenue Report</h2>
         <div id="revenueSummary"><p class="loading-text">Loading...</p></div>
         
-        <div class="glass-panel" style="margin-top: 24px; padding: 20px;">
-          <canvas id="revenueChart" style="max-height: 300px;"></canvas>
+        <div class="glass-panel" style="margin-top: 24px; padding: 24px;">
+          <canvas id="revenueChart" style="max-height: 500px; width: 100%;"></canvas>
         </div>
 
         <h3 style="color:var(--text);margin:28px 0 16px;">Event Breakdown</h3>
@@ -991,7 +991,13 @@
               grid: { color: gridColor } 
             },
             x: { 
-              ticks: { color: textColor },
+              ticks: { 
+                color: textColor,
+                maxRotation: 45,
+                minRotation: 45,
+                autoSkip: false,
+                font: { size: 11 }
+              },
               grid: { display: false } 
             }
           }
@@ -1010,11 +1016,19 @@
       var evSelect = document.getElementById('promoEvent');
       var listContainer = document.getElementById('promoListContainer');
       
-      // Load events into select
+      // Load active events into select with dates
       fetch('/api/organizer/events', { headers: { 'Authorization': 'Bearer ' + getToken() } })
       .then(r => r.json())
       .then(events => {
-          evSelect.innerHTML = events.map(e => `<option value="${e.id}">${e.title}</option>`).join('');
+          const activeEvents = events.filter(e => e.status === 'active');
+          evSelect.innerHTML = activeEvents.map(e => {
+              let dStr = e.date;
+              try {
+                  const d = new Date(e.date);
+                  dStr = d.toLocaleDateString('tr-TR', { day:'numeric', month:'short' });
+              } catch(ex) {}
+              return `<option value="${e.id}">${e.title} - ${dStr}</option>`;
+          }).join('');
       });
 
       // Load promos
@@ -1094,14 +1108,20 @@
     let validateTabInited = false;
 
     function initValidateTab() {
-      // Etkinlikleri yükle
+      // Load active events into select with dates
       fetch('/api/organizer/events', { headers: { 'Authorization': 'Bearer ' + getToken() } })
       .then(r => r.json())
       .then(events => {
         var sel = document.getElementById('qrEventFilter');
         sel.innerHTML = '<option value="">All My Events (No Filter)</option>';
-        events.forEach(ev => {
-          sel.innerHTML += `<option value="${ev.id}">${ev.title}</option>`;
+        const activeEvents = events.filter(e => e.status === 'active');
+        activeEvents.forEach(ev => {
+          let dStr = ev.date;
+          try {
+              const d = new Date(ev.date);
+              dStr = d.toLocaleDateString('tr-TR', { day:'numeric', month:'short' });
+          } catch(ex) {}
+          sel.innerHTML += `<option value="${ev.id}">${ev.title} - ${dStr}</option>`;
         });
       });
 

@@ -37,6 +37,16 @@ def get_events():
 
 @events_bp.route('/<event_id>', methods=['GET'])
 def get_event(event_id):
+    # Manually check for token if present to populate g.user for session visibility
+    from utils import decode_token
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header.split(' ')[1]
+        try:
+            g.user = decode_token(token)
+        except:
+            g.user = None
+
     conn = get_db_connection()
     e = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
     conn.close()
@@ -49,12 +59,14 @@ def get_event(event_id):
     sessions = []
     if event_dict.get('recurring_config') or event_dict.get('parent_event_id'):
         parent_id = event_dict.get('parent_event_id') or event_dict['id']
-        # Fetch parent and children that are active and upcoming
-        rows = conn.execute('''
+        # If admin, show everything. If public, show only active.
+        status_filter = "('active', 'pending', 'rejected')" if hasattr(g, 'user') and g.user and g.user.get('role') == 'admin' else "('active')"
+        
+        rows = conn.execute(f'''
             SELECT id, date, title 
             FROM events 
             WHERE (id = ? OR parent_event_id = ?) 
-              AND status = 'active'
+              AND status IN {status_filter}
             ORDER BY date ASC
         ''', (parent_id, parent_id)).fetchall()
         for r in rows:
@@ -247,11 +259,15 @@ def update_event(event_id):
         conn.close()
         return jsonify({'message': 'No fields to update'}), 400
 
-    # If an organizer edits their event and it's not already pending, bump it to pending
-    if g.user['role'] == 'organizer' and needs_reapproval and event['status'] != 'pending':
-        fields.append("status = 'pending'")
-        fields.append("rejection_reason = NULL") # Clear previous rejection reason
-        create_notification(conn, g.user['id'], f"Your event '{event['title']}' has been updated and resubmitted for approval.")
+    # If an organizer edits their event...
+    if g.user['role'] == 'organizer':
+        # 1. Any update to a REJECTED event should resubmit it for approval
+        # 2. Significant updates to ACTIVE events should resubmit them for approval
+        if event['status'] == 'rejected' or (needs_reapproval and event['status'] != 'pending'):
+            fields.append("status = 'pending'")
+            fields.append("rejection_reason = NULL") # Clear previous rejection reason
+            create_notification(conn, g.user['id'], f"Your event '{event['title']}' status has been reset to pending for admin approval.")
+            needs_reapproval = True # Ensure we return the 'pending' status in the response
 
     values.append(event_id)
     conn.execute(f"UPDATE events SET {', '.join(fields)} WHERE id = ?", values)
@@ -293,7 +309,7 @@ def update_event(event_id):
         return jsonify({'message': 'Event updated and resubmitted for admin approval', 'status': 'pending'}), 200
     return jsonify({'message': 'Event updated', 'status': event['status']}), 200
 
-@events_bp.route('/<event_id>', methods=['DELETE'])
+@events_bp.route('/<event_id>', methods=['DELETE', 'POST'])
 @role_required('organizer', 'admin')
 def cancel_event(event_id):
     permanent = request.args.get('permanent', 'false').lower() == 'true'
@@ -338,20 +354,32 @@ def cancel_event(event_id):
         return jsonify({'message': 'Refund notification sent to ticket holders and event deleted from everywhere'}), 200
 
     # Mevcut iptal mantığı
-    reason = request.args.get('reason', 'Cancelled by the organizer')
+    reason = request.args.get('reason') or (request.json.get('reason') if request.is_json else 'Cancelled by the organizer')
+    selected_ids = request.json.get('selected_ids', []) if request.is_json else []
     cancelled_by = g.user['role'] # 'admin' or 'organizer'
     
-    conn.execute("UPDATE events SET status = 'cancelled', rejection_reason = ?, cancelled_by = ? WHERE id = ?", 
-                 (reason, cancelled_by, event_id))
+    if selected_ids:
+        placeholders = ','.join(['?'] * len(selected_ids))
+        conn.execute(f"UPDATE events SET status = 'cancelled', rejection_reason = ?, cancelled_by = ? WHERE id IN ({placeholders})", 
+                     [reason, cancelled_by] + list(selected_ids))
+    else:
+        conn.execute("UPDATE events SET status = 'cancelled', rejection_reason = ?, cancelled_by = ? WHERE id = ? OR parent_event_id = ?", 
+                     (reason, cancelled_by, event_id, event_id))
 
     # Organizatöre bildirim gönder (Eğer admin iptal ettiyse)
     if cancelled_by == 'admin' and event['organizer_id']:
         create_notification(conn, event['organizer_id'], 
-                            f"Your event '{event['title']}' has been cancelled by the admin. Reason: {reason}")
+                            f"Your session(s) in event '{event['title']}' has been cancelled by the admin. Reason: {reason}")
 
+    # Bilet iade süreçlerini başlat
+    target_ids = selected_ids if selected_ids else [event_id]
+    placeholders = ','.join(['?'] * len(target_ids))
+    
     tickets = conn.execute(
-        "SELECT * FROM tickets WHERE event_id = ? AND status = 'valid'", (event_id,)
+        f"SELECT * FROM tickets WHERE event_id IN ({placeholders}) AND status = 'valid'", 
+        list(target_ids)
     ).fetchall()
+    
     for ticket in tickets:
         conn.execute(
             "UPDATE tickets SET status = 'refund_pending' WHERE id = ?", (ticket['id'],)
