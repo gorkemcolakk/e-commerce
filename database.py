@@ -94,6 +94,16 @@ def get_db_connection():
         return conn
 
 def init_db():
+    if USING_TURSO:
+        try:
+            # Hızlı kontrol: Eğer users tablosu ve tickets.owner_name kolonu varsa,
+            # veritabanı zaten kuruludur, 25 tane ayrı HTTP isteği atmaya gerek yok.
+            _client.execute("SELECT id FROM users LIMIT 1", [])
+            _client.execute("SELECT owner_name FROM tickets LIMIT 1", [])
+            return  # Veritabanı hazır, hızlıca çık
+        except Exception:
+            pass # Eğer kurulu değilse, aşağıdan normal şekilde tabloları oluşturmaya devam et
+            
     conn = get_db_connection()
     c = conn.cursor()
 

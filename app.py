@@ -65,8 +65,7 @@ def birthday_job():
             time.sleep(30)
 
 if __name__ == '__main__':
-    from database import init_db
-    init_db()
+    # init_db()  # <-- Turso kurulu olduğu için her başlatmada kapatıyoruz.
     
     # Check to prevent duplicate threads during development reload
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
