@@ -12,7 +12,7 @@ def get_events():
     search = request.args.get('search', '').strip()
 
     conn = get_db_connection()
-    query = "SELECT * FROM events WHERE status = 'active'"
+    query = "SELECT * FROM events WHERE status = 'active' AND parent_event_id IS NULL"
     params = []
 
     if category and category != 'all':
@@ -44,6 +44,24 @@ def get_event(event_id):
         return jsonify({'message': 'Event not found'}), 404
     
     event_dict = event_to_dict(e)
+    
+    # Check if recurring and load sessions
+    sessions = []
+    if event_dict.get('recurring_config') or event_dict.get('parent_event_id'):
+        parent_id = event_dict.get('parent_event_id') or event_dict['id']
+        # Fetch parent and children that are active and upcoming
+        rows = conn.execute('''
+            SELECT id, date, title 
+            FROM events 
+            WHERE (id = ? OR parent_event_id = ?) 
+              AND status = 'active'
+            ORDER BY date ASC
+        ''', (parent_id, parent_id)).fetchall()
+        for r in rows:
+            sessions.append({'id': r['id'], 'date': r['date'], 'title': r['title']})
+            
+    event_dict['sessions'] = sessions
+
     if event_dict.get('has_seating'):
         # Just include a flag so the frontend knows it needs to fetch seats
         pass
@@ -171,9 +189,11 @@ def create_event():
                 created_count += 1
 
         except Exception as ex:
+            import traceback
+            traceback.print_exc()
             conn.rollback()
             conn.close()
-            return jsonify({'message': f'Error while creating recurring dates: {ex}'}), 500
+            return jsonify({'message': f'Failure at session {created_count}: {str(ex)}'}), 500
 
     if event_status == 'pending':
         notif = (
