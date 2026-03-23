@@ -159,6 +159,20 @@
         document.body.style.overflow = 'auto';
     }
 
+    // ── HELPERS ──────────────────────────────────────
+    function getRecurrenceBadge(configJSON, count) {
+        if (!configJSON) return '';
+        try {
+            let conf = typeof configJSON === 'string' ? JSON.parse(configJSON) : configJSON;
+            let typeMap = { 'weekly': 'Haftalık', 'monthly': 'Aylık', 'daily': 'Günlük' };
+            let t = typeMap[conf.type] || conf.type;
+            let endStr = conf.end_date ? new Date(conf.end_date).toLocaleDateString() : '';
+            return `<span style="background:rgba(20,184,166,.1);color:#14b8a6;border:1px solid rgba(20,184,166,.3);padding:2px 8px;border-radius:100px;font-size:0.7rem;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+              🔄 ${t} Tekrar (${count} Oturum) ${endStr ? ' • Bitiş: ' + endStr : ''}
+            </span>`;
+        } catch(err) { return ''; }
+    }
+
     // ── PENDING APPROVAL ──────────────────────────────────────
     async function loadPending() {
       const el = document.getElementById('pendingList');
@@ -181,7 +195,7 @@
               <div style="flex:1;min-width:0;">
                 <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
                   <h3 style="color:var(--text);font-size:1rem;margin:0;">${e.title}</h3>
-                  ${e.recurring_config ? '<span style="background:rgba(20,184,166,.1);color:#14b8a6;border:1px solid rgba(20,184,166,.3);padding:1px 8px;border-radius:100px;font-size:0.65rem;display:inline-flex;align-items:center;gap:4px;">🔄 Haftalık Tekrar</span>' : ''}
+                  ${getRecurrenceBadge(e.recurring_config, e.session_count)}
                   ${e.parent_event_id ? '<span style="background:rgba(139,92,246,.1);color:#a78bfa;border:1px solid rgba(139,92,246,.3);padding:1px 8px;border-radius:100px;font-size:0.65rem;display:inline-flex;align-items:center;gap:4px;">🔗 Tekrar Oturumu</span>' : ''}
                 </div>
                 <p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 2px;">📅 ${e.date} &nbsp;|&nbsp; 📍 ${e.location}</p>
@@ -325,12 +339,11 @@
           <div class="glass-panel" style="margin-bottom:10px;padding:14px 18px;display:flex;gap:14px;align-items:center;">
             <img src="${e.image}" style="width:60px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.src='https://images.unsplash.com/photo-1540039155733-5bb30b4a574b?w=200'">
             <div style="flex:1;min-width:0;">
-              <div style="display:flex;gap:8px;align-items:center;margin-bottom:3px;flex-wrap:wrap;">
-                <span style="color:var(--text);font-weight:600;font-size:0.9rem;">${e.title}</span>
-                <span style="background:${sColor(e.status)}18;color:${sColor(e.status)};border:1px solid ${sColor(e.status)}44;border-radius:100px;padding:1px 8px;font-size:0.7rem;font-weight:600;">${sLabel(e.status)}</span>
-                ${e.recurring_config ? '<span style="background:rgba(20,184,166,.1);color:#14b8a6;border:1px solid rgba(20,184,166,.3);padding:1px 8px;border-radius:100px;font-size:0.6rem;">🔄 Haftalık</span>' : ''}
-                ${e.parent_event_id ? '<span style="background:rgba(139,92,246,.1);color:#a78bfa;border:1px solid rgba(139,92,246,.3);padding:1px 8px;border-radius:100px;font-size:0.6rem;">🔗 Oturum</span>' : ''}
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">
+                <span style="color:var(--text);font-weight:600;font-size:0.95rem;">${e.title}</span>
+                <span style="background:${sColor(e.status)}18;color:${sColor(e.status)};border:1px solid ${sColor(e.status)}44;border-radius:100px;padding:1px 8px;font-size:0.75rem;font-weight:600;">${sLabel(e.status)}</span>
               </div>
+              ${e.recurring_config ? `<div style="margin-bottom:6px;">${getRecurrenceBadge(e.recurring_config, e.session_count)}</div>` : ''}
               <p style="color:var(--text-muted);font-size:0.78rem;margin:0;">📅 ${fDate(e.date)} | 📍 ${e.location} | 💰 ${e.price.toLocaleString('en-US')} ₺ | 🎟 ${e.sold_count}/${e.capacity}</p>
             </div>
             <div style="display:flex; gap:8px;">
