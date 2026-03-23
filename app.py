@@ -72,4 +72,5 @@ if __name__ == '__main__':
         t = threading.Thread(target=birthday_job, daemon=True)
         t.start()
         print(">>> Birthday Background Service Started (Waiting for 00:00)")
-    app.run(debug=True, port=5002)
+    # On Windows, using use_reloader=False is more stable for custom threading
+    app.run(debug=True, port=5002, use_reloader=False)
