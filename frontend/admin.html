@@ -498,19 +498,19 @@
         let html = `
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:30px;">
           <div class="glass-panel" style="padding:22px;text-align:center;border-top:3px solid var(--gold);box-shadow:0 10px 30px rgba(245,158,11,0.1);">
-            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--gold);">${d.total_revenue.toLocaleString('en-US')} ₺</div>
+            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--gold);">${(d.total_revenue || 0).toLocaleString('en-US')} ₺</div>
             <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Total Revenue</div>
           </div>
           <div class="glass-panel" style="padding:22px;text-align:center;border-top:3px solid var(--coral);box-shadow:0 10px 30px rgba(239,68,68,0.1);">
-            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--coral);">${d.commission.toLocaleString('en-US')} ₺</div>
-            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Platform Commission (%${(d.commission_rate*100).toFixed(0)})</div>
+            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--coral);">${(d.commission || 0).toLocaleString('en-US')} ₺</div>
+            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Platform Commission (%${((d.commission_rate || 0.1)*100).toFixed(0)})</div>
           </div>
           <div class="glass-panel" style="padding:22px;text-align:center;border-top:3px solid var(--teal);box-shadow:0 10px 30px rgba(20,184,166,0.1);">
-            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--teal);">${d.net_revenue.toLocaleString('en-US')} ₺</div>
+            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--teal);">${(d.net_revenue || 0).toLocaleString('en-US')} ₺</div>
             <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Earnings Payouts</div>
           </div>
           <div class="glass-panel" style="padding:22px;text-align:center;border-top:3px solid var(--blue);box-shadow:0 10px 30px rgba(59,130,246,0.1);">
-            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--blue);">${d.total_tickets}</div>
+            <div style="font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--blue);">${d.total_tickets || 0}</div>
             <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Total Tickets</div>
           </div>
         </div>

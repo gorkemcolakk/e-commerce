@@ -49,8 +49,8 @@ def get_event(event_id):
 
     conn = get_db_connection()
     e = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
-    conn.close()
     if not e:
+        conn.close()
         return jsonify({'message': 'Event not found'}), 404
     
     event_dict = event_to_dict(e)
@@ -72,6 +72,7 @@ def get_event(event_id):
         for r in rows:
             sessions.append({'id': r['id'], 'date': r['date'], 'title': r['title']})
             
+    conn.close()
     event_dict['sessions'] = sessions
 
     if event_dict.get('has_seating'):

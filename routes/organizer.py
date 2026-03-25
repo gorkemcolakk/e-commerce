@@ -40,8 +40,8 @@ def organizer_revenue():
         WHERE t.status IN ('valid', 'used') {event_filter}
     ''', params).fetchall()
 
-    total_revenue = sum(t['total_price'] for t in tickets)
-    total_tickets = sum(t['quantity'] for t in tickets)
+    total_revenue = sum(t['total_price'] for t in tickets) if tickets else 0
+    total_tickets = sum(t['quantity'] for t in tickets) if tickets else 0
     commission = round(total_revenue * COMMISSION_RATE)
     net_revenue = total_revenue - commission
 
