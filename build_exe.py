@@ -22,18 +22,18 @@ def main():
     # PyInstaller kurulu mu kontrol et
     try:
         import PyInstaller
-        print(f"✅ PyInstaller {PyInstaller.__version__} bulundu.")
+        print(f"[OK] PyInstaller {PyInstaller.__version__} bulundu.")
     except ImportError:
-        print("📦 PyInstaller kuruluyor...")
+        print("[INFO] PyInstaller kuruluyor...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
-        print("✅ PyInstaller kuruldu.")
+        print("[OK] PyInstaller kuruldu.")
 
     # certifi kurulu mu kontrol et
     try:
         import certifi
-        print(f"✅ certifi bulundu.")
+        print(f"[OK] certifi bulundu.")
     except ImportError:
-        print("📦 certifi kuruluyor...")
+        print("[INFO] certifi kuruluyor...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "certifi"])
 
     # Proje kök dizini
@@ -49,26 +49,26 @@ def main():
     frontend_dir = os.path.join(project_dir, "frontend")
     if os.path.isdir(frontend_dir):
         datas.append(f"{frontend_dir}{separator}frontend")
-        print(f"📁 Frontend klasörü eklendi: {frontend_dir}")
+        print(f"[DIR] Frontend klasörü eklendi: {frontend_dir}")
     
     # .env dosyası
     env_file = os.path.join(project_dir, ".env")
     if os.path.isfile(env_file):
         datas.append(f"{env_file}{separator}.")
-        print(f"📄 .env dosyası eklendi")
+        print(f"[FILE] .env dosyası eklendi")
     
     # database.db (varsa)
     db_file = os.path.join(project_dir, "database.db")
     if os.path.isfile(db_file):
         datas.append(f"{db_file}{separator}.")
-        print(f"📄 database.db eklendi")
+        print(f"[FILE] database.db eklendi")
     
     # certifi sertifika dosyası
     try:
         import certifi
         cert_file = certifi.where()
         datas.append(f"{cert_file}{separator}certifi")
-        print(f"🔒 SSL sertifikaları eklendi")
+        print(f"[SSL] SSL sertifikaları eklendi")
     except Exception:
         pass
 
@@ -135,7 +135,7 @@ def main():
     # Ana uygulama dosyasını belirt
     cmd.append(os.path.join(project_dir, "app.py"))
     
-    print("\n🔨 Build başlatılıyor...\n")
+    print("\n[BUILD] Build başlatılıyor...\n")
     print(f"Komut: {' '.join(cmd)}\n")
     
     # Build'i çalıştır
@@ -148,18 +148,18 @@ def main():
             exe_path = os.path.join(project_dir, "dist", "Eventix")
         
         print("\n" + "=" * 60)
-        print("✅ BUILD BAŞARILI!")
+        print("BUILD BASARILI!")
         print("=" * 60)
-        print(f"\n📍 Dosya konumu: {exe_path}")
-        print(f"\n🚀 Çalıştırmak için:")
+        print(f"\n[LOC] Dosya konumu: {exe_path}")
+        print(f"\n[RUN] Çalıştırmak için:")
         if sys.platform == "win32":
             print(f"   dist\\Eventix.exe")
         else:
             print(f"   ./dist/Eventix")
-        print(f"\n🌐 Tarayıcıda açmak için: http://localhost:5002")
+        print(f"\n[URL] Tarayıcıda açmak için: http://localhost:5002")
         print("=" * 60)
     else:
-        print("\n❌ Build başarısız oldu! Yukarıdaki hata mesajlarını kontrol edin.")
+        print("\n[FAIL] Build başarısız oldu! Yukarıdaki hata mesajlarını kontrol edin.")
         sys.exit(1)
 
 

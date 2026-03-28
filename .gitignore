@@ -7,23 +7,12 @@ __pycache__/
 *.pyd
 .Python
 
-# Database (local only)
-database.db
-ecommerce.db
+# PyInstaller build artifacts (temp)
+build/
+*.spec
 
-# Environment variables
-.env
-.env.local
-
-# IDE
+# IDE & OS
 .vscode/
 .idea/
-
-# OS
 .DS_Store
 Thumbs.db
-
-# PyInstaller build artifacts
-build/
-dist/
-*.spec
