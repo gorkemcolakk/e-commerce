@@ -1,5 +1,6 @@
 # Python
 venv/
+.venv/
 __pycache__/
 *.pyc
 *.pyo
@@ -8,6 +9,7 @@ __pycache__/
 
 # Database (local only)
 database.db
+ecommerce.db
 
 # Environment variables
 .env
@@ -20,3 +22,8 @@ database.db
 # OS
 .DS_Store
 Thumbs.db
+
+# PyInstaller build artifacts
+build/
+dist/
+*.spec

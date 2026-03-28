@@ -1,7 +1,17 @@
-from dotenv import load_dotenv
-load_dotenv()  # Load SMTP and other settings from .env file
-
+import sys
 import os
+
+# PyInstaller ile paketlendiğinde dosya yollarını doğru ayarla
+if getattr(sys, 'frozen', False):
+    # PyInstaller ile çalışıyor (exe modunda)
+    BASE_DIR = sys._MEIPASS
+    os.chdir(BASE_DIR)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+from dotenv import load_dotenv
+load_dotenv(os.path.join(BASE_DIR, '.env'))  # Load SMTP and other settings from .env file
+
 import certifi
 os.environ['SSL_CERT_FILE'] = certifi.where()
 
@@ -11,7 +21,6 @@ from utils import SECRET_KEY, limiter, send_birthday_emails
 import threading
 import time
 from datetime import datetime
-import os
 
 from routes.auth import auth_bp
 from routes.users import users_bp
@@ -23,7 +32,7 @@ from routes.organizer import organizer_bp
 from routes.admin import admin_bp
 from routes.upload import upload_bp
 
-app = Flask(__name__, static_folder='frontend', static_url_path='')
+app = Flask(__name__, static_folder=os.path.join(BASE_DIR, 'frontend'), static_url_path='')
 CORS(app)
 app.config['SECRET_KEY'] = SECRET_KEY
 limiter.init_app(app)

@@ -1,15 +1,22 @@
 import os
+import sys
 import sqlite3
 from dotenv import load_dotenv
 
-load_dotenv()
+# PyInstaller ile paketlendiğinde dosya yollarını doğru ayarla
+if getattr(sys, 'frozen', False):
+    _BASE_DIR = sys._MEIPASS
+else:
+    _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+load_dotenv(os.path.join(_BASE_DIR, '.env'))
 
 TURSO_DB_URL = os.getenv('TURSO_DB_URL')
 if TURSO_DB_URL and TURSO_DB_URL.startswith('libsql://'):
     TURSO_DB_URL = TURSO_DB_URL.replace('libsql://', 'https://')
 TURSO_AUTH_TOKEN = os.getenv('TURSO_AUTH_TOKEN')
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
+DB_PATH = os.path.join(_BASE_DIR, 'database.db')
 
 USING_TURSO = False
 try:

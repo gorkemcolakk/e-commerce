@@ -6,3 +6,5 @@ qrcode[pil]
 libsql-client
 python-dotenv
 Flask-Limiter
+certifi
+pyinstaller
