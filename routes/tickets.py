@@ -283,18 +283,37 @@ def validate_by_qr():
     if not qr_code or not verify_ticket_signature(qr_code):
         return jsonify({'valid': False, 'message': 'Invalid signature.'}), 400
     conn = get_db_connection()
-    t = conn.execute('SELECT t.*, e.organizer_id FROM tickets t JOIN events e ON t.event_id = e.id WHERE t.qr_code = ?', (qr_code,)).fetchone()
+    t = conn.execute('''
+        SELECT t.*, e.organizer_id, e.title, e.date, e.location
+        FROM tickets t JOIN events e ON t.event_id = e.id
+        WHERE t.qr_code = ?
+    ''', (qr_code,)).fetchone()
     if not t:
         conn.close()
         return jsonify({'valid': False, 'message': 'Not found.'}), 404
     if g.user['role'] == 'organizer' and t['organizer_id'] != g.user['id']:
         conn.close()
         return jsonify({'valid': False, 'message': 'No permission.'}), 403
+
+    ticket_data = dict(t)
+
+    # Already used ticket - return invalid with status
+    if t['status'] == 'used':
+        conn.close()
+        return jsonify({
+            'valid': False,
+            'status': 'already_used',
+            'message': 'This ticket has already been used!',
+            'ticket': ticket_data
+        }), 200
+
     if action == 'use' and t['status'] == 'valid':
         conn.execute("UPDATE tickets SET status = 'used' WHERE qr_code = ?", (qr_code,))
         conn.commit()
+        ticket_data['status'] = 'used'
+
     conn.close()
-    return jsonify({'valid': True, 'ticket': dict(t)}), 200
+    return jsonify({'valid': True, 'ticket': ticket_data}), 200
 
 # --- PROMO VALIDATE ---
 @tickets_bp.route('/validate_promo', methods=['POST'])
